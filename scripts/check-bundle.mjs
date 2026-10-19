@@ -24,7 +24,7 @@ const ADMIN_MARKERS = [
   "Clear stuck game",
   "Add a late player",
 ];
-const DEV_ONLY_MARKERS = ["forceConflict"];
+const DEV_ONLY_MARKERS = ["forceConflict", "ct51-style-preview"];
 // Built by concatenation so this file doesn't match the secret scan.
 const TOKEN_PATTERNS = [new RegExp("github" + "_pat_[A-Za-z0-9_]{20,}"), new RegExp("gh" + "p_[A-Za-z0-9]{20,}")];
 
@@ -79,6 +79,11 @@ else {
   if (!sw.includes("skipWaiting()") || !sw.includes("clientsClaim()")) {
     failures.push("service worker lacks skipWaiting()/clientsClaim(): updates would wait for every tab to close");
   }
+  // Fonts are self-hosted and precached, Latin subset only (no Google Fonts, no unused subsets offline).
+  if (!/inter-latin-400-normal[^"]*\.woff2/.test(sw) || !/playfair-display-latin-700-normal[^"]*\.woff2/.test(sw)) {
+    failures.push("service worker doesn't precache the self-hosted Inter/Playfair Latin fonts");
+  }
+  if (/(cyrillic|greek|vietnamese)[^"]*\.woff2/.test(sw)) failures.push("service worker precaches non-Latin font subsets");
   // Every chunk the admin chunk imports must be precached, or the admin can't run offline.
   const adminText = await readFile(join(dist, adminChunk), "utf8");
   for (const [, imported] of adminText.matchAll(/from\s*"\.\/([^"]+\.js)"/g)) {

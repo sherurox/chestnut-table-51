@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import "./design/fonts.js";
 import "./index.css";
 import { App } from "./App.js";
 import { registerServiceWorker } from "./lib/appUpdate.js";

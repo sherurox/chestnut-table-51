@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Design system (CLAUDE.md §11). In the components layer so Tailwind utilities can still override it. */
+@import "./design/design.css" layer(components);
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
@@ -10,8 +12,20 @@
   --color-chestnut-600: #8a4a2f;
   --color-chestnut-500: #a85b3a;
   --color-chestnut-400: #c47548;
-  --color-win: #4ade80;
-  --color-loss: #f87171;
+}
+
+/* Semantic colours that follow the theme (values live in design.css): text-ink, text-ink-muted,
+   text-brass, border-line, bg-panel, text-win, text-loss. */
+@theme inline {
+  --color-ink: var(--ct-text);
+  --color-ink-muted: var(--ct-text-muted);
+  --color-brass: var(--ct-brass);
+  --color-line: var(--ct-line);
+  --color-panel: var(--ct-felt);
+  --color-win: var(--ct-win);
+  --color-loss: var(--ct-loss);
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
 }
 
 html,
@@ -21,5 +35,8 @@ body,
 }
 
 body {
-  @apply bg-white text-felt-950 dark:bg-felt-950 dark:text-white;
+  background-color: var(--ct-bg);
+  color: var(--ct-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }

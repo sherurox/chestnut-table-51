@@ -1,0 +1,426 @@
+/* Chestnut Table 51 — "private club card room" design system.
+   Tokens are CSS custom properties so both themes and every component read from one place.
+   Dark is the default; [data-theme="light"] overrides. Motion is opt-out via prefers-reduced-motion. */
+
+:root,
+[data-theme="dark"] {
+  --ct-bg: #0b1d16;           /* deep felt, page background */
+  --ct-felt: #123326;         /* panel felt */
+  --ct-felt-hi: #18412f;      /* panel highlight */
+  --ct-line: #2c5a46;         /* hairlines on felt */
+  --ct-wood-dark: #2b150d;    /* mahogany */
+  --ct-wood: #5b2c19;
+  --ct-wood-light: #8a4a2c;   /* chestnut */
+  --ct-brass: #d6b35e;        /* brass / gold accent */
+  --ct-brass-hi: #f0d68b;
+  --ct-brass-lo: #9c7a34;
+  --ct-ink-on-brass: #2a1a08;
+  --ct-text: #f4ecda;         /* warm ivory */
+  --ct-text-muted: #c4bba6;
+  --ct-win: #6fdc9a;
+  --ct-loss: #ff9076;
+  --ct-focus: #f0d68b;
+  --ct-shadow: rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --ct-bg: #f4ecda;           /* ivory card stock */
+  --ct-felt: #fffaf0;
+  --ct-felt-hi: #ffffff;
+  --ct-line: #d9caa8;
+  --ct-wood-dark: #3a1c10;
+  --ct-wood: #6b3420;
+  --ct-wood-light: #95532f;
+  --ct-brass: #b8923e;
+  --ct-brass-hi: #e3c473;
+  --ct-brass-lo: #7d5f1f;
+  --ct-ink-on-brass: #2a1a08;
+  --ct-text: #1f2a22;
+  --ct-text-muted: #5a5240;
+  --ct-win: #17703f;
+  --ct-loss: #b0381f;
+  --ct-focus: #7d5f1f;
+  --ct-shadow: rgba(60, 40, 10, 0.18);
+  color-scheme: light;
+}
+
+/* ---- Base ------------------------------------------------------------------------------------ */
+
+.ct-app {
+  min-height: 100%;
+  color: var(--ct-text);
+  font-family: "Inter", system-ui, sans-serif;
+  background-color: var(--ct-bg);
+  /* Felt: a soft overhead light plus a fine weave. Pure CSS, no images. */
+  background-image:
+    radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, 0.07), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+}
+[data-theme="light"] .ct-app {
+  background-image:
+    radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, 0.7), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(120, 90, 40, 0.035) 0 1px, transparent 1px 4px);
+}
+
+.ct-display {
+  font-family: "Playfair Display", Georgia, serif;
+  letter-spacing: 0.01em;
+  font-variant-numeric: lining-nums; /* Playfair defaults to old-style figures */
+}
+.ct-num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.ct-muted {
+  color: var(--ct-text-muted);
+}
+.ct-win {
+  color: var(--ct-win);
+}
+.ct-loss {
+  color: var(--ct-loss);
+}
+.ct-brass {
+  color: var(--ct-brass);
+}
+.ct-focus:focus-visible,
+.ct-btn:focus-visible,
+.ct-chip:focus-visible {
+  outline: 3px solid var(--ct-focus);
+  outline-offset: 3px;
+}
+
+/* ---- Surfaces -------------------------------------------------------------------------------- */
+
+/* Wood rail: header/footer bars, like the padded edge of a card table. */
+.ct-rail {
+  color: #f4ecda;
+  background:
+    repeating-linear-gradient(97deg, rgba(0, 0, 0, 0.1) 0 2px, transparent 2px 9px),
+    linear-gradient(180deg, var(--ct-wood-light), var(--ct-wood) 45%, var(--ct-wood-dark));
+  border-bottom: 1px solid var(--ct-brass-lo);
+  box-shadow: 0 2px 10px var(--ct-shadow);
+}
+
+/* Card-like panel on felt with a brass hairline. */
+.ct-panel {
+  border: 1px solid var(--ct-line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--ct-felt-hi), var(--ct-felt));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 20px -10px var(--ct-shadow);
+}
+.ct-panel-brass {
+  border-color: var(--ct-brass-lo);
+  box-shadow:
+    inset 0 0 0 1px rgba(214, 179, 94, 0.15),
+    0 8px 20px -10px var(--ct-shadow);
+}
+
+/* Section heading with a suit accent: <h2 class="ct-heading"><span class="ct-suit">♠</span> Title</h2> */
+.ct-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 600;
+  font-variant-numeric: lining-nums;
+}
+.ct-suit {
+  color: var(--ct-brass);
+  font-family: system-ui, sans-serif;
+  font-size: 0.85em;
+}
+.ct-suit-red {
+  color: var(--ct-loss);
+}
+
+/* ---- Buttons --------------------------------------------------------------------------------- */
+
+.ct-btn {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  /* Labels are never truncated: a long label wraps onto a second line and the button grows. */
+  min-width: 0;
+  padding: 0.5rem 1rem;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  transition: transform 60ms ease-out, filter 60ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+.ct-btn:disabled {
+  opacity: 0.5;
+}
+/* Disabled primary: flat and clearly "not yet", instead of a dimmed (muddy) brass. */
+.ct-btn-primary:disabled {
+  opacity: 1;
+  color: var(--ct-text-muted);
+  background: transparent;
+  border: 1px dashed var(--ct-line);
+  box-shadow: none;
+}
+.ct-btn-primary {
+  color: var(--ct-ink-on-brass);
+  background: linear-gradient(180deg, var(--ct-brass-hi), var(--ct-brass) 55%, var(--ct-brass-lo));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+.ct-btn-secondary {
+  color: var(--ct-text);
+  border: 1px solid var(--ct-brass-lo);
+  background: rgba(0, 0, 0, 0.12);
+}
+[data-theme="light"] .ct-btn-secondary {
+  background: rgba(255, 255, 255, 0.6);
+}
+.ct-btn-danger {
+  color: var(--ct-loss);
+  border: 1px solid var(--ct-loss);
+  background: transparent;
+}
+
+/* ---- Poker chips ----------------------------------------------------------------------------- */
+
+/* A chip: solid centre, a thin inlay ring, and edge spots made with a conic gradient.
+   Tones set --chip (body), --chip-spot (edge spots) and --chip-ink (label). */
+.ct-chip {
+  --chip: #a8322a;
+  --chip-spot: #f4ecda;
+  --chip-ink: #fff8ea;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 100%;
+  max-width: 80px;
+  min-width: 56px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  color: var(--chip-ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-size: 0.8rem;
+  letter-spacing: -0.01em;
+  background:
+    radial-gradient(circle, var(--chip) 0 54%, rgba(255, 255, 255, 0.55) 54% 57%, var(--chip) 57% 66%, transparent 66.5%),
+    repeating-conic-gradient(var(--chip-spot) 0 14deg, var(--chip) 14deg 45deg);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.28),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.25),
+    0 3px 0 rgba(0, 0, 0, 0.5);
+  transition: transform 50ms ease-out, box-shadow 50ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+.ct-chip:active {
+  transform: translateY(2px) scale(0.95);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.28),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.25),
+    0 1px 0 rgba(0, 0, 0, 0.5);
+}
+.ct-chip[data-tone="red"] {
+  --chip: #a8322a;
+  --chip-spot: #f4ecda;
+}
+.ct-chip[data-tone="blue"] {
+  --chip: #1f4f8c;
+  --chip-spot: #f4ecda;
+}
+.ct-chip[data-tone="black"] {
+  --chip: #1c1a17;
+  --chip-spot: #d6b35e;
+}
+.ct-chip[data-tone="green"] {
+  --chip: #1d6b45;
+  --chip-spot: #f4ecda;
+}
+/* "Custom" chip: an empty chip outline. */
+.ct-chip[data-tone="outline"] {
+  --chip-ink: var(--ct-text);
+  background: transparent;
+  border: 2px dashed var(--ct-brass-lo);
+  box-shadow: none;
+}
+
+/* The tap "pop": a ring bursts out of the chip. Purely decorative, never blocks input. */
+.ct-chip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--ct-brass-hi);
+  opacity: 0;
+  pointer-events: none;
+}
+.ct-chip.ct-pop::after {
+  animation: ct-pop 320ms ease-out;
+}
+@keyframes ct-pop {
+  from {
+    opacity: 0.9;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+
+/* The brand chip (ChipBadge) is the app icon's SVG chip; it only needs a shadow to sit on the felt. */
+.ct-chip-badge {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+
+/* ---- Rank badges ----------------------------------------------------------------------------- */
+
+.ct-rank {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ct-text-muted);
+}
+.ct-rank[data-rank="1"],
+.ct-rank[data-rank="2"],
+.ct-rank[data-rank="3"] {
+  color: #24170a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+.ct-rank[data-rank="1"] {
+  background: radial-gradient(circle at 35% 30%, #fff1b8, #e1b84a 55%, #9f7a22);
+}
+.ct-rank[data-rank="2"] {
+  background: radial-gradient(circle at 35% 30%, #ffffff, #c4cbd2 55%, #808992);
+}
+.ct-rank[data-rank="3"] {
+  background: radial-gradient(circle at 35% 30%, #ffd6ae, #c9824a 55%, #87491f);
+}
+
+/* Leaderboard row; "you" gets a brass edge. */
+.ct-row {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--ct-line);
+}
+.ct-row:last-child {
+  border-bottom: 0;
+}
+.ct-row-me {
+  box-shadow: inset 3px 0 0 var(--ct-brass);
+  background: linear-gradient(90deg, rgba(214, 179, 94, 0.12), transparent 70%);
+}
+
+/* ---- Motion ---------------------------------------------------------------------------------- */
+
+/* Staggered entrance: style="--i: 3" on each item. */
+.ct-rise {
+  animation: ct-rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+@keyframes ct-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Screen change: a short fade/slide. Never applied to the live game or end screens. */
+.ct-screen {
+  animation: ct-screen 180ms ease-out both;
+}
+@keyframes ct-screen {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Splash intro, ~1.2s: lamp glow 0–500ms, chip drops 0–650ms, name 300–750ms, suits 450–900ms,
+   fade out 980–1200ms. (Reduced motion: the Splash component draws nothing at all.) */
+.ct-splash {
+  animation: ct-fade-out 220ms 980ms ease-in forwards;
+}
+.ct-splash-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 42%, rgba(255, 228, 160, 0.32), rgba(214, 179, 94, 0.1) 30%, transparent 60%);
+  animation: ct-fade-in 500ms ease-out both;
+}
+[data-theme="light"] .ct-splash-glow {
+  background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.95), rgba(240, 214, 139, 0.3) 34%, transparent 64%);
+}
+.ct-splash-chip {
+  animation: ct-drop 650ms cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+.ct-splash-name {
+  animation: ct-rise 450ms 300ms ease-out both;
+}
+.ct-splash-suits {
+  animation: ct-rise 450ms 450ms ease-out both;
+}
+@keyframes ct-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-48px) rotate(-200deg) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ct-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ct-fade-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-rise,
+  .ct-screen,
+  .ct-splash,
+  .ct-splash-glow,
+  .ct-splash-chip,
+  .ct-splash-name,
+  .ct-splash-suits,
+  .ct-chip.ct-pop::after {
+    animation: none !important;
+  }
+  .ct-chip,
+  .ct-btn {
+    transition: none;
+  }
+}

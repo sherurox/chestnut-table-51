@@ -31,7 +31,25 @@ const AdminRoutes = lazy(() =>
     }),
 );
 
+// Dev-only style guide (#/style). The DEV check is a compile-time constant, so production builds drop
+// the route and the chunk entirely; check-bundle verifies it.
+const StylePreview = import.meta.env.DEV
+  ? lazy(() => import("./style/StylePreview.js").then((m) => ({ default: m.StylePreview })))
+  : null;
+
 const router = createHashRouter([
+  ...(StylePreview
+    ? [
+        {
+          path: "/style",
+          element: (
+            <Suspense fallback={null}>
+              <StylePreview />
+            </Suspense>
+          ),
+        },
+      ]
+    : []),
   {
     element: <AppShell />,
     errorElement: <RouteError />,
