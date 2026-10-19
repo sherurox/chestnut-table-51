@@ -23,7 +23,8 @@ daily home poker game played between friends with **play money** (shown as dolla
 1. **Never commit, log, print, or hard-code the raw GitHub token.** Only the encrypted blob
    (`public/admin-key.json`) may be committed. The raw token exists only (a) in the owner's head/password
    manager and (b) in browser memory after admin login. Before every commit, check the diff for
-   anything that looks like `github_pat_` or `ghp_`. If found, abort.
+   anything that looks like `github_pat_` or `ghp_`. If found, abort. `src/secretScan.test.ts` (every
+   `npm test`) and `npm run check:bundle` (dist/) also fail on token-shaped strings.
 2. **Never store derived numbers in `data.json`.** No totals, balances, standings or champions. Everything
    is computed from raw games at read time.
 3. **Every write to `data.json` must pass schema validation first.** Never upload a file that fails validation.
@@ -67,7 +68,8 @@ Node 22+ is required. No backend code, no other external services.
 │  ├─ admin-key.json         # encrypted token blob (safe to commit)
 │  └─ icons/                 # PWA icons
 ├─ scripts/
-│  └─ encrypt-token.mjs      # one-time: encrypts the GitHub token with the admin password
+│  ├─ encrypt-token.mjs      # one-time: encrypts the GitHub token with the admin password
+│  └─ check-bundle.mjs       # post-build: no admin/dev-only code in the viewer bundle
 ├─ src/
 │  ├─ config.ts              # owner, repo, branch, data path
 │  ├─ domain/                # PURE logic + types + zod schema (no React, no fetch)
@@ -80,9 +82,11 @@ Node 22+ is required. No backend code, no other external services.
 │  ├─ storage/               # the ONLY code that touches the network
 │  │  ├─ github.ts           # read data.json (viewer + admin), list commits
 │  │  ├─ githubWrite.ts      # admin write path (admin chunk only, see §8.2)
-│  │  ├─ auth.ts             # decrypt token, admin session (memory only)
+│  │  ├─ adminKey.ts         # parse + decrypt admin-key.json (no network)
+│  │  ├─ auth.ts             # admin login, session (memory only)
 │  │  └─ localGame.ts        # live-game autosave in localStorage
-│  ├─ screens/               # one file per screen
+│  ├─ admin/                 # admin screens: lazy-loaded chunk, never shipped to viewers
+│  ├─ screens/               # one file per viewer screen
 │  ├─ components/
 │  └─ main.tsx
 └─ .github/workflows/deploy.yml
@@ -303,6 +307,8 @@ No login. Can see everything except admin screens. Cannot write anything.
   thrown must never include the token (covered by a test).
 - **Changing the password or replacing the token** = rerun the script and commit the new `admin-key.json`.
 - The passphrase should be 4–5 random words. The script refuses passphrases shorter than 16 characters.
+  The passphrase is trimmed before key derivation, in both the script and the app (phone keyboards add
+  trailing spaces). Run the script in PowerShell/Windows Terminal; it refuses non-TTY input and any arguments.
 
 ### 7.3 Token expiry warning
 Admin screens show "Admin key expires in N days" when N ≤ 14, and a blocking message after expiry.
@@ -330,6 +336,9 @@ admin code: `#/admin/*` routes use `React.lazy` + `Suspense`).
 - The PWA service worker precaches the built app shell only (JS/CSS/HTML/icons). It must never add
   runtime caching for `api.github.com` or any data endpoint — the localStorage cache above is the
   single source of offline/cached data.
+- The admin chunk (`AdminRoutes-*.js`) is excluded from the precache (`globIgnores`) so viewers never
+  download it. Phase 4 must revisit this: continuing a live game offline after a reload needs admin code
+  available offline.
 
 ### 8.2 Writing (admin only)
 1. `GET` the contents endpoint (JSON form) to get the current `sha` and content.
@@ -496,7 +505,7 @@ remove sample data and reset `data.json` to the initial file (section 6.3).
 - Plan before coding any phase or any change touching `domain/` or `storage/`. Wait for approval.
 - Small, focused commits with clear messages. Don't mix refactors with features.
 - Targeted edits; don't rewrite whole files to change a few lines.
-- Run `npm test` and `npm run build` before declaring anything done.
+- Run `npm test`, `npm run build` and `npm run check:bundle` before declaring anything done.
 - Never edit `data/data.json` by hand in a real season (Phase 6 onward). Changes go through the app.
 - Don't add dependencies beyond section 3 without asking.
 - If a rule here seems wrong or incomplete, say so instead of silently working around it.
