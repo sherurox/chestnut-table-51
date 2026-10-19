@@ -1,12 +1,12 @@
 import { z } from "zod";
 import type { Data } from "./types.js";
 
-const MAX_AMOUNT = 10_000_000;
+export const MAX_AMOUNT = 10_000_000;
 
 const idSchema = z.string().min(1);
 
 const settingsSchema = z.object({
-  presetBuyIns: z.array(z.number().int().positive()),
+  presetBuyIns: z.array(z.number().int().min(1).max(MAX_AMOUNT)).min(1),
 });
 
 const playerSchema = z.object({
@@ -64,7 +64,7 @@ const dataShapeSchema = z.object({
   liveGame: liveMarkerSchema.nullable(),
 });
 
-function normalizeName(name: string): string {
+export function normalizeName(name: string): string {
   return name.trim().toLowerCase();
 }
 

@@ -254,4 +254,18 @@ describe("validateData", () => {
     const data = { ...makeData(), version: 2 };
     expect(() => validateData(data)).toThrow();
   });
+
+  it("rejects an empty preset buy-in list", () => {
+    expect(() => validateData(makeData({ settings: { presetBuyIns: [] } }))).toThrow();
+  });
+
+  it("rejects preset buy-ins outside 1..10,000,000 or non-integer", () => {
+    for (const bad of [0, -100, 10_000_001, 12.5]) {
+      expect(() => validateData(makeData({ settings: { presetBuyIns: [1000, bad] } }))).toThrow();
+    }
+  });
+
+  it("accepts preset buy-ins at the 1 and 10,000,000 bounds", () => {
+    expect(() => validateData(makeData({ settings: { presetBuyIns: [1, 10_000_000] } }))).not.toThrow();
+  });
 });
