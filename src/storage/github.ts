@@ -24,6 +24,36 @@ interface CacheEntry {
   lastUpdated: string | null;
 }
 
+// The admin token is owned by auth.ts (lazy admin chunk). It registers a provider here so viewer code
+// can make authenticated reads without importing admin code or holding its own copy of the token.
+let authTokenProvider: () => string | null = () => null;
+
+export function setAuthTokenProvider(provider: () => string | null): void {
+  authTokenProvider = provider;
+}
+
+export function authHeaders(authToken: string): Record<string, string> {
+  return {
+    Authorization: `Bearer ${authToken}`,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+}
+
+function readHeaders(accept?: string): Record<string, string> {
+  const token = authTokenProvider();
+  const headers: Record<string, string> = token ? authHeaders(token) : {};
+  if (accept) headers.Accept = accept;
+  return headers;
+}
+
+// After a successful admin save, show and cache exactly what was written (no extra read needed).
+export function rememberSavedData(data: Data): LoadedData {
+  const lastUpdated = new Date().toISOString();
+  writeCache({ data, lastUpdated });
+  return { data, lastUpdated, fromCache: false, error: null };
+}
+
 function readCache(): CacheEntry | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
@@ -53,7 +83,7 @@ function cachedFallback(error: string): LoadedData {
 async function fetchLastUpdated(): Promise<string | null> {
   try {
     const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/commits?path=${CONFIG.dataPath}&per_page=1`;
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: readHeaders(), cache: "no-cache" });
     if (!res.ok) return null;
     const commits = (await res.json()) as Array<{ commit?: { author?: { date?: string } } }>;
     return commits[0]?.commit?.author?.date ?? null;
@@ -63,7 +93,9 @@ async function fetchLastUpdated(): Promise<string | null> {
 }
 
 export async function loadData(): Promise<LoadedData> {
-  if (import.meta.env.DEV) {
+  // The local dev file is for logged-out viewing only: a logged-in admin always reads GitHub, which is
+  // where saves go (CLAUDE.md §8.1).
+  if (import.meta.env.DEV && !authTokenProvider()) {
     try {
       const res = await fetch(DEV_DATA_URL);
       if (!res.ok) throw new Error(`Dev data endpoint returned ${res.status}`);
@@ -78,11 +110,16 @@ export async function loadData(): Promise<LoadedData> {
 
   let res: Response;
   try {
-    res = await fetch(url, { headers: { Accept: "application/vnd.github.raw+json" } });
+    // "no-cache" revalidates with the ETag instead of trusting GitHub's max-age=60, so a refresh right
+    // after a save shows it; a 304 doesn't count against the rate limit.
+    res = await fetch(url, { headers: readHeaders("application/vnd.github.raw+json"), cache: "no-cache" });
   } catch {
     return cachedFallback("Couldn't reach GitHub. Showing the last saved copy.");
   }
 
+  if (res.status === 401) {
+    return cachedFallback("Admin key is invalid or expired. The owner needs to create a new token.");
+  }
   if (res.status === 403) {
     return cachedFallback("GitHub is busy. Try refreshing in a few minutes.");
   }
@@ -104,7 +141,7 @@ export async function loadData(): Promise<LoadedData> {
 
 export async function fetchCommitHistory(limit = 50): Promise<CommitEntry[]> {
   const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/commits?path=${CONFIG.dataPath}&per_page=${limit}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: readHeaders(), cache: "no-cache" });
   if (!res.ok) {
     throw new Error(`Couldn't load edit history (${res.status}).`);
   }
