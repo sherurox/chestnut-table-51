@@ -19,7 +19,7 @@ export function ExpiryGate({ expiresOn, children }: { expiresOn: string | null; 
   return (
     <>
       {days !== null && days <= WARN_DAYS && (
-        <p role="status" className="mx-4 mt-2 rounded-lg border border-chestnut-400 px-3 py-2 text-sm">
+        <p role="status" className="mx-4 mt-2 ct-panel ct-panel-brass px-3 py-2 text-sm">
           {days === 0 ? "Admin key expires today." : `Admin key expires in ${days} day${days === 1 ? "" : "s"}.`}
         </p>
       )}

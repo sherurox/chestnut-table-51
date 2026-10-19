@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Loading, PageTitle } from "../design/components.js";
+import { IconChevron } from "../design/icons.js";
 import { createFirstSeason } from "../domain/adminOps.js";
 import { startedSeasonMessage } from "../domain/commitMessages.js";
 import { localIsoDate } from "../domain/dates.js";
@@ -18,7 +20,7 @@ function CreateFirstSeason() {
   const [confirming, setConfirming] = useState(false);
 
   return (
-    <section className="mb-4 rounded-lg border border-chestnut-400 p-4">
+    <section className="mb-4 ct-panel ct-panel-brass p-4">
       <h2 className="font-semibold">No seasons yet</h2>
       <p className={`mb-3 text-sm ${muted}`}>Create Season 1 to start tracking standings.</p>
       {confirming ? (
@@ -62,11 +64,11 @@ function ShareResults({ data, game }: { data: Data; game: Game }) {
   const text = shareText(data, game);
   return (
     <li className="py-2">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span>{gameLabel(game)}</span>
         <button
           type="button"
-          className={btnSecondary}
+          className={`${btnSecondary} whitespace-nowrap`}
           onClick={() =>
             navigator.clipboard
               .writeText(text)
@@ -80,7 +82,7 @@ function ShareResults({ data, game }: { data: Data; game: Game }) {
       {status === "manual" && (
         <label className="mt-2 block">
           <span className={`text-sm ${muted}`}>Couldn't copy automatically. Select and copy:</span>
-          <textarea readOnly className="mt-1 w-full rounded-lg border border-felt-700 bg-transparent p-2 text-sm" rows={4} value={text} onFocus={(e) => e.target.select()} />
+          <textarea readOnly className="ct-input mt-1 h-auto py-2 text-sm" rows={4} value={text} onFocus={(e) => e.target.select()} />
         </label>
       )}
     </li>
@@ -93,11 +95,14 @@ function NotSynced() {
 
   return (
     <>
-      <section className="mb-4">
-        <h2 className="mb-1 font-semibold">
+      <section className={`ct-panel mb-4 p-4 ${queue.length > 0 ? "ct-panel-brass" : ""}`}>
+        <h2 className="ct-heading mb-1 text-lg">
+          <span className="ct-suit ct-suit-red" aria-hidden="true">
+            ♦
+          </span>
           Not synced
           {queue.length > 0 && (
-            <span className="ml-2 rounded-full bg-chestnut-500 px-2 py-0.5 text-xs font-semibold text-white">{queue.length}</span>
+            <span className="ct-pill font-sans">{queue.length}</span>
           )}
         </h2>
         {queue.length === 0 ? (
@@ -105,14 +110,14 @@ function NotSynced() {
         ) : (
           <>
             <p className={`mb-2 text-sm ${muted}`}>Saved on this phone, not yet on GitHub. It's never dropped.</p>
-            <ul className="mb-2 divide-y divide-felt-700/20">
+            <ul className="mb-2 ct-divided">
               {queue.map((e) => (
                 <li key={e.game.id} className="flex min-h-[48px] items-center">
                   {gameLabel(e.game)}
                 </li>
               ))}
             </ul>
-            <button type="button" className={btnPrimary} disabled={syncing} onClick={() => void syncNow()}>
+            <button type="button" className={`${btnPrimary} w-full`} disabled={syncing} onClick={() => void syncNow()}>
               {syncing ? "Syncing…" : "Sync now"}
             </button>
           </>
@@ -125,9 +130,14 @@ function NotSynced() {
       </section>
 
       {recent.length > 0 && (
-        <section className="mb-4">
-          <h2 className="mb-1 font-semibold">Saved</h2>
-          <ul className="divide-y divide-felt-700/20">
+        <section className="ct-panel mb-4 p-4">
+          <h2 className="ct-heading mb-1 text-lg">
+            <span className="ct-suit" aria-hidden="true">
+              ♣
+            </span>
+            Saved
+          </h2>
+          <ul className="ct-divided">
             {recent.map((s) => (
               <ShareResults key={s.entry.game.id} data={s.data} game={s.entry.game} />
             ))}
@@ -147,35 +157,42 @@ export function AdminHome() {
     void syncNow();
   }, [syncNow]);
 
-  if (loading && !data) return <p className="p-4">Loading…</p>;
+  if (loading && !data) return <Loading />;
 
   return (
-    <div className="p-4">
-      <h1 className="mb-3 text-lg font-semibold">Admin</h1>
+    <div className="px-4 pt-2 pb-4">
+      <PageTitle suit="♠" title="Admin" subtitle="Run tonight's game, manage players and settings." />
 
       {data && data.seasons.length === 0 && <CreateFirstSeason />}
 
-      <ul className="mb-4 divide-y divide-felt-700/20">
-        <li>
-          <Link to={local ? "/admin/live" : "/admin/start"} className="flex min-h-[48px] items-center font-semibold">
-            {local ? "Resume game" : "Start game"}
-          </Link>
-        </li>
-        <li>
-          <Link to="/admin/players" className="flex min-h-[48px] items-center">
-            Players
-          </Link>
-        </li>
-        <li>
-          <Link to="/admin/settings" className="flex min-h-[48px] items-center">
-            Settings
-          </Link>
-        </li>
-      </ul>
+      <Link to={local ? "/admin/live" : "/admin/start"} className={`${btnPrimary} mb-4 w-full text-lg`}>
+        {local ? "♠ Resume game" : "♠ Start game"}
+      </Link>
+
+      <div className="ct-panel mb-4 overflow-hidden">
+        <ul>
+          <li>
+            <Link to="/admin/players" className="ct-list-row ct-focus">
+              <span className="flex-1">Players</span>
+              <span className={muted}>
+                <IconChevron />
+              </span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/settings" className="ct-list-row ct-focus">
+              <span className="flex-1">Settings</span>
+              <span className={muted}>
+                <IconChevron />
+              </span>
+            </Link>
+          </li>
+        </ul>
+      </div>
 
       <NotSynced />
 
-      <button type="button" className={btnSecondary} onClick={logout}>
+      <button type="button" className={`${btnSecondary} w-full`} onClick={logout}>
         Log out
       </button>
     </div>

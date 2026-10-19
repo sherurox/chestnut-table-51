@@ -4,13 +4,12 @@ import { useData } from "../state/DataContext.js";
 import { isLoggedIn, subscribe } from "../storage/auth.js";
 import { saveChange } from "../storage/githubWrite.js";
 
-const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chestnut-400";
-
-export const btnPrimary = `min-h-[48px] rounded-lg bg-chestnut-500 px-4 font-semibold text-white disabled:opacity-50 ${focus}`;
-export const btnSecondary = `min-h-[48px] rounded-lg border border-felt-700 px-3 disabled:opacity-50 ${focus}`;
-export const input = `min-h-[48px] w-full rounded-lg border border-felt-700 bg-transparent px-3 ${focus}`;
-export const muted = "text-felt-950/60 dark:text-white/60";
-export const btnDanger = `min-h-[48px] rounded-lg border border-loss px-3 text-loss disabled:opacity-50 ${focus}`;
+// Design-system classes (src/design/design.css, CLAUDE.md §11).
+export const btnPrimary = "ct-btn ct-btn-primary";
+export const btnSecondary = "ct-btn ct-btn-secondary";
+export const btnDanger = "ct-btn ct-btn-danger";
+export const input = "ct-input";
+export const muted = "text-ink-muted";
 
 export function useLoggedIn(): boolean {
   return useSyncExternalStore(subscribe, isLoggedIn);
@@ -78,12 +77,12 @@ export function ConfirmButton({
   }
   const last = step === prompts.length;
   return (
-    <div role="group" className="flex flex-col gap-2 rounded-lg border border-chestnut-400 p-3">
+    <div role="group" className="ct-panel ct-panel-brass flex flex-col gap-2 p-3">
       <p className="font-medium">{prompts[step - 1]}</p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          className={btnPrimary}
+          className={`${btnPrimary} flex-1`}
           disabled={disabled}
           onClick={() => {
             if (!last) return setStep(step + 1);
@@ -93,7 +92,7 @@ export function ConfirmButton({
         >
           {last ? confirmLabel : "Yes, continue"}
         </button>
-        <button type="button" className={btnSecondary} onClick={() => setStep(0)}>
+        <button type="button" className={`${btnSecondary} flex-1`} onClick={() => setStep(0)}>
           Cancel
         </button>
       </div>

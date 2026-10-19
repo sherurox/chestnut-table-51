@@ -1,3 +1,4 @@
+import { ChipBadge, EmptyState } from "../design/components.js";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useData } from "../state/DataContext.js";
@@ -12,7 +13,7 @@ function LocalGameNotice() {
   const queued = useQueue().length;
   if (!local && queued === 0) return null;
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-chestnut-400 p-3">
+    <div className="flex flex-col gap-2 ct-panel ct-panel-brass p-3">
       {local && (
         <Link to="/admin/live" className={`${btnSecondary} flex items-center justify-center font-semibold`}>
           Continue the game on this phone
@@ -60,21 +61,25 @@ export function Login() {
   if (notSetUp) {
     return (
       <div className="p-4">
-        <h1 className="mb-3 text-lg font-semibold">Admin</h1>
-        <p>{NOT_SET_UP_MESSAGE}</p>
+        <EmptyState suit="♠" title="Admin">
+          {NOT_SET_UP_MESSAGE}
+        </EmptyState>
       </div>
     );
   }
 
   return (
-    <form className="flex flex-col gap-3 p-4" onSubmit={onSubmit}>
-      <h1 className="text-lg font-semibold">Admin login</h1>
+    <form className="flex flex-col gap-4 px-4 pt-6 pb-4" onSubmit={onSubmit}>
+      <div className="flex flex-col items-center gap-2 text-center">
+        <ChipBadge size={72} />
+        <h1 className="ct-display text-2xl font-semibold">Admin login</h1>
+        <p className={`text-sm ${muted}`}>Viewers don't need this. Reloading the page logs you out.</p>
+      </div>
       <LocalGameNotice />
-      <p className={`text-sm ${muted}`}>Viewers don't need this. Reloading the page logs you out.</p>
       {/* Lets password managers file the passphrase under a stable name. */}
       <input type="text" name="username" autoComplete="username" value="CT51 admin" readOnly hidden />
-      <label className="flex flex-col gap-1">
-        <span>Password</span>
+      <label className="flex flex-col">
+        <span className="ct-label">Password</span>
         <input
           type="password"
           autoComplete="current-password"

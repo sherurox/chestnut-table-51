@@ -19,7 +19,7 @@
 @theme inline {
   --color-ink: var(--ct-text);
   --color-ink-muted: var(--ct-text-muted);
-  --color-brass: var(--ct-brass);
+  --color-brass: var(--ct-brass-text);
   --color-line: var(--ct-line);
   --color-panel: var(--ct-felt);
   --color-win: var(--ct-win);

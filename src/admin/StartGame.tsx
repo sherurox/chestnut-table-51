@@ -1,3 +1,4 @@
+import { Loading, PageTitle } from "../design/components.js";
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { clearedLiveGameMessage } from "../domain/commitMessages.js";
@@ -17,7 +18,7 @@ import { ConfirmButton, SaveStatus, btnPrimary, btnSecondary, input, muted, useS
 function IosHint() {
   if (!isIos() || isStandalone()) return null;
   return (
-    <p role="note" className="mb-3 rounded-lg border border-chestnut-400 px-3 py-2 text-sm">
+    <p role="note" className="mb-3 ct-panel ct-panel-brass px-3 py-2 text-sm">
       Run games from the CT51 home-screen app, not Safari.
     </p>
   );
@@ -27,7 +28,7 @@ function IosHint() {
 function GameInProgress({ gameId, startedAt }: { gameId: ID; startedAt: string }) {
   const { save, saving, state } = useSave();
   return (
-    <section role="alert" className="mb-4 rounded-lg border border-chestnut-400 p-4">
+    <section role="alert" className="mb-4 ct-panel ct-panel-brass p-4">
       <p className="mb-1 font-semibold">A game is already in progress (started {formatDateTime(startedAt)})</p>
       <p className={`mb-3 text-sm ${muted}`}>
         It isn't on this phone. If it was abandoned or its phone is lost, clear it to start a new one.
@@ -65,7 +66,7 @@ export function StartGame() {
   );
 
   if (local) return <Navigate to="/admin/live" replace />;
-  if (!data) return <p className="p-4">Loading…</p>;
+  if (!data) return <Loading />;
 
   const season = activeSeason(data);
   if (!season) {
@@ -81,7 +82,7 @@ export function StartGame() {
   if (data.liveGame) {
     return (
       <div className="p-4">
-        <h1 className="mb-3 text-lg font-semibold">Start game</h1>
+        <PageTitle suit="♠" title="Start game" />
         <GameInProgress gameId={data.liveGame.gameId} startedAt={data.liveGame.startedAt} />
       </div>
     );
@@ -117,38 +118,41 @@ export function StartGame() {
   }
 
   return (
-    <div className="p-4 pb-28">
-      <h1 className="mb-3 text-lg font-semibold">Start game</h1>
+    <div className="px-4 pt-2 pb-4">
+      <PageTitle suit="♠" title="Start game" />
       <IosHint />
 
       <fieldset className="mb-4 flex gap-2">
-        <legend className="mb-1 font-semibold">Mode</legend>
+        <legend className="ct-label">Mode</legend>
         {(["season", "incognito"] as const).map((m) => (
           <button
             key={m}
             type="button"
             aria-pressed={mode === m}
             onClick={() => setMode(m)}
-            className={`${btnSecondary} flex-1 ${mode === m ? "bg-felt-700 text-white" : ""}`}
+            className={`${btnSecondary} ct-choice flex-1`}
           >
             {m === "season" ? season.name : "Incognito"}
           </button>
         ))}
       </fieldset>
 
-      <label className="mb-4 flex flex-col gap-1">
-        <span className="font-semibold">Date</span>
+      <label className="mb-4 flex flex-col">
+        <span className="ct-label">Date</span>
         <input type="date" className={input} value={date} onChange={(e) => setDate(e.target.value)} required />
       </label>
 
-      <div className="mb-2 flex items-baseline justify-between">
-        <h2 className="font-semibold">Players ({selected.length} picked)</h2>
-        {last.length > 0 && (
-          <button type="button" className="min-h-[48px] px-2 text-chestnut-400 underline" onClick={() => setSelected(last)}>
-            Same players as last game
-          </button>
-        )}
-      </div>
+      <h2 className="ct-heading mb-2 text-lg">
+        <span className="ct-suit" aria-hidden="true">
+          ♣
+        </span>
+        Players <span className="font-sans text-sm font-normal text-ink-muted">({selected.length} picked)</span>
+      </h2>
+      {last.length > 0 && (
+        <button type="button" className={`${btnSecondary} mb-2 w-full`} onClick={() => setSelected(last)}>
+          Same players as last game
+        </button>
+      )}
       <label className="mb-2 block">
         <span className="sr-only">Search players</span>
         <input
@@ -174,7 +178,7 @@ export function StartGame() {
                   type="button"
                   aria-pressed={on}
                   onClick={() => toggle(p.id)}
-                  className={`${btnSecondary} flex w-full items-center justify-between text-left ${on ? "bg-felt-700 text-white" : ""}`}
+                  className={`${btnSecondary} ct-choice flex w-full items-center justify-between text-left`}
                 >
                   <span>
                     {on ? "✓ " : ""}
@@ -192,7 +196,7 @@ export function StartGame() {
       </p>
 
       {askGuests ? (
-        <section role="dialog" aria-label="Guests in this game" className="rounded-lg border border-chestnut-400 p-4">
+        <section role="dialog" aria-label="Guests in this game" className="ct-panel ct-panel-brass p-4">
           <p className="mb-1 font-semibold">This game has guests: {guests.map(nameOf).join(", ")}</p>
           <p className={`mb-3 text-sm ${muted}`}>Add them to {season.name} as regulars, or keep this game incognito.</p>
           <div className="flex flex-col gap-2">

@@ -33,7 +33,7 @@ function shouldPlayIntro(pathname: string): boolean {
 }
 
 const pill = "flex min-h-[48px] shrink-0 items-center";
-const pillInner = "rounded-full bg-brass px-2.5 py-0.5 text-xs font-semibold text-[#2a1a08]";
+const pillInner = "ct-pill";
 
 // Only ever shows on the admin's phone: it reads the live-game / sync-queue keys, never admin code.
 function LocalStatus() {

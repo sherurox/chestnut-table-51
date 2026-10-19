@@ -1,3 +1,4 @@
+import { PageTitle } from "../design/components.js";
 import { Link, useNavigate } from "react-router-dom";
 import { endCheck, finishLocalGame, liveState, parseStack, playerTotal, setFinalStack } from "../domain/liveGame.js";
 import type { ID } from "../domain/types.js";
@@ -44,9 +45,8 @@ export function EndGame() {
   }
 
   return (
-    <div className="p-4 pb-28">
-      <h1 className="mb-1 text-lg font-semibold">End game</h1>
-      <p className={`mb-3 text-sm ${muted}`}>Count each player's chips and enter their final stack. $0 is fine.</p>
+    <div className="px-4 pt-2 pb-4">
+      <PageTitle suit="♦" title="End game" subtitle="Count each player's chips and enter their final stack. $0 is fine." />
 
       <ul className="mb-4 flex flex-col gap-3">
         {state.players.map((p) => {
@@ -54,7 +54,7 @@ export function EndGame() {
           const bought = playerTotal(state, p);
           const result = stack === null ? null : stack - bought;
           return (
-            <li key={p} className="rounded-lg border border-felt-700 p-3">
+            <li key={p} className="ct-panel p-3">
               <label className="flex flex-col gap-1">
                 <span className="flex items-baseline justify-between">
                   <span className="font-semibold">{nameOf(p)}</span>
@@ -78,13 +78,20 @@ export function EndGame() {
         })}
       </ul>
 
-      <section aria-live="polite" className="mb-4 rounded-lg border border-chestnut-400 p-4">
-        <h2 className="mb-2 font-semibold">Chip check</h2>
-        <p className="text-sm">Buy-ins: {formatDollars(totalIn)}</p>
+      <section aria-live="polite" className={`ct-panel mb-4 p-4 ${check.ok ? "" : "ct-panel-brass"}`}>
+        <h2 className="ct-heading mb-2 text-lg">
+          <span className="ct-suit ct-suit-red" aria-hidden="true">
+            ♦
+          </span>
+          Chip check
+        </h2>
+        <p className={`mb-1 text-sm ${muted}`}>
+          Buy-ins <span className="ct-num">{formatDollars(totalIn)}</span>
+        </p>
         {check.allStacksEntered && (
-          <p className="mb-2 text-lg font-semibold">
+          <p className="ct-num mb-2 text-2xl font-bold">
             {check.gap === 0 ? (
-              <span className="text-win">✓ Stacks match the buy-ins</span>
+              <span className="text-win">✓ Stacks match</span>
             ) : check.gap < 0 ? (
               <span className="text-loss">Short by {formatDollars(-check.gap)}</span>
             ) : (
@@ -101,7 +108,7 @@ export function EndGame() {
           </ul>
         )}
         {!check.ok && (
-          <Link to="/admin/live" className={`${btnSecondary} inline-flex items-center`}>
+          <Link to="/admin/live" className={`${btnSecondary} mt-1`}>
             Fix buy-ins
           </Link>
         )}

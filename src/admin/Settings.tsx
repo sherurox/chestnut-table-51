@@ -1,3 +1,4 @@
+import { EmptyState, Loading, PageTitle } from "../design/components.js";
 import { useState, type FormEvent } from "react";
 import { MAX_PRESETS, presetBuyInsError, setPresetBuyIns } from "../domain/adminOps.js";
 import { presetBuyInsMessage } from "../domain/commitMessages.js";
@@ -76,12 +77,18 @@ function PresetForm({ data }: { data: Data }) {
 export function Settings() {
   const { data, loading } = useData();
 
-  if (loading && !data) return <p className="p-4">Loading…</p>;
-  if (!data) return <p className="p-4">No data.</p>;
+  if (loading && !data) return <Loading />;
+  if (!data) {
+    return (
+      <div className="p-4">
+        <EmptyState suit="♦" title="No data yet" />
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4">
-      <h1 className="mb-3 text-lg font-semibold">Settings</h1>
+    <div className="px-4 pt-2 pb-4">
+      <PageTitle suit="♣" title="Settings" />
       <PresetForm data={data} />
     </div>
   );

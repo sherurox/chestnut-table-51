@@ -20,7 +20,7 @@ const NO_LOGIN_PATHS = ["/admin/live", "/admin/end"];
 
 function BackToGame() {
   return (
-    <Link to="/admin/live" className="mx-4 mt-2 flex min-h-[48px] items-center justify-center rounded-lg bg-chestnut-500 font-semibold text-white">
+    <Link to="/admin/live" className="ct-btn ct-btn-primary mx-4 mt-2 flex">
       Game in progress — back to the game
     </Link>
   );
@@ -48,7 +48,8 @@ function AdminScreens() {
 
   return (
     <ExpiryGate expiresOn={getTokenExpiresOn()}>
-      {local && !inGame && <BackToGame />}
+      {/* Admin home has its own "Resume game" button; the banner is for the other admin pages. */}
+      {local && !inGame && pathname !== "/admin" && <BackToGame />}
       <Routes>
         <Route index element={<AdminHome />} />
         <Route path="start" element={<StartGame />} />

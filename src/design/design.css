@@ -14,6 +14,7 @@
   --ct-brass: #d6b35e;        /* brass / gold accent */
   --ct-brass-hi: #f0d68b;
   --ct-brass-lo: #9c7a34;
+  --ct-brass-text: #d6b35e;   /* brass used as text (AA on felt) */
   --ct-ink-on-brass: #2a1a08;
   --ct-text: #f4ecda;         /* warm ivory */
   --ct-text-muted: #c4bba6;
@@ -35,6 +36,7 @@
   --ct-brass: #b8923e;
   --ct-brass-hi: #e3c473;
   --ct-brass-lo: #7d5f1f;
+  --ct-brass-text: #7d5f1f;   /* deep brass: AA on ivory */
   --ct-ink-on-brass: #2a1a08;
   --ct-text: #1f2a22;
   --ct-text-muted: #5a5240;
@@ -82,7 +84,7 @@
   color: var(--ct-loss);
 }
 .ct-brass {
-  color: var(--ct-brass);
+  color: var(--ct-brass-text);
 }
 .ct-focus:focus-visible,
 .ct-btn:focus-visible,
@@ -129,7 +131,7 @@
   font-variant-numeric: lining-nums;
 }
 .ct-suit {
-  color: var(--ct-brass);
+  color: var(--ct-brass-text);
   font-family: system-ui, sans-serif;
   font-size: 0.85em;
 }
@@ -365,7 +367,7 @@
   border-top: 2px solid transparent;
 }
 .ct-nav-active {
-  color: var(--ct-brass);
+  color: var(--ct-brass-text);
   border-top-color: var(--ct-brass);
 }
 /* Room for the fixed nav (and the live screen's action bar, which sits right above it). */
@@ -377,6 +379,13 @@
   inset-inline: 0;
   z-index: 15;
   bottom: calc(var(--ct-nav-h) + env(safe-area-inset-bottom));
+}
+/* Live screen's fixed action bar (sits on .ct-above-nav). */
+.ct-action-bar {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(180deg, var(--ct-felt-hi), var(--ct-felt));
+  border-top: 1px solid var(--ct-brass-lo);
+  box-shadow: 0 -6px 16px -8px var(--ct-shadow);
 }
 .ct-spin {
   animation: ct-spin 1.2s linear infinite;
@@ -435,7 +444,7 @@
 }
 .ct-tag-brass {
   border-color: var(--ct-brass-lo);
-  color: var(--ct-brass);
+  color: var(--ct-brass-text);
 }
 
 /* A tappable row inside a panel (lists of players, seasons, menu items). */
@@ -458,6 +467,11 @@ button.ct-list-row:active {
 .ct-list-row:focus-visible {
   outline: 3px solid var(--ct-focus);
   outline-offset: -3px;
+}
+
+/* Plain divided list: <ul class="ct-divided"> */
+.ct-divided > * + * {
+  border-top: 1px solid var(--ct-line);
 }
 
 /* Toggle-style choice buttons (mode, player picker): pressed = brass. */
@@ -561,4 +575,16 @@ button.ct-list-row:active {
   .ct-btn {
     transition: none;
   }
+}
+
+/* Brass pill (status: "Game on", "Not synced: 1", counts). Brass fill with dark ink in both themes. */
+.ct-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ct-ink-on-brass);
+  background: linear-gradient(180deg, var(--ct-brass-hi), var(--ct-brass));
 }

@@ -23,16 +23,19 @@ import { isLoggedIn } from "../storage/auth.js";
 import { saveChange } from "../storage/githubWrite.js";
 import { clearLocalGame } from "../storage/localGame.js";
 import { useGameUpdater, useLocalGame } from "./localHooks.js";
+import { EmptyState } from "../design/components.js";
+import { chipFeedback } from "../design/motion.js";
 import { ConfirmButton, btnDanger, btnPrimary, btnSecondary, input, muted, useLoggedIn } from "./ui.js";
 
 const FALLBACK_PRESETS = [1000, 1500, 2000];
-const bigBtn =
-  "min-h-[56px] rounded-lg bg-felt-700 px-2 text-lg font-semibold text-white active:bg-felt-800 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chestnut-400";
+// Poker-chip colours for the preset buttons, in order.
+const CHIP_TONES = ["red", "blue", "black", "green"] as const;
 
-function describe(action: LiveAction, nameOf: (id: ID) => string): string {
-  if (action.type === "buyIn") return `${formatDollars(action.amount)} for ${nameOf(action.player)}`;
-  if (action.type === "addPlayer") return `adding ${nameOf(action.player)}`;
-  return `removing ${nameOf(action.player)}`;
+// The Undo button always names the whole target, e.g. "Undo: Shreyas +$1,500". Never truncated.
+function undoLabel(action: LiveAction, nameOf: (id: ID) => string): string {
+  if (action.type === "buyIn") return `Undo: ${nameOf(action.player)} +${formatDollars(action.amount)}`;
+  if (action.type === "addPlayer") return `Undo: add ${nameOf(action.player)}`;
+  return `Undo: remove ${nameOf(action.player)}`;
 }
 
 function PlayerCard({
@@ -66,34 +69,45 @@ function PlayerCard({
   }
 
   return (
-    <li className="rounded-lg border border-felt-700 p-3">
-      <div className="mb-2 flex items-baseline justify-between gap-2">
-        <span className="text-lg font-semibold">
-          {name}
-          {guestNote && <span className={`ml-2 text-xs font-normal ${muted}`}>{guestNote}</span>}
+    <li className="ct-panel p-3">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <span className="min-w-0">
+          <span className="block text-lg font-semibold break-words">{name}</span>
+          {guestNote && <span className="ct-tag mt-1">{guestNote}</span>}
         </span>
-        <span className="text-right">
-          <span className="text-lg font-semibold tabular-nums">{formatDollars(total)}</span>
+        <span className="shrink-0 text-right">
+          <span className="ct-num block text-xl font-bold">{formatDollars(total)}</span>
           <span className={`block text-xs ${muted}`}>
             {count === 0 ? "no buy-in yet" : `${count} buy-in${count === 1 ? "" : "s"}`}
           </span>
         </span>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        {presets.map((amount) => (
-          <button key={amount} type="button" className={bigBtn} onClick={() => onBuyIn(amount)} aria-label={`Buy in ${formatDollars(amount)} for ${name}`}>
-            +{formatDollars(amount)}
+      {/* Chips record the buy-in first, then pop (and buzz on Android): feedback never delays input. */}
+      <div className="grid grid-cols-4 justify-items-center gap-2">
+        {presets.map((amount, i) => (
+          <button
+            key={amount}
+            type="button"
+            className="ct-chip"
+            data-tone={CHIP_TONES[i % CHIP_TONES.length]}
+            onClick={(e) => {
+              onBuyIn(amount);
+              chipFeedback(e.currentTarget);
+            }}
+            aria-label={`Buy in ${formatDollars(amount)} for ${name}`}
+          >
+            {formatDollars(amount)}
           </button>
         ))}
         {custom === null && (
-          <button type="button" className={`${btnSecondary} min-h-[56px]`} onClick={() => setCustom("")}>
+          <button type="button" className="ct-chip" data-tone="outline" onClick={() => setCustom("")} aria-label={`Custom buy-in for ${name}`}>
             Custom
           </button>
         )}
       </div>
       {custom !== null && (
-        <form onSubmit={submitCustom} className="mt-2 flex gap-2">
-          <label className="flex-1">
+        <form onSubmit={submitCustom} className="mt-3 flex flex-wrap gap-2">
+          <label className="min-w-[8rem] flex-1">
             <span className="sr-only">Custom buy-in for {name}</span>
             <input
               className={input}
@@ -145,7 +159,7 @@ function LatePlayerPicker({
   if (guestFor) {
     const name = data.players.find((p) => p.id === guestFor)?.name ?? "This guest";
     return (
-      <section role="dialog" aria-label="Late guest" className="rounded-lg border border-chestnut-400 p-4">
+      <section role="dialog" aria-label="Late guest" className="ct-panel ct-panel-brass p-4">
         <p className="mb-1 font-semibold">{name} is a guest</p>
         <p className={`mb-3 text-sm ${muted}`}>
           Add {name} to {season?.name ?? "the season"} as a regular (when the game is saved), or make this whole game incognito.
@@ -166,9 +180,14 @@ function LatePlayerPicker({
   }
 
   return (
-    <section aria-label="Add a late player" className="rounded-lg border border-felt-700 p-3">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="font-semibold">Add a late player</h2>
+    <section aria-label="Add a late player" className="ct-panel p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h2 className="ct-heading text-lg">
+          <span className="ct-suit" aria-hidden="true">
+            ♣
+          </span>
+          Add a late player
+        </h2>
         <button type="button" className={btnSecondary} onClick={onClose}>
           Close
         </button>
@@ -189,7 +208,7 @@ function LatePlayerPicker({
                 onClick={() => (lateNeedsGuestChoice(data, game, p.id) ? setGuestFor(p.id) : onAdd(p.id, null))}
               >
                 <span>{p.name}</span>
-                {p.type === "guest" && <span className="text-xs opacity-70">Guest</span>}
+                {p.type === "guest" && <span className="ct-tag">Guest</span>}
               </button>
             </li>
           ))}
@@ -220,10 +239,11 @@ export function LiveGame() {
   if (!game) {
     return (
       <div className="p-4">
-        <p className="mb-3">No game in progress on this phone.</p>
-        <Link to="/admin/start" className={`${btnPrimary} inline-flex items-center`}>
-          Start game
-        </Link>
+        <EmptyState suit="♠" title="No game in progress on this phone">
+          <Link to="/admin/start" className={`${btnPrimary} mt-3`}>
+            Start game
+          </Link>
+        </EmptyState>
       </div>
     );
   }
@@ -245,22 +265,27 @@ export function LiveGame() {
   }
 
   return (
-    <div className="p-4 pb-36">
-      <div className="mb-3 flex items-baseline justify-between gap-2">
-        <div>
-          <h1 className="text-lg font-semibold">Live game</h1>
+    <div className="px-4 pt-2 pb-40">
+      <div className="mb-4 flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="ct-heading text-2xl">
+            <span className="ct-suit" aria-hidden="true">
+              ♠
+            </span>
+            Live game
+          </h1>
           <p className={`text-sm ${muted}`}>
             {formatDate(`${game.date}T12:00:00`)} · {state.mode === "season" ? (season?.name ?? "Season") : "Incognito"}
           </p>
         </div>
-        <div className="text-right">
-          <span className={`block text-xs ${muted}`}>Table total</span>
-          <span className="text-2xl font-bold tabular-nums">{formatDollars(tableTotal(state))}</span>
+        <div className="shrink-0 text-right">
+          <span className={`block text-xs font-semibold tracking-wide uppercase ${muted}`}>Table total</span>
+          <span className="ct-num text-3xl font-bold text-brass">{formatDollars(tableTotal(state))}</span>
         </div>
       </div>
 
       {!loggedIn && (
-        <p role="status" className={`mb-3 rounded-lg border border-felt-700 px-3 py-2 text-sm ${muted}`}>
+        <p role="status" className={`ct-panel mb-3 px-3 py-2 text-sm ${muted}`}>
           Not logged in. Everything is saved on this phone; you'll log in to sync after the game.
         </p>
       )}
@@ -310,16 +335,13 @@ export function LiveGame() {
         />
       </div>
 
-      <div className="ct-above-nav flex gap-2 border-t border-felt-700 bg-white p-2 dark:bg-felt-900">
-        <button
-          type="button"
-          className={`${btnSecondary} min-w-0 flex-1 truncate`}
-          disabled={!lastAction}
-          onClick={() => update(undo)}
-        >
-          {lastAction ? `Undo ${describe(lastAction, nameOf)}` : "Nothing to undo"}
+      {/* Thumb-reach action bar. "End game" takes only the width it needs; Undo gets the rest and
+          wraps to a second line rather than truncating. */}
+      <div className="ct-above-nav ct-action-bar flex items-stretch gap-2">
+        <button type="button" className={`${btnSecondary} flex-1 text-[15px]`} disabled={!lastAction} onClick={() => update(undo)}>
+          {lastAction ? undoLabel(lastAction, nameOf) : "Nothing to undo"}
         </button>
-        <Link to="/admin/end" className={`${btnPrimary} flex flex-1 items-center justify-center`}>
+        <Link to="/admin/end" className={`${btnPrimary} shrink-0 px-4 whitespace-nowrap`}>
           End game
         </Link>
       </div>

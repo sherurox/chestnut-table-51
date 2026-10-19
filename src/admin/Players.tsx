@@ -1,3 +1,4 @@
+import { EmptyState, Loading, PageTitle } from "../design/components.js";
 import { useState, type FormEvent } from "react";
 import {
   addPlayer,
@@ -53,7 +54,7 @@ function AddPlayerForm({ save, saving }: { save: Save; saving: boolean }) {
             type="button"
             aria-pressed={type === t}
             onClick={() => setType(t)}
-            className={`${btnSecondary} flex-1 ${type === t ? "bg-felt-700 text-white" : ""}`}
+            className={`${btnSecondary} ct-choice flex-1`}
           >
             {t === "regular" ? "Regular" : "Guest"}
           </button>
@@ -161,15 +162,21 @@ export function Players() {
   const { data, loading } = useData();
   const { save, saving, state } = useSave();
 
-  if (loading && !data) return <p className="p-4">Loading…</p>;
-  if (!data) return <p className="p-4">No data.</p>;
+  if (loading && !data) return <Loading />;
+  if (!data) {
+    return (
+      <div className="p-4">
+        <EmptyState suit="♦" title="No data yet" />
+      </div>
+    );
+  }
 
   const active = data.players.filter((p) => p.status === "active").sort(byName);
   const archived = data.players.filter((p) => p.status === "archived").sort(byName);
 
   return (
-    <div className="p-4">
-      <h1 className="mb-3 text-lg font-semibold">Players</h1>
+    <div className="px-4 pt-2 pb-4">
+      <PageTitle suit="♥" title="Players" subtitle="Add, rename, archive, or promote a guest to regular." />
       <AddPlayerForm save={save} saving={saving} />
       <SaveStatus state={state} />
 
@@ -177,7 +184,7 @@ export function Players() {
       {active.length === 0 ? (
         <p className={`py-2 text-sm ${muted}`}>No players yet. Add the first one above.</p>
       ) : (
-        <ul className="divide-y divide-felt-700/20">
+        <ul className="ct-divided">
           {active.map((p) => (
             <PlayerRow key={p.id} player={p} save={save} saving={saving} />
           ))}
@@ -188,7 +195,7 @@ export function Players() {
         <>
           <h2 className="mt-4 font-semibold">Archived</h2>
           <p className={`text-sm ${muted}`}>Hidden from pickers; their history is kept.</p>
-          <ul className="divide-y divide-felt-700/20">
+          <ul className="ct-divided">
             {archived.map((p) => (
               <PlayerRow key={p.id} player={p} save={save} saving={saving} />
             ))}
