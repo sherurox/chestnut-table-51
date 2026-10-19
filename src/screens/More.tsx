@@ -45,7 +45,7 @@ export function More() {
       </div>
       <div className="mt-10 flex flex-col items-center gap-2 text-center">
         <Wordmark size="lg" />
-        <p className="text-xs text-ink-muted">A daily home game between friends.</p>
+        <p lang="hi" className="text-sm break-words">💰 या तो लाखों में या सलाखों में💰</p>
       </div>
     </div>
   );

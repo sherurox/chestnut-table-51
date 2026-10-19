@@ -157,7 +157,7 @@ export function AppShell() {
         <span aria-hidden="true" className="mr-2 tracking-[0.3em] text-brass">
           ♠♥♦♣
         </span>
-        Play money only — no real gambling.
+        Paisa he paisa hoga, hehehe 💸
       </footer>
 
       <nav className="ct-nav" aria-label="Main">

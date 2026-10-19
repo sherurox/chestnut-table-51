@@ -495,7 +495,9 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 - Tap targets ≥ 48px. Buy-in buttons are large.
 - Money: whole dollars with separators. Positive green `+$1,100`, negative red `−$300` (true minus sign),
   zero neutral. Never rely on color alone: always show the sign.
-- Footer on every screen: "Play money only — no real gambling."
+- Footer on every screen: "Paisa he paisa hoga, hehehe 💸". The More screen shows the tagline
+  "💰 या तो लाखों में या सलाखों में💰" under the wordmark (Devanagari and emoji use system fonts; no
+  extra font files).
 - Confirm dialogs for: end game, delete, restore, editing a closed season, start new season, clear stuck game.
 - Empty states for no seasons, no games, no players.
 - PWA manifest: `name` "Chestnut Table 51", `short_name` "CT51", standalone display, theme color, icons

@@ -490,7 +490,7 @@ export function StylePreview() {
           </div>
         </Section>
 
-        <footer className="ct-muted pt-4 text-center text-xs">Play money only — no real gambling.</footer>
+        <footer className="ct-muted pt-4 text-center text-xs">Paisa he paisa hoga, hehehe 💸</footer>
       </main>
     </div>
   );
