@@ -250,6 +250,11 @@ describe("validateData", () => {
     expect(() => validateData(data)).not.toThrow();
   });
 
+  it("accepts a live marker for a game not yet written (it lives on the admin's phone)", () => {
+    const data = makeData({ liveGame: { gameId: "notYetSaved", startedAt: "2026-10-19T21:04:00.000Z" } });
+    expect(() => validateData(data)).not.toThrow();
+  });
+
   it("rejects an unknown version", () => {
     const data = { ...makeData(), version: 2 };
     expect(() => validateData(data)).toThrow();

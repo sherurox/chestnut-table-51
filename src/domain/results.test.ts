@@ -130,7 +130,7 @@ describe("chipCheck", () => {
     const result = chipCheck(game);
     expect(result.ok).toBe(false);
     expect(result.gap).toBe(-1500);
-    expect(result.hint).toBe("Same as one $1500 buy-in — missed rebuy?");
+    expect(result.hint).toBe("Same as one $1,500 buy-in — missed rebuy?");
   });
 
   it("gives no hint when the gap matches no buy-in amount", () => {

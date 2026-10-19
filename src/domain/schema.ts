@@ -162,11 +162,8 @@ export const dataSchema = dataShapeSchema.superRefine((data, ctx) => {
     }
   }
 
-  if (data.liveGame) {
-    if (!gameIds.has(data.liveGame.gameId)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `liveGame references unknown game ${data.liveGame.gameId}` });
-    }
-  }
+  // No check on liveGame.gameId: a game in progress lives on the admin's phone and is only written to
+  // `games` when finished (CLAUDE.md §6.1), so the marker normally points at a game not in this file.
 });
 
 export function validateData(raw: unknown): Data {

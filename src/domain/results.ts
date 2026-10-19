@@ -34,7 +34,7 @@ export function chipCheck(game: Game): ChipCheckResult {
     const absGap = Math.abs(gap);
     const matchingBuyIn = game.buyIns.find((b) => b.amount === absGap);
     if (matchingBuyIn) {
-      hint = `Same as one $${absGap} buy-in — missed rebuy?`;
+      hint = `Same as one $${absGap.toLocaleString("en-US")} buy-in — missed rebuy?`;
     }
   }
 
