@@ -77,8 +77,9 @@ Node 22+ is required. No backend code, no other external services.
 │  │  ├─ standings.ts        # season standings, ranking, tiebreaks
 │  │  ├─ migrations.ts
 │  │  └─ *.test.ts
-│  ├─ storage/               # the ONLY code that talks to GitHub
-│  │  ├─ github.ts           # read/write data.json, list commits
+│  ├─ storage/               # the ONLY code that touches the network
+│  │  ├─ github.ts           # read data.json (viewer + admin), list commits
+│  │  ├─ githubWrite.ts      # admin write path (admin chunk only, see §8.2)
 │  │  ├─ auth.ts             # decrypt token, admin session (memory only)
 │  │  └─ localGame.ts        # live-game autosave in localStorage
 │  ├─ screens/               # one file per screen
@@ -296,6 +297,10 @@ No login. Can see everything except admin screens. Cannot write anything.
   sessionStorage, cookies, URLs or logs. Reloading the page logs the admin out (the live game survives; see section 9).
 - After login, verify the token with one authenticated API call. On 401, show
   "Admin key is invalid or expired. The owner needs to create a new token."
+- If `public/admin-key.json` is missing or malformed, the admin screen shows "Admin not set up yet. The owner
+  needs to run the setup script." Never crash.
+- Never `console.log` request objects, headers, or anything containing the token. Error messages shown or
+  thrown must never include the token (covered by a test).
 - **Changing the password or replacing the token** = rerun the script and commit the new `admin-key.json`.
 - The passphrase should be 4–5 random words. The script refuses passphrases shorter than 16 characters.
 
@@ -306,12 +311,17 @@ Admin screens show "Admin key expires in N days" when N ≤ 14, and a blocking m
 
 ## 8. Storage via the GitHub API (`src/storage/github.ts`)
 
-This module is the only code that touches the network.
+`src/storage/` is the only code that touches the network. Reads live in `github.ts`; the admin write
+path lives in `githubWrite.ts` so it ships only in the lazy-loaded admin chunk (viewers never download
+admin code: `#/admin/*` routes use `React.lazy` + `Suspense`).
 
 ### 8.1 Reading (everyone)
 `GET https://api.github.com/repos/{owner}/{repo}/contents/{dataPath}?ref={branch}` with header
 `Accept: application/vnd.github.raw+json` (returns the raw file). Viewers call it unauthenticated
 (about 60 requests/hour per IP); admins call it authenticated.
+- **When an admin is logged in, always read via the authenticated contents API**, including in
+  `npm run dev` (the dev-mode local-file read is for logged-out viewing only). After a successful save,
+  update the UI from the data that was just written.
 - Fetch on app open and on manual refresh only. **Never poll.**
 - Cache the last good copy in localStorage so the app opens instantly and works offline (read-only).
 - On a 403 rate limit, show the cached copy plus "GitHub is busy. Try refreshing in a few minutes."
@@ -326,8 +336,12 @@ This module is the only code that touches the network.
 2. Apply the change to the freshly fetched data (never to stale data).
 3. Run `migrate` + validation. If it fails, abort and show the error.
 4. `PUT` the contents endpoint with base64 content, `sha`, `branch`, and the commit message.
-5. On 409 / 422 (sha mismatch: someone else saved), go back to step 1 and reapply. Retry up to 3 times,
-   then show "Couldn't save — someone else is editing. Try again."
+5. On **409** (sha mismatch: someone else saved), go back to step 1 and reapply.
+   On **422**, refetch and compare the sha: if it changed, treat it as a conflict and reapply; if it is
+   unchanged, it is a real error, so stop and show GitHub's error message.
+   Retry conflicts up to 3 times, then show "Couldn't save — someone else is editing. Try again."
+   In `npm run dev` only (`import.meta.env.DEV`), `?forceConflict=1` sends a stale sha on the first PUT
+   to exercise this path; a test proves it is absent from the production bundle.
 
 Express every change as a function `(data: Data) => Data` so it can be reapplied on retry.
 
@@ -364,9 +378,11 @@ All prefixed `Admin:` and human-readable, e.g.:
    localStorage immediately. No network needed.
 5. **End game:** enter every player's final stack, then the chip check (section 5.6). When it passes:
    write the finished game + clear `liveGame` in **one** commit, then clear localStorage.
-6. **Offline:** if the save can't reach GitHub, keep the finished game queued in localStorage with a visible
+6. **Login rule:** *starting* a game requires admin login. Only continuing an already-started local game
+   after a reload may run without login (buy-ins, undo, final stacks, chip check). Syncing it needs login.
+7. **Offline:** if the save can't reach GitHub, keep the finished game queued in localStorage with a visible
    "Not synced" badge, and retry on reconnect / app open / tap. Never drop it.
-7. After a successful save, offer **Share results**: copy plain text for the group chat, e.g.
+8. After a successful save, offer **Share results**: copy plain text for the group chat, e.g.
    ```
    CT51 · Season 1 · Fri 24 Oct
    Shreyas +$1,100 · Rohan −$100 · Amit −$1,000
