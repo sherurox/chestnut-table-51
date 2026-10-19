@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useData } from "../state/DataContext.js";
 import { useTheme } from "../state/useTheme.js";
+import { isUpdateReady, reloadIntoNewVersion, reloader, subscribeUpdateReady } from "../lib/appUpdate.js";
 import { formatLastUpdated } from "../lib/format.js";
 import { hasLocalGame, queuedCount, subscribeLocalChange } from "../storage/localKeys.js";
 
@@ -32,6 +33,28 @@ function LocalStatus() {
         </Link>
       )}
     </>
+  );
+}
+
+// A new version activated while on an admin screen: never auto-reload there (it would log the admin out
+// or interrupt a game). The admin reloads when ready; any game in progress is saved on this phone.
+function UpdateBanner() {
+  const ready = useSyncExternalStore(subscribeUpdateReady, isUpdateReady);
+  if (!ready) return null;
+  return (
+    <div role="status" className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-lg border border-chestnut-400 px-3 py-1 text-sm">
+      <span>Update ready — reload when the game ends.</span>
+      <button
+        type="button"
+        className="min-h-[48px] shrink-0 px-2 font-semibold text-chestnut-400 underline"
+        onClick={() => {
+          reloader.clear();
+          void reloadIntoNewVersion();
+        }}
+      >
+        Reload
+      </button>
+    </div>
   );
 }
 
@@ -71,6 +94,8 @@ export function AppShell() {
             🔒
           </NavLink>
         </header>
+
+        <UpdateBanner />
 
         {error && (
           <p className="px-4 py-2 text-sm text-chestnut-400">

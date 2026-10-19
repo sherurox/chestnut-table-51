@@ -35,6 +35,9 @@ export default defineConfig({
     devDataMiddleware(),
     VitePWA({
       registerType: "autoUpdate",
+      // Registered by src/lib/appUpdate.ts, which decides whether a new version reloads the page or waits
+      // (never mid-game). The plugin's injected registerSW.js would leave pages on the old version.
+      injectRegister: false,
       manifest: {
         name: "Chestnut Table 51",
         short_name: "CT51",
@@ -50,6 +53,10 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Explicit because injectRegister: false otherwise drops them: a new version must take over open
+        // pages right away so appUpdate.ts can reload them (or show the banner mid-game).
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
         // Viewers never download admin code (CLAUDE.md §8), not even via the precache.
         globIgnores: ["**/AdminRoutes-*.js"],

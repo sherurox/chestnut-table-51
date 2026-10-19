@@ -350,6 +350,21 @@ admin code: `#/admin/*` routes use `React.lazy` + `Suspense`).
   current version is cached even right after an app update. Viewers never set these keys.
   `npm run check:bundle` fails if the chunk is precached, the runtime rule is missing, the service worker
   mentions `api.github.com`/data, or the admin chunk imports a chunk that isn't precached.
+- **Updates after a deploy** (`src/lib/appUpdate.ts`; the app registers the service worker itself,
+  `injectRegister: false`, with explicit `skipWaiting` + `clientsClaim`):
+  - A lazy chunk that fails to load (a stale page asking for a chunk the deploy deleted, caught via
+    `vite:preloadError` and the `lazy()` catch) triggers **one** reload into the new version: it first asks
+    the service worker to update and waits for it to take over, so the reload doesn't get the old
+    precached `index.html`. A `sessionStorage` flag allows one automatic reload per tab session (cleared
+    once the chunk loads), so it can't loop. No auto-reload offline. Live games and the queue are in
+    localStorage, so a reload never loses them.
+  - Every route has an `errorElement`: "CT51 was updated — tap to reload" (chunk error), "You're offline
+    and this part of the app isn't cached yet." (offline), or a generic message. Never React Router's
+    developer page.
+  - When a new version takes control: viewer screens reload automatically. **Any `#/admin` screen** shows
+    "Update ready — reload when the game ends." instead: a reload mid-game is never automatic, and on other
+    admin screens it would log the admin out (memory-only token, e.g. while adding a late player).
+  - The app checks for a new version whenever it comes back to the foreground.
 
 ### 8.2 Writing (admin only)
 1. `GET` the contents endpoint (JSON form) to get the current `sha` and content.

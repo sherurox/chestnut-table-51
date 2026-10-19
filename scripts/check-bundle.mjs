@@ -75,11 +75,21 @@ else {
   if (/api\.github\.com|__dev-data__\/data|data\.json/.test(sw.replace(/denylist:\[[^\]]*\]/g, ""))) {
     failures.push("service worker mentions api.github.com or data: no runtime caching of data allowed");
   }
+  // New versions must take over open pages immediately (src/lib/appUpdate.ts relies on controllerchange).
+  if (!sw.includes("skipWaiting()") || !sw.includes("clientsClaim()")) {
+    failures.push("service worker lacks skipWaiting()/clientsClaim(): updates would wait for every tab to close");
+  }
   // Every chunk the admin chunk imports must be precached, or the admin can't run offline.
   const adminText = await readFile(join(dist, adminChunk), "utf8");
   for (const [, imported] of adminText.matchAll(/from\s*"\.\/([^"]+\.js)"/g)) {
     if (!sw.includes(`assets/${imported}`)) failures.push(`admin chunk imports ${imported}, which is not precached`);
   }
+}
+
+// The entry registers the service worker itself and handles updates (src/lib/appUpdate.ts).
+const entryText = await readFile(entryPath, "utf8");
+for (const marker of ["controllerchange", "vite:preloadError", "ct51.reloadedForUpdate"]) {
+  if (!entryText.includes(marker)) failures.push(`entry chunk lacks update handling ("${marker}")`);
 }
 
 if (failures.length > 0) {
