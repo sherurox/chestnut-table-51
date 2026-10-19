@@ -958,5 +958,8 @@
       "createdAt": "2026-10-19T23:25:04.862Z"
     }
   ],
-  "liveGame": null
+  "liveGame": {
+    "gameId": "7tyjl4-N",
+    "startedAt": "2026-10-19T23:31:47.835Z"
+  }
 }
