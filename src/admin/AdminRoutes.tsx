@@ -3,6 +3,8 @@ import { getTokenExpiresOn } from "../storage/auth.js";
 import { AdminHome } from "./AdminHome.js";
 import { ExpiryGate } from "./ExpiryGate.js";
 import { Login } from "./Login.js";
+import { Players } from "./Players.js";
+import { Settings } from "./Settings.js";
 import { useLoggedIn } from "./ui.js";
 
 // Everything under #/admin/*. Loaded lazily from App.tsx so viewers never download admin code.
@@ -14,6 +16,8 @@ export function AdminRoutes() {
     <ExpiryGate expiresOn={getTokenExpiresOn()}>
       <Routes>
         <Route index element={<AdminHome />} />
+        <Route path="players" element={<Players />} />
+        <Route path="settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </ExpiryGate>
