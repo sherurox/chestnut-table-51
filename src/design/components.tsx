@@ -1,68 +1,24 @@
 import { useEffect, useId, type ReactNode } from "react";
 import { formatSignedDollars } from "../lib/format.js";
+import { appIconSvg, chipSvg } from "./iconSvg.js";
 import { useCountUp, useReducedMotion } from "./motion.js";
 
 // Shared brand components. Styling lives in design.css; these only add structure.
 
-// The brand chip: brass rim with mahogany edge spots, wood centre, "51" in the display serif. One artwork
-// for the header, wordmark, splash and app icon. Below 44px the fine details (dotted inlay, spade) are
-// dropped and the "51" is set larger so it stays legible.
-function ChipArt({ ids, detail }: { ids: { wood: string; brass: string }; detail: boolean }) {
-  const spots = [0, 45, 90, 135, 180, 225, 270, 315];
-  return (
-    <>
-      <defs>
-        <radialGradient id={ids.wood} cx="50%" cy="40%" r="60%">
-          <stop offset="0" stopColor="#6e3620" />
-          <stop offset="1" stopColor="#2b150d" />
-        </radialGradient>
-        <linearGradient id={ids.brass} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#f6e2a0" />
-          <stop offset="0.5" stopColor="#d6b35e" />
-          <stop offset="1" stopColor="#8f6f2c" />
-        </linearGradient>
-      </defs>
-      <circle cx="256" cy="256" r="196" fill={`url(#${ids.brass})`} />
-      {spots.map((deg) => (
-        <rect key={deg} x="236" y="62" width="40" height="44" rx="6" fill="#5b2c19" transform={`rotate(${deg} 256 256)`} />
-      ))}
-      <circle cx="256" cy="256" r="146" fill={`url(#${ids.wood})`} stroke="#f6e2a0" strokeWidth="6" />
-      {detail && (
-        <circle cx="256" cy="256" r="126" fill="none" stroke="#d6b35e" strokeWidth="2" strokeDasharray="4 10" opacity="0.8" />
-      )}
-      <text
-        x="256"
-        y={detail ? 300 : 310}
-        textAnchor="middle"
-        fontFamily="'Playfair Display', Georgia, serif"
-        fontWeight="700"
-        fontSize={detail ? 148 : 176}
-        fill={`url(#${ids.brass})`}
-        style={{ fontVariantNumeric: "lining-nums" }}
-      >
-        51
-      </text>
-      {detail && (
-        <text x="256" y="178" textAnchor="middle" fontSize="34" fill="#f6e2a0" fontFamily="system-ui, sans-serif">
-          ♠
-        </text>
-      )}
-    </>
-  );
+function useSvgId(): string {
+  return `ct${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
 }
 
-function useChipIds() {
-  const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
-  return { wood: `ct-wood-${id}`, brass: `ct-brass-${id}`, felt: `ct-felt-${id}` };
-}
-
+// The brand chip (brass rim, mahogany edge spots, "51"): same art as the app icon, from iconSvg.ts.
 export function ChipBadge({ size = 36 }: { size?: number }) {
-  const ids = useChipIds();
-  // Crop the 512 artwork to the chip itself (radius 196 around the centre, plus room for the shadow).
+  const id = useSvgId();
   return (
-    <svg width={size} height={size} viewBox="56 56 400 400" className="ct-chip-badge shrink-0" aria-hidden="true">
-      <ChipArt ids={ids} detail={size >= 44} />
-    </svg>
+    <span
+      className="ct-chip-badge inline-block shrink-0 leading-none"
+      style={{ width: size, height: size }}
+      aria-hidden="true"
+      dangerouslySetInnerHTML={{ __html: chipSvg(size, id) }}
+    />
   );
 }
 
@@ -188,20 +144,16 @@ export function Splash({ onDone }: { onDone: () => void }) {
   );
 }
 
-// The app icon (also rendered to PNG for the PWA manifest): the brand chip on felt. 512×512; the chip
-// (radius 196) sits inside the 80% maskable safe zone (radius 205).
+// The app icon (rendered to the PWA PNGs by scripts/render-icons.mjs from the same iconSvg.ts art).
 export function AppIconSvg({ size = 128, maskable = false }: { size?: number; maskable?: boolean }) {
-  const ids = useChipIds();
+  const id = useSvgId();
   return (
-    <svg width={size} height={size} viewBox="0 0 512 512" role="img" aria-label="Chestnut Table 51 app icon">
-      <defs>
-        <radialGradient id={ids.felt} cx="50%" cy="35%" r="75%">
-          <stop offset="0" stopColor="#1f5a42" />
-          <stop offset="1" stopColor="#0b1d16" />
-        </radialGradient>
-      </defs>
-      <rect width="512" height="512" rx={maskable ? 0 : 112} fill={`url(#${ids.felt})`} />
-      <ChipArt ids={ids} detail />
-    </svg>
+    <span
+      className="inline-block leading-none"
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label="Chestnut Table 51 app icon"
+      dangerouslySetInnerHTML={{ __html: appIconSvg(size, id, maskable) }}
+    />
   );
 }
