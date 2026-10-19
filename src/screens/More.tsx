@@ -1,36 +1,52 @@
 import { Link } from "react-router-dom";
+import { PageTitle, Wordmark } from "../design/components.js";
+import { IconChevron } from "../design/icons.js";
 import { useTheme } from "../state/useTheme.js";
 
 export function More() {
   const { theme, toggle } = useTheme();
 
   return (
-    <div className="p-4">
-      <h1 className="mb-3 text-lg font-semibold">More</h1>
-      <ul className="divide-y divide-felt-700/20">
-        <li>
-          <Link to="/history" className="flex min-h-[48px] items-center">
-            Edit history
-          </Link>
-        </li>
-        <li>
-          <Link to="/me" className="flex min-h-[48px] items-center">
-            Who are you?
-          </Link>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={toggle}
-            className="flex min-h-[48px] w-full items-center justify-between text-left"
-          >
-            <span>Theme</span>
-            <span className="text-felt-950/60 dark:text-white/50">
-              {theme === "dark" ? "Dark" : "Light"}
-            </span>
-          </button>
-        </li>
-      </ul>
+    <div className="px-4 pt-2 pb-4">
+      <PageTitle suit="♥" title="More" />
+      <div className="ct-panel overflow-hidden">
+        <ul>
+          <li>
+            <Link to="/history" className="ct-list-row ct-focus">
+              <span className="flex-1">Edit history</span>
+              <span className="text-ink-muted">
+                <IconChevron />
+              </span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/me" className="ct-list-row ct-focus">
+              <span className="flex-1">Who are you?</span>
+              <span className="text-ink-muted">
+                <IconChevron />
+              </span>
+            </Link>
+          </li>
+          <li>
+            <button type="button" onClick={toggle} className="ct-list-row w-full text-left" aria-label={`Theme: ${theme}. Switch theme`}>
+              <span className="flex-1">Theme</span>
+              <span className="ct-tag ct-tag-brass">{theme === "dark" ? "☾ Dark" : "☀ Light"}</span>
+            </button>
+          </li>
+          <li>
+            <Link to="/admin" className="ct-list-row ct-focus">
+              <span className="flex-1">Admin</span>
+              <span className="text-ink-muted">
+                <IconChevron />
+              </span>
+            </Link>
+          </li>
+        </ul>
+      </div>
+      <div className="mt-10 flex flex-col items-center gap-2 text-center">
+        <Wordmark size="lg" />
+        <p className="text-xs text-ink-muted">A daily home game between friends.</p>
+      </div>
     </div>
   );
 }

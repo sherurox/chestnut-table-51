@@ -445,10 +445,11 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0.9rem;
-  border-bottom: 1px solid var(--ct-line);
 }
-.ct-list-row:last-child {
-  border-bottom: 0;
+/* Dividers between rows, whether rows are siblings or each sits alone in an <li>. */
+.ct-list-row + .ct-list-row,
+li + li > .ct-list-row {
+  border-top: 1px solid var(--ct-line);
 }
 a.ct-list-row:active,
 button.ct-list-row:active {

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { EmptyState, Loading, PageTitle } from "../design/components.js";
+import { IconChevron } from "../design/icons.js";
 import { fetchCommitHistory, type CommitEntry } from "../storage/github.js";
 import { formatDateTime } from "../lib/format.js";
 
@@ -13,24 +15,33 @@ export function EditHistory() {
   }, []);
 
   return (
-    <div className="p-4">
-      <h1 className="mb-3 text-lg font-semibold">Edit history</h1>
-      {error && <p className="text-chestnut-400">{error}</p>}
-      {!error && !commits && <p>Loading…</p>}
-      {commits && commits.length === 0 && <p>No history yet.</p>}
+    <div className="px-4 pt-2 pb-4">
+      <PageTitle suit="♦" title="Edit history" subtitle="Every save is a commit on GitHub. Tap one to see exactly what changed." />
+      {error && (
+        <EmptyState suit="♦" title="Couldn't load the history">
+          {error}
+        </EmptyState>
+      )}
+      {!error && !commits && <Loading />}
+      {commits && commits.length === 0 && <EmptyState suit="♣" title="No history yet" />}
       {commits && commits.length > 0 && (
-        <ul className="divide-y divide-felt-700/20">
-          {commits.map((c) => (
-            <li key={c.sha} className="min-h-[48px] py-2">
-              <a href={c.url} target="_blank" rel="noreferrer" className="block">
-                <div className="text-sm">{c.message}</div>
-                <div className="text-xs text-felt-950/60 dark:text-white/50">
-                  {formatDateTime(c.date)}
-                </div>
-              </a>
-            </li>
-          ))}
-        </ul>
+        <div className="ct-panel overflow-hidden">
+          <ul>
+            {commits.map((c) => (
+              <li key={c.sha}>
+                <a href={c.url} target="_blank" rel="noreferrer" className="ct-list-row ct-focus">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm break-words">{c.message}</span>
+                    <span className="block text-xs text-ink-muted">{formatDateTime(c.date)}</span>
+                  </span>
+                  <span className="text-ink-muted">
+                    <IconChevron />
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

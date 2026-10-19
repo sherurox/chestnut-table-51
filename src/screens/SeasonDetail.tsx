@@ -1,51 +1,53 @@
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { StandingsList } from "../components/StandingsList.js";
+import { Crown, EmptyState, Loading, Money, PageTitle } from "../design/components.js";
 import { champion, seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
+import { useMe } from "../state/useMe.js";
 import { seasonById } from "../lib/selectors.js";
-import { formatSignedDollars } from "../lib/format.js";
 
 export function SeasonDetail() {
   const { id } = useParams();
   const { data, loading } = useData();
+  const { me } = useMe();
 
-  if (loading && !data) return <p className="p-4">Loading…</p>;
-  if (!data || !id) return <p className="p-4">Not found.</p>;
-
-  const season = seasonById(data, id);
-  if (!season) return <p className="p-4">Season not found.</p>;
+  if (loading && !data) return <Loading />;
+  const season = data && id ? seasonById(data, id) : undefined;
+  if (!data || !season) {
+    return (
+      <div className="p-4">
+        <EmptyState suit="♦" title="Season not found" />
+      </div>
+    );
+  }
 
   const rows = seasonStandings(data, season.id);
   const championId = season.status === "closed" ? champion(data, season.id) : null;
+  const championRow = rows.find((r) => r.playerId === championId);
 
   return (
-    <div className="p-4">
-      <h1 className="text-lg font-semibold">{season.name}</h1>
-      <p className="mb-3 text-sm text-felt-950/60 dark:text-white/60">
-        {season.status === "active" ? "Active" : `Closed ${season.endedOn ?? ""}`}
-      </p>
+    <div className="px-4 pt-2 pb-4">
+      <PageTitle
+        suit="♦"
+        title={season.name}
+        subtitle={season.status === "active" ? `Active since ${season.startedOn}` : `Closed ${season.endedOn ?? ""}`}
+      />
+
+      {championRow && (
+        <div className="ct-panel ct-panel-brass mb-4 flex items-center gap-3 p-4">
+          <Crown className="h-9 w-9 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-semibold tracking-wide text-ink-muted uppercase">Champion</div>
+            <div className="ct-display text-xl font-semibold break-words">{championRow.name}</div>
+          </div>
+          <Money value={championRow.net} className="shrink-0 text-lg" />
+        </div>
+      )}
 
       {rows.length === 0 ? (
-        <p>No games yet.</p>
+        <EmptyState suit="♣" title="No games in this season" />
       ) : (
-        <ol className="divide-y divide-felt-700/20">
-          {rows.map((row, i) => (
-            <li key={row.playerId} className="flex min-h-[48px] items-center gap-2 py-2">
-              <span className="w-6 shrink-0 text-sm text-felt-950/60 dark:text-white/50">{i + 1}</span>
-              <Link to={`/players/${row.playerId}`} className="min-w-0 flex-1 truncate">
-                {row.name}
-                {row.playerId === championId && " 🏆"}
-              </Link>
-              <span className="shrink-0 text-sm text-felt-950/60 dark:text-white/50">
-                {row.gamesPlayed}g
-              </span>
-              <span
-                className={`shrink-0 ${row.net > 0 ? "text-win" : row.net < 0 ? "text-loss" : ""}`}
-              >
-                {formatSignedDollars(row.net)}
-              </span>
-            </li>
-          ))}
-        </ol>
+        <StandingsList rows={rows} me={me} championId={championId} />
       )}
     </div>
   );

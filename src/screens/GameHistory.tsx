@@ -1,34 +1,37 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
+import { EmptyState, Loading, Money, PageTitle } from "../design/components.js";
 import { useData } from "../state/DataContext.js";
 import { allSeasonsNewestFirst, playerById, visibleGames } from "../lib/selectors.js";
 import { gameResult } from "../domain/results.js";
-import { formatDate, formatSignedDollars } from "../lib/format.js";
-import type { Data } from "../domain/types.js";
+import { formatDate } from "../lib/format.js";
+import type { Data, Game } from "../domain/types.js";
 
-function GameRow({ data, gameId }: { data: Data; gameId: string }) {
-  const game = data.games.find((g) => g.id === gameId)!;
+function GameCard({ data, game, index }: { data: Data; game: Game; index: number }) {
+  const results = game.players
+    .map((pid) => ({ pid, name: playerById(data, pid)?.name ?? pid, result: gameResult(game, pid) }))
+    .sort((a, b) => b.result - a.result || a.name.localeCompare(b.name));
   return (
     <Link
       to={`/games/${game.id}`}
-      className="block min-h-[48px] rounded border border-felt-700/20 p-3"
+      className="ct-panel ct-focus ct-rise block p-3"
+      style={{ "--i": Math.min(index, 8) } as CSSProperties}
     >
-      <div className="flex items-center justify-between text-sm">
-        <span>{formatDate(game.date)}</span>
-        <span className="flex gap-1">
-          {game.mode === "incognito" && (
-            <span className="rounded bg-chestnut-600/20 px-1.5 py-0.5 text-xs">Incognito</span>
-          )}
-          {game.editedAt && (
-            <span className="rounded bg-felt-700/20 px-1.5 py-0.5 text-xs">Edited</span>
-          )}
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="ct-display text-lg font-semibold">{formatDate(game.date)}</span>
+        <span className="flex gap-1.5">
+          {game.mode === "incognito" && <span className="ct-tag">♣ Incognito</span>}
+          {game.editedAt && <span className="ct-tag ct-tag-brass">Edited</span>}
         </span>
       </div>
-      <div className="mt-1 truncate text-sm text-felt-950/70 dark:text-white/70">
-        {game.players
-          .map((pid) => `${playerById(data, pid)?.name ?? pid} ${formatSignedDollars(gameResult(game, pid))}`)
-          .join(" · ")}
-      </div>
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+        {results.map((r) => (
+          <li key={r.pid} className="flex items-baseline justify-between gap-2">
+            <span className="min-w-0 break-words">{r.name}</span>
+            <Money value={r.result} className="shrink-0 text-sm" />
+          </li>
+        ))}
+      </ul>
     </Link>
   );
 }
@@ -37,38 +40,47 @@ export function GameHistory() {
   const { data, loading } = useData();
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
 
-  if (loading && !data) return <p className="p-4">Loading…</p>;
-  if (!data) return <p className="p-4">No data.</p>;
+  if (loading && !data) return <Loading />;
+  if (!data) {
+    return (
+      <div className="p-4">
+        <EmptyState suit="♦" title="No data yet" />
+      </div>
+    );
+  }
 
   const seasons = allSeasonsNewestFirst(data);
   const games = visibleGames(data, seasonFilter === "all" ? undefined : seasonFilter);
 
   return (
-    <div className="p-4">
-      <h1 className="mb-3 text-lg font-semibold">Game history</h1>
+    <div className="px-4 pt-2 pb-4">
+      <PageTitle suit="♣" title="Game history" subtitle="Newest first. Incognito games never count toward standings." />
 
       {seasons.length > 0 && (
-        <select
-          className="mb-3 min-h-[48px] w-full rounded border border-felt-700/30 bg-transparent px-2"
-          value={seasonFilter}
-          onChange={(e) => setSeasonFilter(e.target.value)}
-        >
-          <option value="all">All seasons</option>
-          {seasons.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
+        <div className="mb-4">
+          <label htmlFor="season-filter" className="ct-label">
+            Season
+          </label>
+          <select id="season-filter" className="ct-input" value={seasonFilter} onChange={(e) => setSeasonFilter(e.target.value)}>
+            <option value="all">All seasons</option>
+            {seasons.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
 
       {games.length === 0 ? (
-        <p>No games yet.</p>
+        <EmptyState suit="♣" title="No games yet">
+          Finished games show up here.
+        </EmptyState>
       ) : (
-        <ul className="space-y-2">
-          {games.map((g) => (
+        <ul className="space-y-3">
+          {games.map((g, i) => (
             <li key={g.id}>
-              <GameRow data={data} gameId={g.id} />
+              <GameCard data={data} game={g} index={i} />
             </li>
           ))}
         </ul>

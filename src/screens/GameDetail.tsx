@@ -1,49 +1,84 @@
 import { Link, useParams } from "react-router-dom";
+import { EmptyState, Loading, Money, PageTitle } from "../design/components.js";
 import { useData } from "../state/DataContext.js";
 import { gameById, playerById, seasonById } from "../lib/selectors.js";
 import { finalStack, gameResult, totalBuyIns } from "../domain/results.js";
-import { formatDate, formatDollars, formatSignedDollars } from "../lib/format.js";
+import { formatDate, formatDollars } from "../lib/format.js";
 
 export function GameDetail() {
   const { id } = useParams();
   const { data, loading } = useData();
 
-  if (loading && !data) return <p className="p-4">Loading…</p>;
-  if (!data || !id) return <p className="p-4">Not found.</p>;
-
-  const game = gameById(data, id);
-  if (!game) return <p className="p-4">Game not found.</p>;
+  if (loading && !data) return <Loading />;
+  const game = data && id ? gameById(data, id) : undefined;
+  if (!data || !game) {
+    return (
+      <div className="p-4">
+        <EmptyState suit="♦" title="Game not found">
+          <Link to="/games" className="underline">
+            Back to game history
+          </Link>
+        </EmptyState>
+      </div>
+    );
+  }
 
   const season = seasonById(data, game.seasonId);
+  const nameOf = (pid: string) => playerById(data, pid)?.name ?? pid;
 
   return (
-    <div className="p-4">
-      <h1 className="text-lg font-semibold">{formatDate(game.date)}</h1>
-      <p className="mb-3 text-sm text-felt-950/60 dark:text-white/60">
-        {season?.name ?? "Unknown season"} · {game.mode === "incognito" ? "Incognito" : "Season"}
-        {game.editedAt && " · Edited"}
-      </p>
-      <ul className="divide-y divide-felt-700/20">
-        {game.players.map((pid) => {
-          const player = playerById(data, pid);
-          const result = gameResult(game, pid);
-          return (
-            <li key={pid} className="flex min-h-[48px] items-center justify-between gap-2 py-2">
-              <Link to={`/players/${pid}`} className="min-w-0 flex-1 truncate">
-                {player?.name ?? pid}
+    <div className="px-4 pt-2 pb-4">
+      <PageTitle
+        suit="♣"
+        title={formatDate(game.date)}
+        subtitle={
+          <span className="flex flex-wrap items-center gap-1.5">
+            {season?.name ?? "Unknown season"}
+            {game.mode === "incognito" && <span className="ct-tag">♣ Incognito</span>}
+            {game.editedAt && <span className="ct-tag ct-tag-brass">Edited</span>}
+          </span>
+        }
+      />
+
+      <div className="ct-panel mb-4 overflow-hidden">
+        <ul>
+          {game.players.map((pid) => (
+            <li key={pid}>
+              <Link to={`/players/${pid}`} className="ct-list-row ct-focus">
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium break-words">{nameOf(pid)}</span>
+                  <span className="ct-num block text-xs text-ink-muted">
+                    {formatDollars(totalBuyIns(game, pid))} in · {formatDollars(finalStack(game, pid))} out
+                  </span>
+                </span>
+                <Money value={gameResult(game, pid)} className="shrink-0 text-lg" />
               </Link>
-              <span className="shrink-0 text-sm text-felt-950/60 dark:text-white/60">
-                {formatDollars(totalBuyIns(game, pid))} → {formatDollars(finalStack(game, pid))}
-              </span>
-              <span
-                className={`shrink-0 ${result > 0 ? "text-win" : result < 0 ? "text-loss" : ""}`}
-              >
-                {formatSignedDollars(result)}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <h2 className="ct-heading mb-2 text-lg">
+        <span className="ct-suit" aria-hidden="true">
+          ♠
+        </span>
+        Every buy-in
+      </h2>
+      <div className="ct-panel p-3">
+        <ul className="space-y-2 text-sm">
+          {game.players.map((pid) => (
+            <li key={pid} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="font-medium">{nameOf(pid)}</span>
+              <span className="ct-num text-ink-muted">
+                {game.buyIns
+                  .filter((b) => b.player === pid)
+                  .map((b) => formatDollars(b.amount))
+                  .join(" · ")}
               </span>
             </li>
-          );
-        })}
-      </ul>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
