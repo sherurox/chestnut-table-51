@@ -77,6 +77,7 @@ Node 22+ is required. No backend code, no other external services.
 │  │  ├─ schema.ts
 │  │  ├─ results.ts          # per-game results, chip check
 │  │  ├─ standings.ts        # season standings, ranking, tiebreaks
+│  │  ├─ liveGame.ts         # live game action log, undo, guest choice, end check, finish/marker changes
 │  │  ├─ migrations.ts
 │  │  └─ *.test.ts
 │  ├─ storage/               # the ONLY code that touches the network
@@ -84,7 +85,9 @@ Node 22+ is required. No backend code, no other external services.
 │  │  ├─ githubWrite.ts      # admin write path (admin chunk only, see §8.2)
 │  │  ├─ adminKey.ts         # parse + decrypt admin-key.json (no network)
 │  │  ├─ auth.ts             # admin login, session (memory only)
-│  │  └─ localGame.ts        # live-game autosave in localStorage
+│  │  ├─ localGame.ts        # live-game autosave + "Not synced" queue in localStorage (no network)
+│  │  ├─ localKeys.ts        # localStorage keys only; safe for the viewer shell (badge, chunk warm-up)
+│  │  └─ sync.ts             # pushes the queue + a pending live marker (admin chunk only)
 │  ├─ admin/                 # admin screens: lazy-loaded chunk, never shipped to viewers
 │  ├─ screens/               # one file per viewer screen
 │  ├─ components/
@@ -254,6 +257,9 @@ Reject the file if any of these fail:
 - a `mode: "season"` finished game contains no player with `type: "guest"`
 - `version` is a known version (run migrations first)
 
+`liveGame.gameId` is deliberately **not** checked against `games`: a game in progress lives on the admin's
+phone and is only written when finished, so the marker normally points at a game not in the file.
+
 ### 6.3 Initial file
 ```json
 {
@@ -337,8 +343,13 @@ admin code: `#/admin/*` routes use `React.lazy` + `Suspense`).
   runtime caching for `api.github.com` or any data endpoint — the localStorage cache above is the
   single source of offline/cached data.
 - The admin chunk (`AdminRoutes-*.js`) is excluded from the precache (`globIgnores`) so viewers never
-  download it. Phase 4 must revisit this: continuing a live game offline after a reload needs admin code
-  available offline.
+  download it. For offline games it is cached at **runtime** instead: one Workbox rule, `CacheFirst`
+  (cache `ct51-admin`, max 3 entries, 200s only), matching only that chunk, so it is cached once an admin
+  route loads it. On a phone with admin state (`ct51.liveGame`, `ct51.syncQueue` or the non-secret
+  `ct51.adminDevice` flag set at login), the app fetches the chunk once on open while online, so the
+  current version is cached even right after an app update. Viewers never set these keys.
+  `npm run check:bundle` fails if the chunk is precached, the runtime rule is missing, the service worker
+  mentions `api.github.com`/data, or the admin chunk imports a chunk that isn't precached.
 
 ### 8.2 Writing (admin only)
 1. `GET` the contents endpoint (JSON form) to get the current `sha` and content.
@@ -366,6 +377,9 @@ All prefixed `Admin:` and human-readable, e.g.:
 - `Admin: deleted game 2026-10-20 (Season 1)` / `Admin: restored game …`
 - `Admin: started Season 2 (closed Season 1)`
 - `Admin: added player Amit` / `Admin: promoted guest Rohan to regular` / `Admin: archived player …`
+- `Admin: started live game` / `Admin: cleared stuck live game` / `Admin: discarded live game`
+- `Admin: finished game 2026-10-24 (Season 1, 5 players; promoted guest Rohan)` (guests promoted in the
+  same commit, §9)
 
 ### 8.5 Deploys must ignore data commits
 `.github/workflows/deploy.yml` builds and deploys to Pages on pushes to `main`, with
@@ -397,6 +411,33 @@ All prefixed `Admin:` and human-readable, e.g.:
    Shreyas +$1,100 · Rohan −$100 · Amit −$1,000
    Season leader: Shreyas +$3,450
    ```
+   Incognito games use `CT51 · Incognito · …` and have no season-leader line. If the clipboard is blocked,
+   show the text in a selectable box.
+
+**Phase 4 decisions (owner-approved):**
+- **Offline Save (answer 1):** without login the admin can enter stacks, pass the strict chip check, and
+  Save. Save moves the game from `ct51.liveGame` into the `ct51.syncQueue` ("Not synced"); the commit
+  happens once online and logged in. Sync runs on login, opening Admin home, the `online` event, and
+  "Sync now". A queued game is removed only after GitHub confirms it.
+- **Duplicate guard:** the finish change returns the data unchanged if the game id already exists, and
+  the write path skips the PUT when a change returns the same object. A retry after a save whose
+  response was lost makes no second commit.
+- **New players (answer 2):** the live game only uses existing players. An online admin can leave the
+  live screen for `#/admin/players`, add someone, and come back; the game stays on the phone and the
+  new player appears in the late-player picker without a reload.
+- **Guest promotion (answer 3):** "Add to season" promotes guests in the finish commit, not at start.
+  A late guest joining a season game asks the same choice ("promote at save" or make the whole game
+  incognito). An abandoned game promotes nobody.
+- **Clear stuck game (answer 4):** offered on Start only when the marker doesn't match a game on this
+  phone. For the phone's own game, "Discard this game" on the live screen (confirm twice) clears the
+  local game and attempts to clear the marker; if that write fails, the next Start shows
+  "Clear stuck game".
+- A player can be removed from a live game only while they have no buy-ins (picked by mistake).
+- The game date is the phone's **local** date at start (never UTC), editable on Start; a game past
+  midnight keeps its start date.
+- **iOS:** Safari and the installed home-screen app have separate storage, so a game started in one is
+  invisible in the other. Start shows "Run games from the CT51 home-screen app, not Safari." on iOS when
+  not running standalone.
 
 ---
 
@@ -419,8 +460,9 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 | Route | Screen |
 |---|---|
 | `#/admin` | Admin home: Start/Resume game, Not-synced queue, token expiry notice, logout. |
-| `#/admin/live` | Live game. |
-| `#/admin/end` | Final stacks + chip check + save. |
+| `#/admin/start` | Start game: players, mode, date, guest choice, stuck-game notice. |
+| `#/admin/live` | Live game. Works without login if the game is on this phone (§9.6). |
+| `#/admin/end` | Final stacks + chip check + save. Works without login (Save queues it). |
 | `#/admin/games/:id/edit` | Edit any game (closed-season warning). Delete from here. |
 | `#/admin/deleted` | Deleted games bin + restore. |
 | `#/admin/players` | Add, rename, archive/unarchive, promote guest. |
