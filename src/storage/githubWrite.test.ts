@@ -80,7 +80,7 @@ describe("saveChange", () => {
     expect(gh.puts).toHaveLength(1);
     expect(gh.puts[0]).toMatchObject({ sha: "sha-0", branch: "main", message: "Admin: added player Amit" });
     expect(gh.data.players.map((p) => p.name)).toEqual(["Alice", "Amit"]);
-    expect(result).toEqual({ data: gh.data, commitSha: "commit-abc" });
+    expect(result).toEqual({ data: gh.data, commitSha: "commit-abc", unchanged: false });
   });
 
   it("writes pretty JSON with a trailing newline", async () => {
@@ -232,5 +232,13 @@ describe("saveChange", () => {
     const err = await saveChange(addAmit, "m", { fetch: fetchFn as typeof fetch, token: TOKEN }).catch((e: unknown) => e);
     expect((err as Error).message).toBe("Couldn't reach GitHub. Nothing was saved.");
     expect(String(err)).not.toContain(TOKEN);
+  });
+
+  it("skips the PUT when the change returns the data unchanged", async () => {
+    const gh = new FakeGitHub();
+    const result = await save(gh, (data) => data);
+    expect(result).toMatchObject({ unchanged: true, commitSha: null });
+    expect(result.data).toEqual(gh.data);
+    expect(gh.puts).toHaveLength(0);
   });
 });

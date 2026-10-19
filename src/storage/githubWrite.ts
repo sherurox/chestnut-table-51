@@ -23,6 +23,9 @@ export class SaveError extends Error {
 export interface SaveResult {
   data: Data;
   commitSha: string | null;
+  // The change made no difference to the fresh data (e.g. the game is already saved), so nothing was
+  // committed. This is how the finish commit avoids a duplicate after a save whose response was lost.
+  unchanged: boolean;
 }
 
 interface Current {
@@ -111,7 +114,8 @@ async function fetchCurrent(fetchFn: typeof fetch, token: string): Promise<Curre
   }
 }
 
-function applyChange(change: Change, data: Data): Data {
+// Returns null when the change returns the data object it was given (nothing to write).
+function applyChange(change: Change, data: Data): Data | null {
   let next: Data;
   try {
     next = change(data);
@@ -119,6 +123,7 @@ function applyChange(change: Change, data: Data): Data {
     // A business rule failed against the fresh data (e.g. name taken): no point retrying.
     throw new SaveError(firstIssue(err));
   }
+  if (next === data) return null;
   try {
     return migrate(next);
   } catch (err) {
@@ -153,6 +158,7 @@ export async function saveChange(
     let current = await fetchCurrent(fetchFn, token);
     for (let attempt = 0; ; attempt++) {
       const next = applyChange(change, current.data);
+      if (next === null) return { data: current.data, commitSha: null, unchanged: true };
       const sentSha = forceConflict ? "0".repeat(40) : current.sha;
       forceConflict = false;
 
@@ -170,7 +176,7 @@ export async function saveChange(
 
       if (res.ok) {
         const body = (await res.json().catch(() => ({}))) as { commit?: { sha?: unknown } };
-        return { data: next, commitSha: typeof body.commit?.sha === "string" ? body.commit.sha : null };
+        return { data: next, commitSha: typeof body.commit?.sha === "string" ? body.commit.sha : null, unchanged: false };
       }
 
       if (res.status === 409 || res.status === 422) {
