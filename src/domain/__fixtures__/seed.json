@@ -1,0 +1,282 @@
+{
+  "version": 1,
+  "settings": { "presetBuyIns": [1000, 1500, 2000] },
+  "players": [
+    { "id": "p1", "name": "Alice", "type": "regular", "status": "active", "createdAt": "2026-01-01T00:00:00.000Z" },
+    { "id": "p2", "name": "Bob", "type": "regular", "status": "active", "createdAt": "2026-01-01T00:00:00.000Z" },
+    { "id": "p3", "name": "Carol", "type": "regular", "status": "active", "createdAt": "2026-01-01T00:00:00.000Z" },
+    { "id": "p4", "name": "Dave", "type": "regular", "status": "active", "createdAt": "2026-01-01T00:00:00.000Z" },
+    { "id": "p5", "name": "Erin", "type": "regular", "status": "archived", "createdAt": "2026-01-01T00:00:00.000Z" },
+    { "id": "p6", "name": "Gary", "type": "guest", "status": "active", "createdAt": "2026-03-09T19:00:00.000Z" }
+  ],
+  "seasons": [
+    { "id": "s1", "name": "Season 1", "status": "closed", "startedOn": "2026-01-05", "endedOn": "2026-06-15" },
+    { "id": "s2", "name": "Season 2", "status": "active", "startedOn": "2026-06-16" }
+  ],
+  "games": [
+    {
+      "id": "g1", "seasonId": "s1", "date": "2026-01-12", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4", "p5"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-01-12T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-01-12T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-01-12T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-01-12T19:30:00.000Z" },
+        { "player": "p5", "amount": 1000, "at": "2026-01-12T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 2000 },
+        { "player": "p2", "amount": 1000 },
+        { "player": "p3", "amount": 500 },
+        { "player": "p4", "amount": 1000 },
+        { "player": "p5", "amount": 500 }
+      ],
+      "createdAt": "2026-01-12T22:00:00.000Z"
+    },
+    {
+      "id": "g2", "seasonId": "s1", "date": "2026-01-19", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4", "p5"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-01-19T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-01-19T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-01-19T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-01-19T19:30:00.000Z" },
+        { "player": "p5", "amount": 1000, "at": "2026-01-19T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 500 },
+        { "player": "p2", "amount": 2000 },
+        { "player": "p3", "amount": 1000 },
+        { "player": "p4", "amount": 1000 },
+        { "player": "p5", "amount": 500 }
+      ],
+      "createdAt": "2026-01-19T22:00:00.000Z"
+    },
+    {
+      "id": "g3", "seasonId": "s1", "date": "2026-01-26", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4", "p5"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-01-26T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-01-26T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-01-26T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-01-26T19:30:00.000Z" },
+        { "player": "p5", "amount": 1000, "at": "2026-01-26T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 1000 },
+        { "player": "p2", "amount": 500 },
+        { "player": "p3", "amount": 2000 },
+        { "player": "p4", "amount": 1000 },
+        { "player": "p5", "amount": 500 }
+      ],
+      "createdAt": "2026-01-26T22:00:00.000Z"
+    },
+    {
+      "id": "g4", "seasonId": "s1", "date": "2026-02-02", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4", "p5"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-02-02T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-02-02T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-02-02T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-02-02T19:30:00.000Z" },
+        { "player": "p5", "amount": 1000, "at": "2026-02-02T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 1000 },
+        { "player": "p2", "amount": 1000 },
+        { "player": "p3", "amount": 500 },
+        { "player": "p4", "amount": 2000 },
+        { "player": "p5", "amount": 500 }
+      ],
+      "createdAt": "2026-02-02T22:00:00.000Z"
+    },
+    {
+      "id": "g5", "seasonId": "s1", "date": "2026-02-09", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4", "p5"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-02-09T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-02-09T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-02-09T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-02-09T19:30:00.000Z" },
+        { "player": "p5", "amount": 1000, "at": "2026-02-09T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 500 },
+        { "player": "p2", "amount": 500 },
+        { "player": "p3", "amount": 1000 },
+        { "player": "p4", "amount": 1000 },
+        { "player": "p5", "amount": 2000 }
+      ],
+      "createdAt": "2026-02-09T22:00:00.000Z"
+    },
+    {
+      "id": "g6", "seasonId": "s1", "date": "2026-02-16", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4", "p5"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-02-16T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-02-16T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-02-16T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-02-16T19:30:00.000Z" },
+        { "player": "p5", "amount": 1000, "at": "2026-02-16T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 1500 },
+        { "player": "p2", "amount": 1500 },
+        { "player": "p3", "amount": 500 },
+        { "player": "p4", "amount": 500 },
+        { "player": "p5", "amount": 1000 }
+      ],
+      "createdAt": "2026-02-16T22:00:00.000Z"
+    },
+    {
+      "id": "g7", "seasonId": "s1", "date": "2026-02-23", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4", "p5"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-02-23T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-02-23T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-02-23T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-02-23T19:30:00.000Z" },
+        { "player": "p5", "amount": 1000, "at": "2026-02-23T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 500 },
+        { "player": "p2", "amount": 500 },
+        { "player": "p3", "amount": 1500 },
+        { "player": "p4", "amount": 1500 },
+        { "player": "p5", "amount": 1000 }
+      ],
+      "createdAt": "2026-02-23T22:00:00.000Z"
+    },
+    {
+      "id": "g8", "seasonId": "s1", "date": "2026-03-02", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p4"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-03-02T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-03-02T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-03-02T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 1000 },
+        { "player": "p2", "amount": 1600 },
+        { "player": "p4", "amount": 400 }
+      ],
+      "createdAt": "2026-03-02T22:00:00.000Z"
+    },
+    {
+      "id": "g9", "seasonId": "s1", "date": "2026-03-09", "mode": "incognito", "status": "finished",
+      "players": ["p1", "p2", "p6"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-03-09T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-03-09T19:30:00.000Z" },
+        { "player": "p6", "amount": 1000, "at": "2026-03-09T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 500 },
+        { "player": "p2", "amount": 500 },
+        { "player": "p6", "amount": 2000 }
+      ],
+      "createdAt": "2026-03-09T22:00:00.000Z"
+    },
+    {
+      "id": "g10", "seasonId": "s1", "date": "2026-03-16", "mode": "season", "status": "deleted",
+      "players": ["p1", "p3"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-03-16T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-03-16T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 1000 },
+        { "player": "p3", "amount": 1000 }
+      ],
+      "createdAt": "2026-03-16T22:00:00.000Z",
+      "deletedAt": "2026-03-17T08:00:00.000Z"
+    },
+    {
+      "id": "g11", "seasonId": "s2", "date": "2026-06-20", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-06-20T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-06-20T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-06-20T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-06-20T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 1800 },
+        { "player": "p2", "amount": 1200 },
+        { "player": "p3", "amount": 600 },
+        { "player": "p4", "amount": 400 }
+      ],
+      "createdAt": "2026-06-20T22:00:00.000Z"
+    },
+    {
+      "id": "g12", "seasonId": "s2", "date": "2026-06-27", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-06-27T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-06-27T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-06-27T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-06-27T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 600 },
+        { "player": "p2", "amount": 1800 },
+        { "player": "p3", "amount": 1200 },
+        { "player": "p4", "amount": 400 }
+      ],
+      "createdAt": "2026-06-27T22:00:00.000Z"
+    },
+    {
+      "id": "g13", "seasonId": "s2", "date": "2026-07-04", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-07-04T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-07-04T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-07-04T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-07-04T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 1000 },
+        { "player": "p2", "amount": 1000 },
+        { "player": "p3", "amount": 1500 },
+        { "player": "p4", "amount": 500 }
+      ],
+      "createdAt": "2026-07-04T22:00:00.000Z"
+    },
+    {
+      "id": "g14", "seasonId": "s2", "date": "2026-07-11", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-07-11T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-07-11T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-07-11T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-07-11T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 1200 },
+        { "player": "p2", "amount": 800 },
+        { "player": "p3", "amount": 1000 },
+        { "player": "p4", "amount": 1000 }
+      ],
+      "createdAt": "2026-07-11T22:00:00.000Z",
+      "editedAt": "2026-07-12T09:00:00.000Z"
+    },
+    {
+      "id": "g15", "seasonId": "s2", "date": "2026-07-18", "mode": "season", "status": "finished",
+      "players": ["p1", "p2", "p3", "p4"],
+      "buyIns": [
+        { "player": "p1", "amount": 1000, "at": "2026-07-18T19:30:00.000Z" },
+        { "player": "p2", "amount": 1000, "at": "2026-07-18T19:30:00.000Z" },
+        { "player": "p3", "amount": 1000, "at": "2026-07-18T19:30:00.000Z" },
+        { "player": "p4", "amount": 1000, "at": "2026-07-18T19:30:00.000Z" }
+      ],
+      "cashOuts": [
+        { "player": "p1", "amount": 1400 },
+        { "player": "p2", "amount": 600 },
+        { "player": "p3", "amount": 1200 },
+        { "player": "p4", "amount": 800 }
+      ],
+      "createdAt": "2026-07-18T22:00:00.000Z"
+    }
+  ],
+  "liveGame": null
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { migrate } from "./migrations.js";
 import { champion, seasonStandings } from "./standings.js";
-import seedRaw from "../../data/data.json" with { type: "json" };
+import seedRaw from "./__fixtures__/seed.json" with { type: "json" };
 
 // Season 1 (s1, closed) is 8 season-mode finished games: g1-g7 have all five regulars
 // (Alice p1, Bob p2, Carol p3, Dave p4, Erin p5), buy-in $1000 each (pot $5000). Per-game
@@ -49,7 +49,7 @@ const SEASON_2_EXPECTED = [
   { playerId: "p4", name: "Dave", net: -1900, gamesPlayed: 5 },
 ];
 
-describe("seed data/data.json", () => {
+describe("seed fixture (src/domain/__fixtures__/seed.json)", () => {
   it("passes schema validation", () => {
     expect(() => migrate(seedRaw)).not.toThrow();
   });
