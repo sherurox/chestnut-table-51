@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import { HomeActions } from "../components/HomeActions.js";
+import { LastNightCard } from "../components/LastNightCard.js";
 import { StandingsList } from "../components/StandingsList.js";
 import { EmptyState, Loading, PageTitle } from "../design/components.js";
 import type { Data } from "../domain/types.js";
+import { rankChanges } from "../domain/highlights.js";
 import { seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
 import { activeSeason, visibleGames } from "../lib/selectors.js";
@@ -33,7 +35,7 @@ function standings(data: Data, me: string | null): ReactNode {
           The admin adds players before the first game.
         </EmptyState>
       ) : (
-        <StandingsList rows={rows} me={me} />
+        <StandingsList rows={rows} me={me} changes={rankChanges(data, season.id)} />
       )}
     </>
   );
@@ -55,7 +57,10 @@ export function Leaderboard() {
           {error ?? "Check your connection and tap refresh."}
         </EmptyState>
       ) : (
-        standings(data, me)
+        <>
+          <LastNightCard data={data} />
+          {standings(data, me)}
+        </>
       )}
     </div>
   );

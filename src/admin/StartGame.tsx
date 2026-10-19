@@ -195,7 +195,11 @@ export function StartGame() {
         </ul>
       )}
       <p className={`mb-3 text-sm ${muted}`}>
-        Someone new? <Link to="/admin/players" className="underline">Add them on the Players screen</Link>, then come back.
+        Someone new?{" "}
+        <Link to="/admin/players" className="ct-focus inline-flex min-h-[48px] items-center align-middle underline">
+          Add them on the Players screen
+        </Link>
+        , then come back.
       </p>
 
       {askGuests ? (
