@@ -922,10 +922,41 @@
         }
       ],
       "createdAt": "2026-07-18T22:00:00.000Z"
+    },
+    {
+      "id": "0XlWTmzX",
+      "seasonId": "s2",
+      "date": "2026-10-19",
+      "mode": "incognito",
+      "status": "finished",
+      "players": [
+        "p1",
+        "p2"
+      ],
+      "buyIns": [
+        {
+          "player": "p1",
+          "amount": 1000,
+          "at": "2026-10-19T23:26:28.728Z"
+        },
+        {
+          "player": "p2",
+          "amount": 1000,
+          "at": "2026-10-19T23:26:29.258Z"
+        }
+      ],
+      "cashOuts": [
+        {
+          "player": "p1",
+          "amount": 1500
+        },
+        {
+          "player": "p2",
+          "amount": 500
+        }
+      ],
+      "createdAt": "2026-10-19T23:25:04.862Z"
     }
   ],
-  "liveGame": {
-    "gameId": "0XlWTmzX",
-    "startedAt": "2026-10-19T23:25:04.862Z"
-  }
+  "liveGame": null
 }
