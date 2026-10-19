@@ -5,6 +5,19 @@ describe("localIsoDate", () => {
   it("formats the local calendar date with zero padding", () => {
     expect(localIsoDate(new Date(2026, 0, 5, 23, 59))).toBe("2026-01-05");
   });
+
+  it("uses the phone's local date late at night, never the UTC date", () => {
+    const original = process.env.TZ;
+    process.env.TZ = "America/New_York";
+    try {
+      const lateNight = new Date("2026-10-25T03:30:00.000Z"); // 11:30 PM on 24 Oct in New York
+      expect(lateNight.toISOString().slice(0, 10)).toBe("2026-10-25");
+      expect(localIsoDate(lateNight)).toBe("2026-10-24");
+    } finally {
+      if (original === undefined) delete process.env.TZ;
+      else process.env.TZ = original;
+    }
+  });
 });
 
 describe("daysUntilExpiry", () => {

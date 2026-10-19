@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   addedPlayerMessage,
+  clearedLiveGameMessage,
+  discardedLiveGameMessage,
+  finishedGameMessage,
+  startedLiveGameMessage,
   archivedPlayerMessage,
   presetBuyInsMessage,
   promotedGuestMessage,
@@ -22,5 +26,24 @@ describe("commit messages", () => {
 
   it("lists presets sorted with dollar separators", () => {
     expect(presetBuyInsMessage([2000, 1000, 1500])).toBe("Admin: updated preset buy-ins ($1,000 / $1,500 / $2,000)");
+  });
+});
+
+describe("live game commit messages", () => {
+  it("matches the §8.4 style", () => {
+    expect(startedLiveGameMessage()).toBe("Admin: started live game");
+    expect(clearedLiveGameMessage()).toBe("Admin: cleared stuck live game");
+    expect(discardedLiveGameMessage()).toBe("Admin: discarded live game");
+    const base = { date: "2026-10-24", seasonName: "Season 1", playerCount: 5, promotedNames: [] };
+    expect(finishedGameMessage({ ...base, mode: "season" })).toBe("Admin: finished game 2026-10-24 (Season 1, 5 players)");
+    expect(finishedGameMessage({ ...base, mode: "incognito", playerCount: 4 })).toBe(
+      "Admin: finished incognito game 2026-10-24 (4 players)",
+    );
+    expect(finishedGameMessage({ ...base, mode: "season", promotedNames: ["Rohan"] })).toBe(
+      "Admin: finished game 2026-10-24 (Season 1, 5 players; promoted guest Rohan)",
+    );
+    expect(finishedGameMessage({ ...base, mode: "season", promotedNames: ["Rohan", "Dev"] })).toBe(
+      "Admin: finished game 2026-10-24 (Season 1, 5 players; promoted guests Rohan, Dev)",
+    );
   });
 });

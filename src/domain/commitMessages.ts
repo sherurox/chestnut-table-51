@@ -33,3 +33,32 @@ export function presetBuyInsMessage(amounts: number[]): string {
 export function startedSeasonMessage(seasonName: string): string {
   return `Admin: started ${seasonName}`;
 }
+
+export function startedLiveGameMessage(): string {
+  return "Admin: started live game";
+}
+
+export function clearedLiveGameMessage(): string {
+  return "Admin: cleared stuck live game";
+}
+
+export function discardedLiveGameMessage(): string {
+  return "Admin: discarded live game";
+}
+
+// e.g. "Admin: finished game 2026-10-24 (Season 1, 5 players; promoted guest Rohan)"
+export function finishedGameMessage(input: {
+  date: string;
+  mode: "season" | "incognito";
+  seasonName: string;
+  playerCount: number;
+  promotedNames: string[];
+}): string {
+  const promoted =
+    input.promotedNames.length === 0
+      ? ""
+      : `; promoted guest${input.promotedNames.length === 1 ? "" : "s"} ${input.promotedNames.join(", ")}`;
+  return input.mode === "season"
+    ? `Admin: finished game ${input.date} (${input.seasonName}, ${input.playerCount} players${promoted})`
+    : `Admin: finished incognito game ${input.date} (${input.playerCount} players)`;
+}
