@@ -52,7 +52,7 @@ daily home poker game played between friends with **play money** (shown as dolla
 | Hosting | GitHub Pages, deployed by GitHub Actions |
 | Storage | `data/data.json` in this repo, read and written via the GitHub REST API |
 
-Node 20+ is required. No backend code, no other external services.
+Node 22+ is required. No backend code, no other external services.
 
 ---
 
@@ -315,7 +315,11 @@ This module is the only code that touches the network.
 - Fetch on app open and on manual refresh only. **Never poll.**
 - Cache the last good copy in localStorage so the app opens instantly and works offline (read-only).
 - On a 403 rate limit, show the cached copy plus "GitHub is busy. Try refreshing in a few minutes."
-- Show "Last updated" using the latest commit time for the file.
+- Show "Last updated" using the latest commit time for the file. That lookup is best-effort: if it
+  fails or is rate-limited, still show the data, with "Last updated: unknown".
+- The PWA service worker precaches the built app shell only (JS/CSS/HTML/icons). It must never add
+  runtime caching for `api.github.com` or any data endpoint — the localStorage cache above is the
+  single source of offline/cached data.
 
 ### 8.2 Writing (admin only)
 1. `GET` the contents endpoint (JSON form) to get the current `sha` and content.
