@@ -186,6 +186,13 @@
 [data-theme="light"] .ct-btn-secondary {
   background: rgba(255, 255, 255, 0.6);
 }
+/* Off the books (Home's "Incognito game"): a heavy dashed brass outline, unlike the thin grey dashes of a
+   disabled primary. */
+.ct-btn-offbook {
+  color: var(--ct-text);
+  border: 2px dashed var(--ct-brass-lo);
+  background: transparent;
+}
 .ct-btn-danger {
   color: var(--ct-loss);
   border: 1px solid var(--ct-loss);

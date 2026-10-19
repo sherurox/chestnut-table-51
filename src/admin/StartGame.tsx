@@ -1,12 +1,13 @@
 import { Loading, PageTitle } from "../design/components.js";
 import { useMemo, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { clearedLiveGameMessage } from "../domain/commitMessages.js";
 import { localIsoDate } from "../domain/dates.js";
 import { newId } from "../domain/ids.js";
 import { clearMarkerChange, guestsNeedingChoice, lastGamePlayers, startGame, type GuestChoice } from "../domain/liveGame.js";
 import type { Game, ID } from "../domain/types.js";
 import { formatDateTime } from "../lib/format.js";
+import { startModeFromSearch } from "../lib/homeActions.js";
 import { isIos, isStandalone } from "../lib/platform.js";
 import { activeSeason } from "../lib/selectors.js";
 import { useData } from "../state/DataContext.js";
@@ -50,9 +51,11 @@ export function StartGame() {
   const local = useLocalGame();
   const { syncNow } = useSync();
   const navigate = useNavigate();
+  const { search: query } = useLocation();
   const [selected, setSelected] = useState<ID[]>([]);
   const [search, setSearch] = useState("");
-  const [mode, setMode] = useState<Game["mode"]>("season");
+  // Preselected by the Home buttons (`?mode=season` / `?mode=incognito`); still changeable here.
+  const [mode, setMode] = useState<Game["mode"]>(() => startModeFromSearch(query));
   const [date, setDate] = useState(() => localIsoDate());
   const [askGuests, setAskGuests] = useState(false);
   const [error, setError] = useState<string | null>(null);

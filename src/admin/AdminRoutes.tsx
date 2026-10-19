@@ -5,6 +5,7 @@ import { ADMIN_DEVICE_KEY, browserStore } from "../storage/localKeys.js";
 import { AdminHome } from "./AdminHome.js";
 import { EndGame } from "./EndGame.js";
 import { ExpiryGate } from "./ExpiryGate.js";
+import { needsLogin, NO_LOGIN_PATHS } from "./gate.js";
 import { LiveGame } from "./LiveGame.js";
 import { useLocalGame } from "./localHooks.js";
 import { Login } from "./Login.js";
@@ -13,10 +14,6 @@ import { Settings } from "./Settings.js";
 import { StartGame } from "./StartGame.js";
 import { SyncProvider } from "./sync.js";
 import { useLoggedIn } from "./ui.js";
-
-// A game already running on this phone can be continued after a reload without logging in (§9.6):
-// buy-ins, undo, final stacks, chip check and Save into the "Not synced" queue. Syncing needs login.
-const NO_LOGIN_PATHS = ["/admin/live", "/admin/end"];
 
 function BackToGame() {
   return (
@@ -41,7 +38,7 @@ function AdminScreens() {
     }
   }, [loggedIn]);
 
-  if (!loggedIn && !(local && inGame)) {
+  if (needsLogin(loggedIn, local !== null, pathname)) {
     // Keyed by route so a stale "Wrong password" doesn't follow the admin to another admin page.
     return <Login key={pathname} />;
   }

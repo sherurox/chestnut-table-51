@@ -1,33 +1,20 @@
+import type { ReactNode } from "react";
+import { HomeActions } from "../components/HomeActions.js";
 import { StandingsList } from "../components/StandingsList.js";
 import { EmptyState, Loading, PageTitle } from "../design/components.js";
+import type { Data } from "../domain/types.js";
 import { seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
 import { activeSeason, visibleGames } from "../lib/selectors.js";
 import { useMe } from "../state/useMe.js";
 
-export function Leaderboard() {
-  const { data, loading, error } = useData();
-  const { me } = useMe();
-
-  if (loading && !data) return <Loading />;
-  if (!data) {
-    return (
-      <div className="p-4">
-        <EmptyState suit="♦" title="Couldn't load the table">
-          {error ?? "Check your connection and tap refresh."}
-        </EmptyState>
-      </div>
-    );
-  }
-
+function standings(data: Data, me: string | null): ReactNode {
   const season = activeSeason(data);
   if (!season) {
     return (
-      <div className="p-4">
-        <EmptyState suit="♠" title="No season yet">
-          Ask the admin to start Season 1.
-        </EmptyState>
-      </div>
+      <EmptyState suit="♠" title="No season yet">
+        Ask the admin to start Season 1.
+      </EmptyState>
     );
   }
 
@@ -35,7 +22,7 @@ export function Leaderboard() {
   const games = visibleGames(data, season.id).filter((g) => g.mode === "season").length;
 
   return (
-    <div className="px-4 pt-2 pb-4">
+    <>
       <PageTitle
         suit="♠"
         title={season.name}
@@ -47,6 +34,28 @@ export function Leaderboard() {
         </EmptyState>
       ) : (
         <StandingsList rows={rows} me={me} />
+      )}
+    </>
+  );
+}
+
+export function Leaderboard() {
+  const { data, loading, error } = useData();
+  const { me } = useMe();
+
+  // The game buttons / "Game on" card come first in every state, so a game on this phone can always be
+  // resumed, even offline before any data has loaded.
+  return (
+    <div className="px-4 pt-2 pb-4">
+      <HomeActions data={data} />
+      {loading && !data ? (
+        <Loading />
+      ) : !data ? (
+        <EmptyState suit="♦" title="Couldn't load the table">
+          {error ?? "Check your connection and tap refresh."}
+        </EmptyState>
+      ) : (
+        standings(data, me)
       )}
     </div>
   );
