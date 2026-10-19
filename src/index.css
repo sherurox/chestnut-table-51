@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --color-felt-950: #0b1f17;
+  --color-felt-900: #112e22;
+  --color-felt-800: #163a2b;
+  --color-felt-700: #1f4d38;
+  --color-chestnut-600: #8a4a2f;
+  --color-chestnut-500: #a85b3a;
+  --color-chestnut-400: #c47548;
+  --color-win: #4ade80;
+  --color-loss: #f87171;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-white text-felt-950 dark:bg-felt-950 dark:text-white;
+}
