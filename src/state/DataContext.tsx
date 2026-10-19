@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { loadData } from "../storage/github.js";
+import { loadData, rememberSavedData } from "../storage/github.js";
 import type { Data } from "../domain/types.js";
 
 interface DataState {
@@ -12,6 +12,8 @@ interface DataState {
 
 interface DataContextValue extends DataState {
   refresh: () => void;
+  // After an admin save: show exactly what was written (CLAUDE.md §8.1).
+  applySaved: (data: Data) => void;
 }
 
 const DataContext = createContext<DataContextValue | null>(null);
@@ -38,11 +40,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       );
   }, []);
 
+  const applySaved = useCallback((data: Data) => {
+    setState({ ...rememberSavedData(data), loading: false });
+  }, []);
+
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  return <DataContext.Provider value={{ ...state, refresh }}>{children}</DataContext.Provider>;
+  return <DataContext.Provider value={{ ...state, refresh, applySaved }}>{children}</DataContext.Provider>;
 }
 
 export function useData(): DataContextValue {

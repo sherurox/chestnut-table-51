@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import { AppShell } from "./components/AppShell.js";
 import { DataProvider } from "./state/DataContext.js";
@@ -10,7 +11,9 @@ import { SeasonDetail } from "./screens/SeasonDetail.js";
 import { EditHistory } from "./screens/EditHistory.js";
 import { WhoAmI } from "./screens/WhoAmI.js";
 import { More } from "./screens/More.js";
-import { Admin } from "./screens/Admin.js";
+
+// Admin code (auth, write path, admin screens) is a separate chunk that viewers never download.
+const AdminRoutes = lazy(() => import("./admin/AdminRoutes.js").then((m) => ({ default: m.AdminRoutes })));
 
 const router = createHashRouter([
   {
@@ -25,7 +28,14 @@ const router = createHashRouter([
       { path: "/history", element: <EditHistory /> },
       { path: "/me", element: <WhoAmI /> },
       { path: "/more", element: <More /> },
-      { path: "/admin", element: <Admin /> },
+      {
+        path: "/admin/*",
+        element: (
+          <Suspense fallback={<p className="p-4">Loading admin…</p>}>
+            <AdminRoutes />
+          </Suspense>
+        ),
+      },
     ],
   },
 ]);

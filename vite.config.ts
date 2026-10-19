@@ -51,6 +51,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
+        // Viewers never download admin code (CLAUDE.md §8), not even via the precache.
+        globIgnores: ["**/AdminRoutes-*.js"],
         navigateFallbackDenylist: [new RegExp(`^${DEV_DATA_PATH}`)],
       },
     }),
