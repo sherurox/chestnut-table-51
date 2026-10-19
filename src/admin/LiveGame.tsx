@@ -310,7 +310,7 @@ export function LiveGame() {
         />
       </div>
 
-      <div className="fixed inset-x-0 bottom-12 z-10 flex gap-2 border-t border-felt-700 bg-white p-2 dark:bg-felt-900">
+      <div className="ct-above-nav flex gap-2 border-t border-felt-700 bg-white p-2 dark:bg-felt-900">
         <button
           type="button"
           className={`${btnSecondary} min-w-0 flex-1 truncate`}

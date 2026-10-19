@@ -157,3 +157,43 @@ export function AppIconSvg({ size = 128, maskable = false }: { size?: number; ma
     />
   );
 }
+
+// Screen header: display-serif title with a suit, optional subtitle line.
+export function PageTitle({ suit = "♠", title, subtitle }: { suit?: "♠" | "♥" | "♦" | "♣"; title: ReactNode; subtitle?: ReactNode }) {
+  return (
+    <div className="mb-4">
+      <div className="text-2xl">
+        <SuitHeading suit={suit} as="h1">
+          {title}
+        </SuitHeading>
+      </div>
+      {subtitle && <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>}
+    </div>
+  );
+}
+
+// Loading placeholder: the brand chip turning slowly (still with reduced motion).
+export function Loading({ label = "Loading…" }: { label?: string }) {
+  return (
+    <div className="flex flex-col items-center gap-3 py-16 text-ink-muted" role="status">
+      <span className="ct-spin inline-block">
+        <ChipBadge size={44} />
+      </span>
+      <span className="text-sm">{label}</span>
+    </div>
+  );
+}
+
+// Empty state: a quiet panel that says what's missing and what to do next.
+export function EmptyState({ suit = "♣", title, children }: { suit?: "♠" | "♥" | "♦" | "♣"; title: string; children?: ReactNode }) {
+  const red = suit === "♥" || suit === "♦";
+  return (
+    <div className="ct-panel flex flex-col items-center gap-2 px-6 py-10 text-center">
+      <span aria-hidden="true" className={`text-3xl ${red ? "text-loss" : "text-brass"}`}>
+        {suit}
+      </span>
+      <p className="ct-display text-lg font-semibold">{title}</p>
+      {children && <div className="text-sm text-ink-muted">{children}</div>}
+    </div>
+  );
+}

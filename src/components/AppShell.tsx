@@ -1,5 +1,8 @@
-import { useSyncExternalStore } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Splash, Wordmark } from "../design/components.js";
+import { IconLock, IconRefresh } from "../design/icons.js";
+import { prefersReducedMotion } from "../design/motion.js";
 import { useData } from "../state/DataContext.js";
 import { useTheme } from "../state/useTheme.js";
 import { isUpdateReady, reloadIntoNewVersion, reloader, subscribeUpdateReady } from "../lib/appUpdate.js";
@@ -7,14 +10,30 @@ import { formatLastUpdated } from "../lib/format.js";
 import { hasLocalGame, queuedCount, subscribeLocalChange } from "../storage/localKeys.js";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Leaderboard" },
-  { to: "/games", label: "Games" },
-  { to: "/seasons", label: "Seasons" },
-  { to: "/more", label: "More" },
+  { to: "/", label: "Leaderboard", suit: "♠" },
+  { to: "/games", label: "Games", suit: "♣" },
+  { to: "/seasons", label: "Seasons", suit: "♦" },
+  { to: "/more", label: "More", suit: "♥" },
 ];
 
+// The live game and end screens are where the admin taps fast: they never animate in.
+const INSTANT_PATHS = ["/admin/live", "/admin/end"];
+const INTRO_KEY = "ct51.introShown";
+
+// The intro plays once per app launch (tab session), never when launching straight into a live game.
+function shouldPlayIntro(pathname: string): boolean {
+  if (INSTANT_PATHS.includes(pathname) || prefersReducedMotion()) return false;
+  try {
+    if (sessionStorage.getItem(INTRO_KEY)) return false;
+    sessionStorage.setItem(INTRO_KEY, "1");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const pill = "flex min-h-[48px] shrink-0 items-center";
-const pillInner = "rounded-full bg-chestnut-500 px-2 py-0.5 text-xs font-semibold text-white";
+const pillInner = "rounded-full bg-brass px-2.5 py-0.5 text-xs font-semibold text-[#2a1a08]";
 
 // Only ever shows on the admin's phone: it reads the live-game / sync-queue keys, never admin code.
 function LocalStatus() {
@@ -24,7 +43,7 @@ function LocalStatus() {
     <>
       {live && (
         <Link to="/admin/live" className={pill}>
-          <span className={pillInner}>Game on</span>
+          <span className={pillInner}>♠ Game on</span>
         </Link>
       )}
       {queued > 0 && (
@@ -42,11 +61,11 @@ function UpdateBanner() {
   const ready = useSyncExternalStore(subscribeUpdateReady, isUpdateReady);
   if (!ready) return null;
   return (
-    <div role="status" className="mx-4 mb-2 flex items-center justify-between gap-2 rounded-lg border border-chestnut-400 px-3 py-1 text-sm">
+    <div role="status" className="ct-panel ct-panel-brass mx-4 mt-2 flex items-center justify-between gap-2 px-3 py-1 text-sm">
       <span>Update ready — reload when the game ends.</span>
       <button
         type="button"
-        className="min-h-[48px] shrink-0 px-2 font-semibold text-chestnut-400 underline"
+        className="ct-focus min-h-[48px] shrink-0 px-2 font-semibold text-brass underline"
         onClick={() => {
           reloader.clear();
           void reloadIntoNewVersion();
@@ -59,64 +78,95 @@ function UpdateBanner() {
 }
 
 function navClassName({ isActive }: { isActive: boolean }): string {
-  return `flex min-h-[48px] flex-1 items-center justify-center text-sm ${
-    isActive ? "text-chestnut-400" : "text-felt-950 dark:text-white/70"
-  }`;
+  return `ct-nav-item ct-focus ${isActive ? "ct-nav-active" : ""}`;
 }
 
 export function AppShell() {
   const { lastUpdated, loading, error, fromCache, refresh } = useData();
+  const { pathname } = useLocation();
+  const [intro, setIntro] = useState(() => shouldPlayIntro(pathname));
+  const endIntro = useCallback(() => setIntro(false), []);
+  const main = useRef<HTMLElement>(null);
+  const firstPath = useRef(true);
   useTheme();
 
+  // Screen transition: animate the page area in place (never remount it: admin screens keep state).
+  useEffect(() => {
+    if (firstPath.current) {
+      firstPath.current = false;
+      return;
+    }
+    window.scrollTo(0, 0);
+    if (INSTANT_PATHS.includes(pathname) || prefersReducedMotion()) return;
+    main.current?.animate(
+      [
+        { opacity: 0, transform: "translateX(10px)" },
+        { opacity: 1, transform: "none" },
+      ],
+      { duration: 180, easing: "ease-out" },
+    );
+  }, [pathname]);
+
   return (
-    <div className="flex min-h-screen flex-col bg-white text-felt-950 dark:bg-felt-950 dark:text-white">
-      <div className="flex flex-1 flex-col pb-20">
-        <header className="flex min-h-[48px] items-center justify-between gap-2 px-4 py-2">
-          <span className="font-semibold">CT51</span>
-          <LocalStatus />
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 text-xs text-felt-950/60 dark:text-white/50">
-            <span className="truncate">Last updated: {formatLastUpdated(lastUpdated)}</span>
+    <div className="ct-app flex min-h-screen flex-col">
+      {intro && <Splash onDone={endIntro} />}
+
+      <header className="ct-rail ct-safe-top sticky top-0 z-20">
+        <div className="flex min-h-[56px] items-center justify-between gap-1 pr-1 pl-4">
+          <Link to="/" className="ct-focus flex min-h-[48px] min-w-0 items-center rounded-md" aria-label="Chestnut Table 51, leaderboard">
+            <Wordmark size="sm" />
+          </Link>
+          <div className="flex shrink-0 items-center">
             <button
               type="button"
               onClick={refresh}
               disabled={loading}
               aria-label="Refresh"
-              className="flex min-h-[48px] min-w-[48px] items-center justify-center text-base disabled:opacity-50"
+              className="ct-focus grid min-h-[48px] min-w-[48px] place-items-center rounded-md disabled:opacity-60"
             >
-              {loading ? "…" : "⟳"}
+              <IconRefresh spinning={loading} />
             </button>
+            <NavLink to="/admin" aria-label="Admin" className="ct-focus grid min-h-[48px] min-w-[48px] place-items-center rounded-md">
+              <IconLock />
+            </NavLink>
           </div>
-          <NavLink
-            to="/admin"
-            aria-label="Admin login"
-            className="flex min-h-[48px] min-w-[48px] items-center justify-center"
-          >
-            🔒
-          </NavLink>
-        </header>
+        </div>
+      </header>
 
-        <UpdateBanner />
-
-        {error && (
-          <p className="px-4 py-2 text-sm text-chestnut-400">
-            {error}
-            {fromCache && " Showing the last saved copy."}
-          </p>
-        )}
-
-        <main className="flex-1">
-          <Outlet />
-        </main>
-
-        <footer className="px-4 py-2 text-center text-xs text-felt-950/60 dark:text-white/50">
-          Play money only — no real gambling.
-        </footer>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 px-4 text-xs text-ink-muted">
+        <span className="py-2">Last updated: {formatLastUpdated(lastUpdated)}</span>
+        <span className="flex gap-2">
+          <LocalStatus />
+        </span>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 flex border-t border-felt-700 bg-white dark:bg-felt-900">
+      <UpdateBanner />
+
+      {error && (
+        <p role="status" className="ct-panel ct-panel-brass mx-4 mt-2 px-3 py-2 text-sm">
+          {error}
+          {fromCache && " Showing the last saved copy."}
+        </p>
+      )}
+
+      <main ref={main} className="ct-main flex-1">
+        <Outlet />
+      </main>
+
+      <footer className="ct-footer px-4 pt-6 text-center text-xs text-ink-muted">
+        <span aria-hidden="true" className="mr-2 tracking-[0.3em] text-brass">
+          ♠♥♦♣
+        </span>
+        Play money only — no real gambling.
+      </footer>
+
+      <nav className="ct-nav" aria-label="Main">
         {NAV_ITEMS.map((item) => (
           <NavLink key={item.to} to={item.to} className={navClassName} end={item.to === "/"}>
-            {item.label}
+            <span aria-hidden="true" className="text-lg leading-none">
+              {item.suit}
+            </span>
+            <span>{item.label}</span>
           </NavLink>
         ))}
       </nav>

@@ -330,6 +330,142 @@
   background: linear-gradient(90deg, rgba(214, 179, 94, 0.12), transparent 70%);
 }
 
+/* ---- App shell ------------------------------------------------------------------------------- */
+
+:root {
+  --ct-nav-h: 60px;
+}
+.ct-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+/* Bottom navigation: a dark felt bar; the active tab gets brass text and a brass top edge. */
+.ct-nav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  height: calc(var(--ct-nav-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: linear-gradient(180deg, var(--ct-felt-hi), var(--ct-felt));
+  border-top: 1px solid var(--ct-brass-lo);
+  box-shadow: 0 -6px 16px -8px var(--ct-shadow);
+}
+.ct-nav-item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 48px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ct-text-muted);
+  border-top: 2px solid transparent;
+}
+.ct-nav-active {
+  color: var(--ct-brass);
+  border-top-color: var(--ct-brass);
+}
+/* Room for the fixed nav (and the live screen's action bar, which sits right above it). */
+.ct-footer {
+  padding-bottom: calc(var(--ct-nav-h) + env(safe-area-inset-bottom) + 1rem);
+}
+.ct-above-nav {
+  position: fixed;
+  inset-inline: 0;
+  z-index: 15;
+  bottom: calc(var(--ct-nav-h) + env(safe-area-inset-bottom));
+}
+.ct-spin {
+  animation: ct-spin 1.2s linear infinite;
+}
+@keyframes ct-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- Forms, tags, lists ---------------------------------------------------------------------- */
+
+.ct-input {
+  min-height: 48px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--ct-line);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 0 0.85rem;
+  color: var(--ct-text);
+  font-size: 1rem; /* 16px+ stops iOS zooming into the field */
+}
+[data-theme="light"] .ct-input {
+  background: #fff;
+}
+.ct-input::placeholder {
+  color: var(--ct-text-muted);
+  opacity: 0.8;
+}
+.ct-input:focus-visible {
+  outline: 3px solid var(--ct-focus);
+  outline-offset: 1px;
+  border-color: var(--ct-brass);
+}
+.ct-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ct-text-muted);
+}
+
+/* Small label on a card: Incognito, Edited, Guest, Active… */
+.ct-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--ct-line);
+  color: var(--ct-text-muted);
+  white-space: nowrap;
+}
+.ct-tag-brass {
+  border-color: var(--ct-brass-lo);
+  color: var(--ct-brass);
+}
+
+/* A tappable row inside a panel (lists of players, seasons, menu items). */
+.ct-list-row {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  border-bottom: 1px solid var(--ct-line);
+}
+.ct-list-row:last-child {
+  border-bottom: 0;
+}
+a.ct-list-row:active,
+button.ct-list-row:active {
+  background: rgba(214, 179, 94, 0.08);
+}
+.ct-list-row:focus-visible {
+  outline: 3px solid var(--ct-focus);
+  outline-offset: -3px;
+}
+
+/* Toggle-style choice buttons (mode, player picker): pressed = brass. */
+.ct-choice[aria-pressed="true"] {
+  color: var(--ct-ink-on-brass);
+  border-color: var(--ct-brass);
+  background: linear-gradient(180deg, var(--ct-brass-hi), var(--ct-brass));
+}
+
 /* ---- Motion ---------------------------------------------------------------------------------- */
 
 /* Staggered entrance: style="--i: 3" on each item. */
@@ -416,7 +552,8 @@
   .ct-splash-chip,
   .ct-splash-name,
   .ct-splash-suits,
-  .ct-chip.ct-pop::after {
+  .ct-chip.ct-pop::after,
+  .ct-spin {
     animation: none !important;
   }
   .ct-chip,

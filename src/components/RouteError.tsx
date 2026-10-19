@@ -1,4 +1,5 @@
 import { useRouteError } from "react-router-dom";
+import { ChipBadge } from "../design/components.js";
 import { isChunkLoadError, reloadIntoNewVersion, reloader } from "../lib/appUpdate.js";
 
 // Router errorElement: a friendly screen instead of React Router's developer error page.
@@ -19,19 +20,22 @@ export function RouteError() {
       : "Reloading usually fixes it. Any game in progress is saved on this phone.";
 
   return (
-    <div role="alert" className="flex flex-col gap-3 p-4">
-      <h1 className="text-lg font-semibold">{title}</h1>
-      <p className="text-sm text-felt-950/70 dark:text-white/70">{detail}</p>
-      <button
-        type="button"
-        className="min-h-[48px] rounded-lg bg-chestnut-500 px-4 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chestnut-400"
-        onClick={() => {
-          reloader.clear();
-          void reloadIntoNewVersion();
-        }}
-      >
-        Reload
-      </button>
+    <div role="alert" className="ct-app p-4">
+      <div className="ct-panel ct-panel-brass mx-auto flex max-w-md flex-col items-center gap-3 px-5 py-8 text-center">
+        <ChipBadge size={64} />
+        <h1 className="ct-display text-xl font-semibold">{title}</h1>
+        <p className="text-sm text-ink-muted">{detail}</p>
+        <button
+          type="button"
+          className="ct-btn ct-btn-primary w-full"
+          onClick={() => {
+            reloader.clear();
+            void reloadIntoNewVersion();
+          }}
+        >
+          Reload
+        </button>
+      </div>
     </div>
   );
 }
