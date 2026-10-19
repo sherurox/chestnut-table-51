@@ -3,7 +3,10 @@
 //  - admin code leaked into the viewer entry chunk (admin routes must be lazy-loaded, CLAUDE.md §8),
 //  - there is no separate admin chunk,
 //  - the dev-only ?forceConflict=1 hook survived into the production bundle (CLAUDE.md §8.2),
-//  - anything token-shaped is in dist/.
+//  - anything token-shaped is in dist/,
+//  - the service worker precaches the admin chunk, lacks the admin runtime-cache rule (offline games,
+//    CLAUDE.md §8.1), caches api.github.com/data at runtime, or the admin chunk imports a chunk that
+//    wouldn't be available offline.
 
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -12,7 +15,15 @@ import { fileURLToPath } from "node:url";
 const dist = fileURLToPath(new URL("../dist/", import.meta.url));
 
 // Strings that only exist in admin code (auth.ts, adminKey.ts, githubWrite.ts, admin screens).
-const ADMIN_MARKERS = ["admin-key.json", "Wrong password", "someone else is editing", "Unlocking…"];
+const ADMIN_MARKERS = [
+  "admin-key.json",
+  "Wrong password",
+  "someone else is editing",
+  "Unlocking…",
+  "Chip check",
+  "Clear stuck game",
+  "Add a late player",
+];
 const DEV_ONLY_MARKERS = ["forceConflict"];
 // Built by concatenation so this file doesn't match the secret scan.
 const TOKEN_PATTERNS = [new RegExp("github" + "_pat_[A-Za-z0-9_]{20,}"), new RegExp("gh" + "p_[A-Za-z0-9]{20,}")];
@@ -58,6 +69,17 @@ else {
   const sw = await readFile(join(dist, "sw.js"), "utf8").catch(() => "");
   const chunkFile = adminChunk.split(/[\\/]/).pop();
   if (sw.includes(chunkFile)) failures.push(`service worker precaches the admin chunk ${chunkFile}`);
+  if (!sw.includes("AdminRoutes-") || !sw.includes("ct51-admin")) {
+    failures.push("service worker has no runtime-cache rule for the admin chunk (offline games need it)");
+  }
+  if (/api\.github\.com|__dev-data__\/data|data\.json/.test(sw.replace(/denylist:\[[^\]]*\]/g, ""))) {
+    failures.push("service worker mentions api.github.com or data: no runtime caching of data allowed");
+  }
+  // Every chunk the admin chunk imports must be precached, or the admin can't run offline.
+  const adminText = await readFile(join(dist, adminChunk), "utf8");
+  for (const [, imported] of adminText.matchAll(/from\s*"\.\/([^"]+\.js)"/g)) {
+    if (!sw.includes(`assets/${imported}`)) failures.push(`admin chunk imports ${imported}, which is not precached`);
+  }
 }
 
 if (failures.length > 0) {

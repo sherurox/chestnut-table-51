@@ -53,6 +53,20 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
         // Viewers never download admin code (CLAUDE.md §8), not even via the precache.
         globIgnores: ["**/AdminRoutes-*.js"],
+        // The admin chunk is cached only once an admin route has loaded it, so the admin can keep running
+        // a game offline after a reload. Hashed file names make CacheFirst safe. No other runtime caching:
+        // never api.github.com or data (the localStorage cache is the only data cache, §8.1).
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/AdminRoutes-[\w-]+\.js$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "ct51-admin",
+              expiration: { maxEntries: 3 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+        ],
         navigateFallbackDenylist: [new RegExp(`^${DEV_DATA_PATH}`)],
       },
     }),

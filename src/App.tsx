@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import { AppShell } from "./components/AppShell.js";
 import { DataProvider } from "./state/DataContext.js";
@@ -11,9 +11,11 @@ import { SeasonDetail } from "./screens/SeasonDetail.js";
 import { EditHistory } from "./screens/EditHistory.js";
 import { WhoAmI } from "./screens/WhoAmI.js";
 import { More } from "./screens/More.js";
+import { isAdminDevice } from "./storage/localKeys.js";
 
 // Admin code (auth, write path, admin screens) is a separate chunk that viewers never download.
-const AdminRoutes = lazy(() => import("./admin/AdminRoutes.js").then((m) => ({ default: m.AdminRoutes })));
+const loadAdmin = () => import("./admin/AdminRoutes.js");
+const AdminRoutes = lazy(() => loadAdmin().then((m) => ({ default: m.AdminRoutes })));
 
 const router = createHashRouter([
   {
@@ -41,6 +43,12 @@ const router = createHashRouter([
 ]);
 
 export function App() {
+  // On the phone that runs games only: fetch the admin chunk once while online so the service worker's
+  // runtime cache has the current version for an offline game, even right after an app update.
+  useEffect(() => {
+    if (isAdminDevice() && navigator.onLine) void loadAdmin().catch(() => {});
+  }, []);
+
   return (
     <DataProvider>
       <RouterProvider router={router} />

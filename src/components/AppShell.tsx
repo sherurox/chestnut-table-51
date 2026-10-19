@@ -1,7 +1,9 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useSyncExternalStore } from "react";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { useData } from "../state/DataContext.js";
 import { useTheme } from "../state/useTheme.js";
 import { formatLastUpdated } from "../lib/format.js";
+import { hasLocalGame, queuedCount, subscribeLocalChange } from "../storage/localKeys.js";
 
 const NAV_ITEMS = [
   { to: "/", label: "Leaderboard" },
@@ -9,6 +11,29 @@ const NAV_ITEMS = [
   { to: "/seasons", label: "Seasons" },
   { to: "/more", label: "More" },
 ];
+
+const pill = "flex min-h-[48px] shrink-0 items-center";
+const pillInner = "rounded-full bg-chestnut-500 px-2 py-0.5 text-xs font-semibold text-white";
+
+// Only ever shows on the admin's phone: it reads the live-game / sync-queue keys, never admin code.
+function LocalStatus() {
+  const queued = useSyncExternalStore(subscribeLocalChange, queuedCount);
+  const live = useSyncExternalStore(subscribeLocalChange, hasLocalGame);
+  return (
+    <>
+      {live && (
+        <Link to="/admin/live" className={pill}>
+          <span className={pillInner}>Game on</span>
+        </Link>
+      )}
+      {queued > 0 && (
+        <Link to="/admin" className={pill}>
+          <span className={pillInner}>Not synced: {queued}</span>
+        </Link>
+      )}
+    </>
+  );
+}
 
 function navClassName({ isActive }: { isActive: boolean }): string {
   return `flex min-h-[48px] flex-1 items-center justify-center text-sm ${
@@ -25,6 +50,7 @@ export function AppShell() {
       <div className="flex flex-1 flex-col pb-20">
         <header className="flex min-h-[48px] items-center justify-between gap-2 px-4 py-2">
           <span className="font-semibold">CT51</span>
+          <LocalStatus />
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2 text-xs text-felt-950/60 dark:text-white/50">
             <span className="truncate">Last updated: {formatLastUpdated(lastUpdated)}</span>
             <button
