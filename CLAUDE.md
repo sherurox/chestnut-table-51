@@ -47,6 +47,7 @@ daily home poker game played between friends with **play money** (shown as dolla
 | Routing | React Router with **HashRouter** (GitHub Pages has no SPA fallback) |
 | Validation | zod |
 | Charts | Recharts |
+| Fonts | `@fontsource/playfair-display` + `@fontsource/inter` (self-hosted, Latin subset; section 11.1) |
 | PWA | vite-plugin-pwa (installable, offline app shell) |
 | Tests | Vitest |
 | Crypto | Web Crypto API (browser) and Node's `crypto.webcrypto` (setup script) |
@@ -465,7 +466,7 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 |---|---|
 | `#/` | **Leaderboard**: active season standings (rank, name, net, games played, last result). "You" highlight. Last updated + refresh. |
 | `#/games` | **Game history**: newest first, season games and incognito games (labeled) with per-player results. Filter by season. "Edited" badges. |
-| `#/games/:id` | **Game detail**: every buy-in, final stacks, results. |
+| `#/games/:id` | **Game detail**: final stacks, results, and an "Every buy-in" panel listing each player's buy-ins in order (e.g. `$1,000 · $1,500`). |
 | `#/players/:id` | **Player page**: net-winnings-over-time chart for the selected season (season games only), game list, best/worst game. |
 | `#/seasons` | **Seasons**: all seasons; closed ones show champion and final standings (tap through). |
 | `#/history` | **Edit history**: commit list. |
@@ -499,6 +500,72 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 - PWA manifest: `name` "Chestnut Table 51", `short_name` "CT51", standalone display, theme color, icons
   (192px, 512px, maskable). iOS: apple-touch-icon and an "Add to Home Screen" hint for Safari users.
 - Accessible: semantic HTML, labels on inputs, visible focus states, sufficient contrast in both themes.
+
+### 11.1 Design system ("private club card room")
+All tokens and component styles live in `src/design/design.css`; brand components in
+`src/design/components.tsx`; motion helpers in `src/design/motion.ts`. Screens use these classes and
+components instead of one-off colours. `#/style` is a dev-only style guide (dropped from production builds).
+
+**Tokens** (CSS custom properties, `--ct-*`). Dark is the default (`<html data-theme="dark">`);
+`[data-theme="light"]` overrides every token. The choice is stored in localStorage `ct51.theme`.
+| Token | Dark | Light | Use |
+|---|---|---|---|
+| `--ct-bg` | `#0b1d16` deep felt | `#f4ecda` ivory | page background (plus a CSS-only felt weave) |
+| `--ct-felt` / `--ct-felt-hi` | `#123326` / `#18412f` | `#fffaf0` / `#ffffff` | panels, nav, action bar |
+| `--ct-line` | `#2c5a46` | `#d9caa8` | hairlines, dividers |
+| `--ct-wood-dark` / `--ct-wood` / `--ct-wood-light` | mahogany → chestnut | same, slightly deeper | header wood rail |
+| `--ct-brass` / `-hi` / `-lo` | `#d6b35e` / `#f0d68b` / `#9c7a34` | `#b8923e` / `#e3c473` / `#7d5f1f` | accents, primary buttons, borders |
+| `--ct-brass-text` | `#d6b35e` | `#7d5f1f` | brass used as **text** (AA in both themes; never use `--ct-brass` for text) |
+| `--ct-ink-on-brass` | `#2a1a08` | `#2a1a08` | text on brass fills |
+| `--ct-text` / `--ct-text-muted` | `#f4ecda` / `#c4bba6` | `#1f2a22` / `#5a5240` | body / secondary text |
+| `--ct-win` / `--ct-loss` | `#6fdc9a` / `#ff9076` | `#17703f` / `#b0381f` | money signs (with the sign, never colour alone) |
+| `--ct-focus` | `#f0d68b` | `#7d5f1f` | 3px focus outline |
+
+- **Typography:** Playfair Display 600/700 for display (`.ct-display`, headings, wordmark; always
+  `lining-nums`), Inter 400–700 for everything else. Numbers use `.ct-num` (tabular, lining figures).
+  Fonts are self-hosted via `@fontsource` (`src/design/fonts.ts`, Latin subset only) and precached;
+  never load Google Fonts. Inputs are ≥16px so iOS doesn't zoom.
+- **Spacing and sizing:** 16px side gutter (`px-4`) on every screen; panels radius 16px, buttons and
+  inputs radius 12px; buttons and inputs ≥48px tall; list/leaderboard rows ≥56px; bottom nav 60px
+  (`--ct-nav-h`) plus the safe-area inset. Button labels wrap and never truncate.
+
+**Components**
+- **Brand chip lockups:** `ChipBadge` is the app-icon chip (brass rim, mahogany spots, "51"), same art
+  as `src/design/iconSvg.ts`. `Wordmark` `sm`/`md` = "Chestnut Table" + chip on one line (header, page
+  titles); `lg` = chip stacked above the name (More screen) so it never breaks at 360px.
+- **Chip buttons** (`.ct-chip`, `data-tone` `red`/`blue`/`black`/`green`, plus `outline` for "Custom"):
+  the live screen's preset buy-in buttons, 56–80px round, four per row, tones cycling by preset index.
+- **Rank badges** (`RankBadge`, `.ct-rank`): gold/silver/bronze discs for ranks 1–3, plain number below.
+  Leaderboard and season standings share `StandingsList`; the "You" row gets a brass left edge
+  (`.ct-row-me`). Closed-season champions get a `Crown`.
+- **Cards and surfaces:** `.ct-panel` (felt card with hairline; `.ct-panel-brass` for emphasis),
+  `.ct-rail` (wood header), `.ct-list-row`, `.ct-tag` (Incognito, Edited, Guest), `.ct-pill` (brass
+  status pill: "Game on", "Not synced"). Buttons: `.ct-btn` + `-primary` (brass) / `-secondary` /
+  `-danger`. Headings: `PageTitle` / `SuitHeading` with a suit accent. `Money` renders signed dollars.
+  `Loading` and `EmptyState` are used on every screen.
+
+**Motion rules**
+- What animates: the ~1.2s intro splash (once per tab session, tap to skip, never when launching into a
+  live game); a 180ms screen fade/slide; staggered entrance on leaderboard rows, game cards and seasons
+  (`.ct-rise`); count-up on leaderboard and player-page totals (`Money animate`); rows sliding on rank
+  change (`useFlip`); the chip tap "pop" ring + 12ms vibrate on Android (`chipFeedback`).
+- Animation is visual only: values, order and handlers are already final, and nothing ever delays input.
+  Chip feedback runs after the buy-in is recorded.
+- **`#/admin/live` and `#/admin/end` never animate** (`INSTANT_PATHS` in `AppShell.tsx`): no screen
+  transition, entrance, count-up or FLIP. The only motion there is the chip tap pop.
+- `prefers-reduced-motion: reduce` turns all of it off: no splash (nothing drawn), no transitions,
+  entrances, count-ups, FLIP, chip pop or spinner; values show final immediately. Any new animation must
+  be added to the reduced-motion block in `design.css` or check `useReducedMotion()`.
+
+**360px check:** before declaring any UI change done, view every screen it touches at 360px wide in
+**both** dark and light themes: no horizontal scroll, no truncated names, amounts or button labels,
+tap targets ≥48px, text contrast AA.
+
+**Icons:** the PWA icons (`public/icons/icon-192.png`, `icon-512.png`, `icon-512-maskable.png`,
+`apple-touch-icon.png`) are rendered from `src/design/iconSvg.ts` with local headless Chrome. After
+changing the icon art, run from the repo root
+`node --experimental-strip-types scripts/render-icons.mjs` (set `CHROME_PATH` if Chrome/Edge isn't in a
+standard location) and commit the PNGs. No image library or npm dependency.
 
 ---
 
