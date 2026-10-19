@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { getTokenExpiresOn } from "../storage/auth.js";
 import { AdminHome } from "./AdminHome.js";
 import { ExpiryGate } from "./ExpiryGate.js";
@@ -10,7 +10,9 @@ import { useLoggedIn } from "./ui.js";
 // Everything under #/admin/*. Loaded lazily from App.tsx so viewers never download admin code.
 export function AdminRoutes() {
   const loggedIn = useLoggedIn();
-  if (!loggedIn) return <Login />;
+  const { pathname } = useLocation();
+  // Keyed by route so a stale "Wrong password" doesn't follow the admin to another admin page.
+  if (!loggedIn) return <Login key={pathname} />;
 
   return (
     <ExpiryGate expiresOn={getTokenExpiresOn()}>
