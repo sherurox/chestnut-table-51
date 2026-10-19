@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
@@ -33,6 +34,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     devDataMiddleware(),
+    // Dev server only: a self-signed https certificate, so the admin login (Web Crypto needs a secure
+    // context) works when testing on a phone over the LAN. Production builds are unaffected.
+    { ...basicSsl(), apply: "serve" },
     VitePWA({
       registerType: "autoUpdate",
       // Registered by src/lib/appUpdate.ts, which decides whether a new version reloads the page or waits
