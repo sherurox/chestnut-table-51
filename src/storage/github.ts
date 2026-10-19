@@ -47,6 +47,14 @@ function readHeaders(accept?: string): Record<string, string> {
   return headers;
 }
 
+// Revalidating read ("no-cache": a 304 costs no rate limit). If a bare 304 ever surfaces, refetch once
+// with "no-store" rather than treating it as an error.
+async function fetchRevalidated(url: string): Promise<Response> {
+  const res = await fetch(url, { headers: readHeaders(), cache: "no-cache" });
+  if (res.status !== 304) return res;
+  return fetch(url, { headers: readHeaders(), cache: "no-store" });
+}
+
 // After a successful admin save, show and cache exactly what was written (no extra read needed).
 export function rememberSavedData(data: Data): LoadedData {
   const lastUpdated = new Date().toISOString();
@@ -83,7 +91,7 @@ function cachedFallback(error: string): LoadedData {
 async function fetchLastUpdated(): Promise<string | null> {
   try {
     const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/commits?path=${CONFIG.dataPath}&per_page=1`;
-    const res = await fetch(url, { headers: readHeaders(), cache: "no-cache" });
+    const res = await fetchRevalidated(url);
     if (!res.ok) return null;
     const commits = (await res.json()) as Array<{ commit?: { author?: { date?: string } } }>;
     return commits[0]?.commit?.author?.date ?? null;
@@ -117,6 +125,17 @@ export async function loadData(): Promise<LoadedData> {
     return cachedFallback("Couldn't reach GitHub. Showing the last saved copy.");
   }
 
+  // We never send conditional headers ourselves, and the browser normally turns its own revalidation 304
+  // into the cached 200. If a bare 304 ever reaches us anyway, it means "unchanged": reuse our copy.
+  if (res.status === 304) {
+    const cached = readCache();
+    if (cached) return { data: cached.data, lastUpdated: cached.lastUpdated, fromCache: true, error: null };
+    try {
+      res = await fetch(url, { headers: readHeaders("application/vnd.github.raw+json"), cache: "no-store" });
+    } catch {
+      return cachedFallback("Couldn't reach GitHub. Showing the last saved copy.");
+    }
+  }
   if (res.status === 401) {
     return cachedFallback("Admin key is invalid or expired. The owner needs to create a new token.");
   }
@@ -141,7 +160,7 @@ export async function loadData(): Promise<LoadedData> {
 
 export async function fetchCommitHistory(limit = 50): Promise<CommitEntry[]> {
   const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/commits?path=${CONFIG.dataPath}&per_page=${limit}`;
-  const res = await fetch(url, { headers: readHeaders(), cache: "no-cache" });
+  const res = await fetchRevalidated(url);
   if (!res.ok) {
     throw new Error(`Couldn't load edit history (${res.status}).`);
   }

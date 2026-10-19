@@ -120,7 +120,7 @@ describe("saveChange", () => {
     gh.putScript.push(() => json(422, { message: "Invalid request. content is not valid Base64" }));
     const err = await save(gh).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(SaveError);
-    expect((err as Error).message).toBe("GitHub rejected the save: Invalid request. content is not valid Base64");
+    expect((err as Error).message).toBe("Save failed: PUT 422 — Invalid request. content is not valid Base64");
     expect((err as Error).message).not.toContain(CONFLICT_MESSAGE);
     expect(gh.puts).toHaveLength(1);
     expect(gh.data.players).toHaveLength(1);
@@ -156,6 +156,52 @@ describe("saveChange", () => {
     gh.data = { ...gh.data, version: 99 } as unknown as Data;
     await expect(save(gh)).rejects.toThrow(/doesn't pass validation/);
     expect(gh.puts).toHaveLength(0);
+  });
+
+  it("the fresh GET is never conditional and never uses the HTTP cache", async () => {
+    const gh = new FakeGitHub();
+    await save(gh);
+    const getInits = gh.fetch.mock.calls.map(([, init]) => init).filter((init) => !init?.method || init.method === "GET");
+    expect(getInits).toHaveLength(1);
+    for (const init of getInits) {
+      expect(init!.cache).toBe("no-store");
+      const names = Object.keys(init!.headers as Record<string, string>).map((h) => h.toLowerCase());
+      expect(names).not.toContain("if-none-match");
+      expect(names).not.toContain("if-modified-since");
+      expect((init!.headers as Record<string, string>).Accept).toBe("application/vnd.github+json");
+    }
+  });
+
+  it("a 304 on the fresh GET fails clearly and sends no PUT", async () => {
+    const fetchFn = vi.fn(async (_u: string | URL | Request, init?: RequestInit) =>
+      !init?.method || init.method === "GET" ? new Response(null, { status: 304 }) : json(200, {}),
+    );
+    const err = await saveChange(addAmit, "m", { fetch: fetchFn as typeof fetch, token: TOKEN }).catch((e: unknown) => e);
+    expect((err as Error).message).toBe("Save failed: GET 304 — no message from GitHub");
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "PUT")).toBe(false);
+  });
+
+  it("a GET body without sha (e.g. the raw file) fails clearly and sends no PUT", async () => {
+    const fetchFn = vi.fn(async (_u: string | URL | Request, init?: RequestInit) =>
+      !init?.method || init.method === "GET" ? json(200, initialData()) : json(200, {}),
+    );
+    await expect(saveChange(addAmit, "m", { fetch: fetchFn as typeof fetch, token: TOKEN })).rejects.toThrow(
+      "Save failed: GET 200 — response had no file sha/content",
+    );
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "PUT")).toBe(false);
+  });
+
+  it("reports method, status and GitHub's message, e.g. PUT 403", async () => {
+    const gh = new FakeGitHub();
+    gh.putScript.push(() => json(403, { message: "Resource not accessible by personal access token" }));
+    await expect(save(gh)).rejects.toThrow("Save failed: PUT 403 — Resource not accessible by personal access token");
+  });
+
+  it("reports method, status and message for a failing GET, e.g. GET 404", async () => {
+    const fetchFn = vi.fn(async () => json(404, { message: "Not Found" }));
+    await expect(saveChange(addAmit, "m", { fetch: fetchFn as typeof fetch, token: TOKEN })).rejects.toThrow(
+      "Save failed: GET 404 — Not Found",
+    );
   });
 
   it("maps a 401 to the expired-token message", async () => {

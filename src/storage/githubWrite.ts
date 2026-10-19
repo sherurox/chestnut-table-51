@@ -60,14 +60,13 @@ async function githubMessage(res: Response): Promise<string> {
   } catch {
     // non-JSON body
   }
-  return `HTTP ${res.status}`;
+  return "no message from GitHub";
 }
 
-async function statusError(res: Response): Promise<SaveError> {
+// e.g. "Save failed: PUT 403 — Resource not accessible by personal access token". 401 keeps the §7.2 wording.
+async function statusError(method: "GET" | "PUT", res: Response): Promise<SaveError> {
   if (res.status === 401) return new SaveError(EXPIRED_MESSAGE);
-  if (res.status === 403) return new SaveError("Admin key can't write to this repo (or GitHub is rate-limiting). Nothing was saved.");
-  if (res.status === 404) return new SaveError("data.json wasn't found, or the admin key can't see this repo. Nothing was saved.");
-  return new SaveError(`GitHub returned an error (${res.status}): ${await githubMessage(res)}. Nothing was saved.`);
+  return new SaveError(`Save failed: ${method} ${res.status} — ${await githubMessage(res)}`);
 }
 
 async function request(fetchFn: typeof fetch, url: string, init: RequestInit): Promise<Response> {
@@ -79,17 +78,25 @@ async function request(fetchFn: typeof fetch, url: string, init: RequestInit): P
 }
 
 async function fetchCurrent(fetchFn: typeof fetch, token: string): Promise<Current> {
+  // Never conditional, never from the HTTP cache: "no-store" sends no If-None-Match/If-Modified-Since and
+  // can't be answered from (or revalidated against) the viewer's raw-read cache entry for this same URL,
+  // which would yield a bodyless 304 or the raw file without a sha.
   const res = await request(fetchFn, `${contentsUrl()}?ref=${CONFIG.branch}`, {
     headers: authHeaders(token),
-    cache: "no-cache",
+    cache: "no-store",
   });
-  if (!res.ok) throw await statusError(res);
-  const body = (await res.json()) as { sha?: unknown; content?: unknown; encoding?: unknown };
+  if (res.status !== 200) throw await statusError("GET", res);
+  let body: { sha?: unknown; content?: unknown; encoding?: unknown };
+  try {
+    body = (await res.json()) as typeof body;
+  } catch {
+    throw new SaveError("Save failed: GET 200 — response wasn't JSON");
+  }
   if (typeof body.sha !== "string" || typeof body.content !== "string") {
-    throw new SaveError("GitHub returned an unexpected response. Nothing was saved.");
+    throw new SaveError("Save failed: GET 200 — response had no file sha/content");
   }
   if (body.encoding !== "base64") {
-    throw new SaveError("data.json is too large for the GitHub contents API (over 1 MB). Nothing was saved.");
+    throw new SaveError("Save failed: data.json is too large for the GitHub contents API (over 1 MB)");
   }
   let raw: unknown;
   try {
@@ -151,6 +158,7 @@ export async function saveChange(
 
       const res = await request(fetchFn, contentsUrl(), {
         method: "PUT",
+        cache: "no-store",
         headers: { ...authHeaders(token), "Content-Type": "application/json" },
         body: JSON.stringify({
           message,
@@ -169,14 +177,14 @@ export async function saveChange(
         const ghMessage = await githubMessage(res);
         const fresh = await fetchCurrent(fetchFn, token);
         if (res.status === 422 && fresh.sha === sentSha) {
-          throw new SaveError(`GitHub rejected the save: ${ghMessage}`);
+          throw new SaveError(`Save failed: PUT 422 — ${ghMessage}`);
         }
         if (attempt >= MAX_RETRIES) throw new SaveError(CONFLICT_MESSAGE);
         current = fresh;
         continue;
       }
 
-      throw await statusError(res);
+      throw await statusError("PUT", res);
     }
   } catch (err) {
     throw redact(err, token);
