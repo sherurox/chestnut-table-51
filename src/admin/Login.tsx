@@ -1,8 +1,31 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { useData } from "../state/DataContext.js";
 import { AdminNotSetUpError, NOT_SET_UP_MESSAGE } from "../storage/adminKey.js";
 import { fetchAdminKey, login } from "../storage/auth.js";
-import { btnPrimary, input, muted } from "./ui.js";
+import { useLocalGame, useQueue } from "./localHooks.js";
+import { btnPrimary, btnSecondary, input, muted } from "./ui.js";
+
+// Shown above the login form on the phone that runs games (§9.6).
+function LocalGameNotice() {
+  const local = useLocalGame();
+  const queued = useQueue().length;
+  if (!local && queued === 0) return null;
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-chestnut-400 p-3">
+      {local && (
+        <Link to="/admin/live" className={`${btnSecondary} flex items-center justify-center font-semibold`}>
+          Continue the game on this phone
+        </Link>
+      )}
+      {queued > 0 && (
+        <p className="text-sm">
+          {queued} game{queued === 1 ? "" : "s"} not synced. Log in (needs internet) to sync.
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function Login() {
   const { refresh } = useData();
@@ -46,6 +69,7 @@ export function Login() {
   return (
     <form className="flex flex-col gap-3 p-4" onSubmit={onSubmit}>
       <h1 className="text-lg font-semibold">Admin login</h1>
+      <LocalGameNotice />
       <p className={`text-sm ${muted}`}>Viewers don't need this. Reloading the page logs you out.</p>
       {/* Lets password managers file the passphrase under a stable name. */}
       <input type="text" name="username" autoComplete="username" value="CT51 admin" readOnly hidden />
