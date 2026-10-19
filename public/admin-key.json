@@ -1,0 +1,9 @@
+{
+  "v": 1,
+  "kdf": "PBKDF2-SHA256",
+  "iterations": 600000,
+  "salt": "RV3DhsgWn/AQsBYYJKyB1w==",
+  "iv": "z+citwUpE5scaV13",
+  "ciphertext": "PqnaJ9P6xe71Fv60VpCzvTZRewGjyEd+x9p0wHGncrxtR+aK4m05WZKLYOfuLQIvEQzY9TOzFcVb7gLKLSR1sEi82uzU8yrc9DlnOStdot4tDBQy325uYetnh8aHrcbBxbuHO+hQTyPiecO2Ug==",
+  "tokenExpiresOn": "2027-01-17"
+}
