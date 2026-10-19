@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useData } from "../state/DataContext.js";
 import { AdminNotSetUpError, NOT_SET_UP_MESSAGE } from "../storage/adminKey.js";
 import { fetchAdminKey, login } from "../storage/auth.js";
+import { canDecryptHere, INSECURE_CONTEXT_MESSAGE } from "./gate.js";
 import { useLocalGame, useQueue } from "./localHooks.js";
 import { btnPrimary, btnSecondary, input, muted } from "./ui.js";
 
@@ -34,6 +35,7 @@ export function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notSetUp, setNotSetUp] = useState(false);
+  const secure = canDecryptHere(window);
 
   // Check up front so a missing key file says so instead of asking for a password first.
   useEffect(() => {
@@ -44,6 +46,7 @@ export function Login() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!canDecryptHere(window)) return setError(INSECURE_CONTEXT_MESSAGE);
     setBusy(true);
     setError(null);
     try {
@@ -89,11 +92,11 @@ export function Login() {
           required
         />
       </label>
-      <button type="submit" className={btnPrimary} disabled={busy || password.length === 0}>
+      <button type="submit" className={btnPrimary} disabled={busy || !secure || password.length === 0}>
         {busy ? "Unlocking…" : "Unlock"}
       </button>
       <p role="alert" className="min-h-[1.5rem] text-sm text-loss">
-        {error}
+        {secure ? error : INSECURE_CONTEXT_MESSAGE}
       </p>
     </form>
   );
