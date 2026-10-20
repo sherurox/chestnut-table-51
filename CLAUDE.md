@@ -635,6 +635,8 @@ remove sample data and reset `data.json` to the initial file (section 6.3).
 - Run `npm test`, `npm run build` and `npm run check:bundle` before declaring anything done.
 - Commit only when `npm test && npm run build` both pass, chained with `&&` (never `;`), e.g.
   `npm test && npm run build && npm run check:bundle && git commit …`.
+- Run the gate exactly as `npm test && npm run build && npm run check:bundle`, with no pipes
+  (`| tail`, `| head`, `| Select-Object` …): a pipe reports the last command's exit code and hides a failure.
 - Never edit `data/data.json` by hand in a real season (Phase 6 onward). Changes go through the app.
 - Don't add dependencies beyond section 3 without asking.
 - If a rule here seems wrong or incomplete, say so instead of silently working around it.
