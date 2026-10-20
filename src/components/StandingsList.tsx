@@ -8,14 +8,16 @@ import type { ID } from "../domain/types.js";
 import { morphNames, useViewTransitionTo } from "../lib/viewTransitions.js";
 
 // ▲n / ▼n / NEW since the last season game. The arrow and number are the signal; colour only adds to it.
-function RankMove({ change }: { change: RankChange }) {
+// `pulse`: once, after a new game (Home only).
+function RankMove({ change, pulse }: { change: RankChange; pulse: boolean }) {
+  const p = pulse ? "ct-pulse" : "";
   if (change.kind === "new") {
-    return <span className="ct-tag ct-tag-brass shrink-0 text-[0.65rem]">NEW</span>;
+    return <span className={`ct-tag ct-tag-brass shrink-0 text-[0.65rem] ${p}`}>NEW</span>;
   }
   const up = change.kind === "up";
   return (
     <span
-      className={`ct-num shrink-0 text-xs font-semibold ${up ? "text-win" : "text-loss"}`}
+      className={`ct-num shrink-0 text-xs font-semibold ${up ? "text-win" : "text-loss"} ${p}`}
       aria-label={`${up ? "Up" : "Down"} ${change.by} since the last game`}
     >
       <span aria-hidden="true">
@@ -46,7 +48,7 @@ function RowLink({ playerId, morph, children }: { playerId: ID; morph: boolean; 
 // Ranked standings (leaderboard, season detail). Rows rise in with a stagger, amounts count up, and
 // rows slide to their new place when the order changes after a refresh. Names and lines wrap, never
 // truncate. `lines` (leaderboard only) adds today's line under each row, full width. `morph` (leaderboard
-// only): tapping a row morphs its rank and name into the player page.
+// only): tapping a row morphs its rank and name into the player page. `pulse`: rank arrows pulse once.
 export function StandingsList({
   rows,
   me,
@@ -54,6 +56,7 @@ export function StandingsList({
   changes,
   lines,
   morph = false,
+  pulse = false,
 }: {
   rows: StandingsRow[];
   me: ID | null;
@@ -61,6 +64,7 @@ export function StandingsList({
   changes?: Map<ID, RankChange>;
   lines?: Map<ID, string>;
   morph?: boolean;
+  pulse?: boolean;
 }) {
   const list = useRef<HTMLOListElement>(null);
   useFlip(list, [rows.map((r) => r.playerId).join(",")]);
@@ -92,7 +96,7 @@ export function StandingsList({
                             <span className="min-w-0 break-words" style={names ? { viewTransitionName: names.name } : undefined}>
                               {row.name}
                             </span>
-                            {change && <RankMove change={change} />}
+                            {change && <RankMove change={change} pulse={pulse} />}
                             {row.playerId === championId && <Crown className="h-4 w-4 shrink-0" />}
                             {isMe && <span className="text-xs font-semibold text-brass">YOU</span>}
                           </span>

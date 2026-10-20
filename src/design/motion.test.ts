@@ -143,7 +143,8 @@ describe("motion-off CSS", () => {
     expect(mirror).toEqual(rules(media));
   });
 
-  it("covers the screen transitions", () => {
+  it("covers the new pulse and the screen transitions", () => {
+    expect(media).toContain(".ct-pulse");
     expect(media).toContain("::view-transition-group(*)");
   });
 });

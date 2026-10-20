@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { HomeActions } from "../components/HomeActions.js";
 import { LastNightCard } from "../components/LastNightCard.js";
 import { StandingsList } from "../components/StandingsList.js";
@@ -9,8 +9,30 @@ import { seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
 import { activeSeason, todaysLines, visibleGames } from "../lib/selectors.js";
 import { useMe } from "../state/useMe.js";
+import { checkLastSeenGame, latestSeasonGameId } from "../lib/lastSeenGame.js";
+import { motionReduced } from "../design/motion.js";
+import { browserStore } from "../storage/localKeys.js";
 
-function standings(data: Data, me: string | null): ReactNode {
+const PULSE_MS = 1200;
+
+// Rank arrows pulse once when this phone sees a new season game for the first time (never on the very
+// first visit, never twice for the same game). The key is updated even when animations are off.
+function usePulseOnNewGame(data: Data | null): boolean {
+  const season = data ? activeSeason(data) : undefined;
+  const latest = data && season ? latestSeasonGameId(data, season.id) : null;
+  const [pulse, setPulse] = useState(false);
+  useEffect(() => {
+    if (checkLastSeenGame(latest, browserStore()) && !motionReduced()) setPulse(true);
+  }, [latest]);
+  useEffect(() => {
+    if (!pulse) return;
+    const timer = setTimeout(() => setPulse(false), PULSE_MS);
+    return () => clearTimeout(timer);
+  }, [pulse]);
+  return pulse;
+}
+
+function standings(data: Data, me: string | null, pulse: boolean): ReactNode {
   const season = activeSeason(data);
   if (!season) {
     return (
@@ -36,7 +58,7 @@ function standings(data: Data, me: string | null): ReactNode {
           The admin adds players before the first game.
         </EmptyState>
       ) : (
-        <StandingsList rows={rows} me={me} changes={rankChanges(data, season.id)} lines={lines} />
+        <StandingsList rows={rows} me={me} changes={rankChanges(data, season.id)} lines={lines} morph pulse={pulse} />
       )}
     </>
   );
@@ -45,6 +67,7 @@ function standings(data: Data, me: string | null): ReactNode {
 export function Leaderboard() {
   const { data, loading, error } = useData();
   const { me } = useMe();
+  const pulse = usePulseOnNewGame(data);
 
   // The game buttons / "Game on" card come first in every state, so a game on this phone can always be
   // resumed, even offline before any data has loaded.
@@ -60,7 +83,7 @@ export function Leaderboard() {
       ) : (
         <>
           <LastNightCard data={data} />
-          {standings(data, me)}
+          {standings(data, me, pulse)}
         </>
       )}
     </div>
