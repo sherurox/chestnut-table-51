@@ -96,6 +96,12 @@ describe("champion crown (once per phone per season)", () => {
     expect(checkChampionCrown("s2", store, on)).toBe(false);
   });
 
+  it("stale keys from wiped test seasons don't affect a real season (keys are per season id)", () => {
+    const store = memoryStore({ [SEEN_CHAMPION_PREFIX + "s1"]: "1", [SEEN_CHAMPION_PREFIX + "s2"]: "1" });
+    expect(checkChampionCrown("Hq4_Zr8w", store, on)).toBe(true);
+    expect(checkChampionCrown("Hq4_Zr8w", store, on)).toBe(false);
+  });
+
   it("animations off: no drop, and the season counts as seen", () => {
     const store = memoryStore();
     expect(checkChampionCrown("s1", store, off)).toBe(false);

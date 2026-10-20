@@ -27,10 +27,12 @@ function useNewGameCelebration(data: Data | null): { pulse: boolean; confetti: b
   const [pulse, setPulse] = useState(false);
   const [confetti, setConfetti] = useState(false);
   useEffect(() => {
-    const play = newGameCelebration(checkLastSeenGame(latest, browserStore()), !motionReduced(), latest, cardGameId);
+    if (!data) return;
+    const isGame = (id: string) => data.games.some((g) => g.id === id);
+    const play = newGameCelebration(checkLastSeenGame(latest, browserStore(), isGame), !motionReduced(), latest, cardGameId);
     if (play.pulse) setPulse(true);
     if (play.confetti) setConfetti(true);
-  }, [latest, cardGameId]);
+  }, [data, latest, cardGameId]);
   useEffect(() => {
     if (!pulse) return;
     const timer = setTimeout(() => setPulse(false), PULSE_MS);

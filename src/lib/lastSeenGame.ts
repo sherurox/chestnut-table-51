@@ -18,9 +18,20 @@ export function lastSeenDecision(stored: ID | null, latest: ID | null): { pulse:
 }
 
 // Reads the key, applies the decision and writes the key. Returns whether to pulse.
-export function checkLastSeenGame(latest: ID | null, store: Pick<Storage, "getItem" | "setItem"> | null): boolean {
+// isGame: a stored id that is no game in the data (the test data was wiped on 2026-10-20) is forgotten,
+// so this phone acts like one that never saw a game: the next game is remembered without a pulse.
+export function checkLastSeenGame(
+  latest: ID | null,
+  store: (Pick<Storage, "getItem" | "setItem"> & Partial<Pick<Storage, "removeItem">>) | null,
+  isGame: (id: ID) => boolean = () => true,
+): boolean {
   try {
-    const { pulse, store: next } = lastSeenDecision(store?.getItem(LAST_SEEN_GAME_KEY) ?? null, latest);
+    let stored = store?.getItem(LAST_SEEN_GAME_KEY) ?? null;
+    if (stored !== null && !isGame(stored)) {
+      store?.removeItem?.(LAST_SEEN_GAME_KEY);
+      stored = null;
+    }
+    const { pulse, store: next } = lastSeenDecision(stored, latest);
     if (next !== null) store?.setItem(LAST_SEEN_GAME_KEY, next);
     return pulse;
   } catch {

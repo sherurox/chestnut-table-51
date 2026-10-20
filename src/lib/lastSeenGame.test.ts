@@ -4,7 +4,12 @@ import { checkLastSeenGame, LAST_SEEN_GAME_KEY, lastSeenDecision, latestSeasonGa
 
 function memoryStore(initial: Record<string, string> = {}) {
   const map = new Map(Object.entries(initial));
-  return { getItem: (k: string) => map.get(k) ?? null, setItem: (k: string, v: string) => void map.set(k, v), map };
+  return {
+    getItem: (k: string) => map.get(k) ?? null,
+    setItem: (k: string, v: string) => void map.set(k, v),
+    removeItem: (k: string) => void map.delete(k),
+    map,
+  };
 }
 
 const game = (id: string, date: string, extra: Partial<Game> = {}): Game => ({
@@ -84,5 +89,23 @@ describe("lastSeenGame", () => {
     };
     expect(checkLastSeenGame("g2", blocked)).toBe(false);
     expect(checkLastSeenGame("g2", null)).toBe(false);
+  });
+
+  it("a stored game that no longer exists (test data wiped) is forgotten: the next game doesn't pulse", () => {
+    const wiped = data([]);
+    const isGame = (id: string) => wiped.games.some((g) => g.id === id);
+    const store = memoryStore({ [LAST_SEEN_GAME_KEY]: "g9" });
+    expect(checkLastSeenGame(null, store, isGame)).toBe(false);
+    expect(store.map.has(LAST_SEEN_GAME_KEY)).toBe(false);
+
+    const first = data([game("Qw7_kLm2", "2026-10-21")]);
+    expect(checkLastSeenGame("Qw7_kLm2", store, (id) => first.games.some((g) => g.id === id))).toBe(false);
+    expect(store.map.get(LAST_SEEN_GAME_KEY)).toBe("Qw7_kLm2");
+  });
+
+  it("a stored game that still exists (even deleted) is kept and still pulses for a newer game", () => {
+    const d = data([game("g1", "2026-10-01", { status: "deleted" }), game("g2", "2026-10-03")]);
+    const store = memoryStore({ [LAST_SEEN_GAME_KEY]: "g1" });
+    expect(checkLastSeenGame("g2", store, (id) => d.games.some((g) => g.id === id))).toBe(true);
   });
 });
