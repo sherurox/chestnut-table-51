@@ -5,8 +5,8 @@ import type { KeyValueStore } from "../storage/localKeys.js";
 // localStorage keys behind them are non-secret and update even when animations are off.
 
 // One new-game signal for Home, shared by the rank-arrow pulse and the winner confetti. isNew comes from
-// checkLastSeenGame (read once, before ct51.lastSeenGame is updated); latest is the new season game it is
-// about. The pulse follows the signal alone; the confetti also needs the "Last night" card to be showing
+// checkNewGame (read once, before the ct51.seenGamesUpTo watermark is updated); latest is the new season
+// game it is about. The pulse follows the signal alone; the confetti also needs the "Last night" card to be showing
 // that game (cardGameId), so it never bursts over a newer incognito game.
 export function newGameCelebration(
   isNew: boolean,

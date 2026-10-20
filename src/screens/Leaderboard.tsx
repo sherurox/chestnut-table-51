@@ -11,30 +11,33 @@ import { champion, seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
 import { activeSeason, allSeasonsNewestFirst, todaysLines, visibleGames } from "../lib/selectors.js";
 import { useMe } from "../state/useMe.js";
-import { checkLastSeenGame, latestSeasonGameId } from "../lib/lastSeenGame.js";
+import { checkNewGame, latestSeasonGame } from "../lib/lastSeenGame.js";
 import { motionReduced } from "../design/motion.js";
 import { newGameCelebration } from "../lib/celebrations.js";
 import { browserStore } from "../storage/localKeys.js";
 
 const PULSE_MS = 1200;
 
-// One new-game signal for Home: when this phone sees a new season game for the first time (never on the
-// very first visit, never twice for the same game) the rank arrows pulse once and confetti bursts over
-// the "Last night" card (only when the card is showing that game, not a newer incognito one). It is read
-// once, before the key is updated, and the key is updated even when animations are off.
+// One new-game signal for Home: when this phone sees a season game created after every game it has seen
+// before (never on the very first visit, never twice, never for an edit, delete or restore) the rank
+// arrows pulse once and confetti bursts over the "Last night" card (only when the card is showing that
+// game, not a newer incognito one). It is read once, before the watermark is updated, and the watermark
+// is updated even when animations are off.
 function useNewGameCelebration(data: Data | null): { pulse: boolean; confetti: boolean; confettiDone: () => void } {
   const season = data ? activeSeason(data) : undefined;
-  const latest = data && season ? latestSeasonGameId(data, season.id) : null;
+  const latestGame = data && season ? latestSeasonGame(data, season.id) : null;
+  const latest = latestGame?.id ?? null;
   const cardGameId = data ? (latestFinishedGame(data)?.id ?? null) : null;
   const [pulse, setPulse] = useState(false);
   const [confetti, setConfetti] = useState(false);
   useEffect(() => {
     if (!data) return;
-    const isGame = (id: string) => data.games.some((g) => g.id === id);
-    const play = newGameCelebration(checkLastSeenGame(latest, browserStore(), isGame), !motionReduced(), latest, cardGameId);
+    const createdAtOf = (id: string) => data.games.find((g) => g.id === id)?.createdAt ?? null;
+    const isNew = checkNewGame(latestGame, browserStore(), createdAtOf);
+    const play = newGameCelebration(isNew, !motionReduced(), latest, cardGameId);
     if (play.pulse) setPulse(true);
     if (play.confetti) setConfetti(true);
-  }, [data, latest, cardGameId]);
+  }, [data, latestGame, latest, cardGameId]);
   useEffect(() => {
     if (!pulse) return;
     const timer = setTimeout(() => setPulse(false), PULSE_MS);

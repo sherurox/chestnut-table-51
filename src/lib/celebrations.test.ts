@@ -9,7 +9,8 @@ import {
   newGameCelebration,
   SEEN_CHAMPION_PREFIX,
 } from "./celebrations.js";
-import { checkLastSeenGame, LAST_SEEN_GAME_KEY } from "./lastSeenGame.js";
+import { checkNewGame, SEEN_WATERMARK_KEY } from "./lastSeenGame.js";
+import type { Game } from "../domain/types.js";
 
 function memoryStore(initial: Record<string, string> = {}) {
   const map = new Map(Object.entries(initial));
@@ -19,25 +20,30 @@ function memoryStore(initial: Record<string, string> = {}) {
 const on = animationsAllowed({ osReduced: false, appOn: true }, "/");
 const off = animationsAllowed({ osReduced: false, appOn: false }, "/");
 
-// What Home does on open: read the signal once (before the key updates), then decide both effects.
+const CREATED: Record<string, string> = { g1: "2026-10-16T01:00:00.000Z", g2: "2026-10-17T01:00:00.000Z" };
+const T1 = CREATED.g1!;
+const T2 = CREATED.g2!;
+const gameWith = (id: string) => ({ id, createdAt: CREATED[id]! }) as Game;
+
+// What Home does on open: read the signal once (before the watermark updates), then decide both effects.
 // card: the game the "Last night" card shows (defaults to the new season game itself).
 const homeOpens = (latest: string | null, store: ReturnType<typeof memoryStore>, allowed: boolean, card: string | null = latest) =>
-  newGameCelebration(checkLastSeenGame(latest, store), allowed, latest, card);
+  newGameCelebration(checkNewGame(latest ? gameWith(latest) : null, store, (id) => CREATED[id] ?? null), allowed, latest, card);
 
 describe("the shared new-game signal (rank pulse + winner confetti)", () => {
-  it("first ever visit: neither plays, the key is set", () => {
+  it("first ever visit: neither plays, the watermark is set", () => {
     const store = memoryStore();
     expect(homeOpens("g1", store, on)).toEqual({ pulse: false, confetti: false });
-    expect(store.map.get(LAST_SEEN_GAME_KEY)).toBe("g1");
+    expect(store.map.get(SEEN_WATERMARK_KEY)).toBe(T1);
   });
 
   it("same game as last visit: neither plays", () => {
-    const store = memoryStore({ [LAST_SEEN_GAME_KEY]: "g1" });
+    const store = memoryStore({ [SEEN_WATERMARK_KEY]: T1 });
     expect(homeOpens("g1", store, on)).toEqual({ pulse: false, confetti: false });
   });
 
   it("a new game: both play, once, and agree while the card shows that game", () => {
-    const store = memoryStore({ [LAST_SEEN_GAME_KEY]: "g1" });
+    const store = memoryStore({ [SEEN_WATERMARK_KEY]: T1 });
     expect(homeOpens("g2", store, on)).toEqual({ pulse: true, confetti: true });
     expect(homeOpens("g2", store, on)).toEqual({ pulse: false, confetti: false });
     for (const isNew of [true, false]) {
@@ -49,16 +55,16 @@ describe("the shared new-game signal (rank pulse + winner confetti)", () => {
   });
 
   it("the card shows a newer incognito game: arrows still pulse, no confetti", () => {
-    const store = memoryStore({ [LAST_SEEN_GAME_KEY]: "g1" });
+    const store = memoryStore({ [SEEN_WATERMARK_KEY]: T1 });
     expect(homeOpens("g2", store, on, "incognito-3")).toEqual({ pulse: true, confetti: false });
-    expect(store.map.get(LAST_SEEN_GAME_KEY)).toBe("g2");
+    expect(store.map.get(SEEN_WATERMARK_KEY)).toBe(T2);
     expect(newGameCelebration(true, true, null, null)).toEqual({ pulse: true, confetti: false });
   });
 
   it("animations off: no confetti (or pulse), but the key still updates", () => {
-    const store = memoryStore({ [LAST_SEEN_GAME_KEY]: "g1" });
+    const store = memoryStore({ [SEEN_WATERMARK_KEY]: T1 });
     expect(homeOpens("g2", store, off)).toEqual({ pulse: false, confetti: false });
-    expect(store.map.get(LAST_SEEN_GAME_KEY)).toBe("g2");
+    expect(store.map.get(SEEN_WATERMARK_KEY)).toBe(T2);
     // Turning animations back on doesn't replay an old game.
     expect(homeOpens("g2", store, on)).toEqual({ pulse: false, confetti: false });
   });
