@@ -8,4 +8,11 @@ describe("live data/data.json", () => {
   it("passes migrate() + schema validation", () => {
     expect(() => migrate(liveRaw)).not.toThrow();
   });
+
+  // Since the test-data reset (2026-10-20) every id comes from newId(): 8 random characters, never "p1"/"s1".
+  it("uses only random newId() ids, no sequential test ids", () => {
+    const data = migrate(liveRaw);
+    const ids = [...data.players, ...data.seasons, ...data.games].map((x) => x.id);
+    for (const id of ids) expect(id).toMatch(/^[A-Za-z0-9_-]{8}$/);
+  });
 });

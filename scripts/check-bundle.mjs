@@ -2,7 +2,8 @@
 // Post-build check (run after `npm run build`, locally and in CI). Fails if:
 //  - admin code leaked into the viewer entry chunk (admin routes must be lazy-loaded, CLAUDE.md §8),
 //  - there is no separate admin chunk,
-//  - the dev-only ?forceConflict=1 hook survived into the production bundle (CLAUDE.md §8.2),
+//  - the dev-only ?forceConflict=1 hook or #/style preview survived into the production bundle (CLAUDE.md §8.2),
+//  - test data (the seed fixture's sequential player ids) is in the bundle,
 //  - anything token-shaped is in dist/,
 //  - the service worker precaches the admin chunk, lacks the admin runtime-cache rule (offline games,
 //    CLAUDE.md §8.1), caches api.github.com/data at runtime, or the admin chunk imports a chunk that
@@ -25,6 +26,9 @@ const ADMIN_MARKERS = [
   "Add a late player",
 ];
 const DEV_ONLY_MARKERS = ["forceConflict", "ct51-style-preview"];
+// Test data (src/domain/__fixtures__/seed.json, the wiped sample data) uses sequential player ids like
+// "p1"; real players get random 8-character ids and are only ever fetched live, never bundled.
+const TEST_DATA_PATTERN = /"?id"?\s*:\s*"p\d+"\s*,\s*"?name"?\s*:/;
 // Built by concatenation so this file doesn't match the secret scan.
 const TOKEN_PATTERNS = [new RegExp("github" + "_pat_[A-Za-z0-9_]{20,}"), new RegExp("gh" + "p_[A-Za-z0-9]{20,}")];
 
@@ -60,6 +64,7 @@ for (const file of jsFiles) {
   for (const marker of DEV_ONLY_MARKERS) {
     if (text.includes(marker)) failures.push(`dev-only code in production bundle ${name}: "${marker}"`);
   }
+  if (TEST_DATA_PATTERN.test(text)) failures.push(`test data (sequential player ids) in production bundle ${name}`);
   for (const pattern of TOKEN_PATTERNS) {
     if (pattern.test(text)) failures.push(`token-shaped string in ${name}`);
   }
