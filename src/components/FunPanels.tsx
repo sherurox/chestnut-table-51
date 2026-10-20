@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import { Link } from "react-router-dom";
 import { Money } from "../design/components.js";
 import type { Award, AwardKind, Badge, FormMark, Nemesis } from "../domain/fun.js";
@@ -35,7 +36,7 @@ export function FormDots({ form }: { form: FormMark[] }) {
 
 // Tier or situation name, today's line and recent form. `today` is undefined when the player has no
 // leaderboard row this season (a guest or archived player with no season games).
-export function TitleCard({ today, form }: { today: TodaysLine | undefined; form: FormMark[] }) {
+export function TitleCard({ today, form, ref }: { today: TodaysLine | undefined; form: FormMark[]; ref?: Ref<HTMLElement> }) {
   const tier = today?.mood.tier ?? "freshBlood";
   const situation = today?.mood.situation ?? null;
   const games = today?.mood.stats.games ?? 0;
@@ -43,7 +44,7 @@ export function TitleCard({ today, form }: { today: TodaysLine | undefined; form
   const toGo = FRESH_BLOOD_GAMES - games;
 
   return (
-    <section className="ct-panel ct-panel-brass mb-4 flex flex-col gap-2 p-4" aria-label="Title">
+    <section ref={ref} className="ct-panel ct-panel-brass mb-4 flex flex-col gap-2 p-4" aria-label="Title">
       <span className="flex flex-wrap items-center gap-2">
         <span className="ct-display text-xl font-semibold">{situation ? SITUATION_NAMES[situation] : TIER_NAMES[tier]}</span>
         {situation && <span className="ct-tag">{TIER_NAMES[tier]}</span>}

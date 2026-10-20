@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode, type Ref } from "react";
 import { Link, useParams, useViewTransitionState } from "react-router-dom";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AwardsList, BadgeList, NemesisCard, SectionLabel, TitleCard } from "../components/FunPanels.js";
 import { EmptyState, Loading, Money, PageTitle, RankBadge } from "../design/components.js";
+import { createOnce, motionReduced } from "../design/motion.js";
 import { seasonStandings } from "../domain/standings.js";
 import { morphNames } from "../lib/viewTransitions.js";
 import { useData } from "../state/DataContext.js";
@@ -36,13 +37,13 @@ function streakText(streak: Streak | null): string {
   return `${streak.length} ${streak.length === 1 ? word : `${word}${word === "loss" ? "es" : "s"}`}`;
 }
 
-function PlayerSeasonSection({ data, seasonId, playerId }: { data: Data; seasonId: string; playerId: string }) {
+function PlayerSeasonSection({ data, seasonId, playerId, titleRef }: { data: Data; seasonId: string; playerId: string; titleRef: Ref<HTMLElement> }) {
   const points = netWinningsOverTime(data, seasonId, playerId);
   const stats = playerSeasonStats(data, seasonId, playerId);
   const today = todaysLines(data, seasonId).get(playerId);
   const fresh = (today?.mood.tier ?? "freshBlood") === "freshBlood";
 
-  const titleCard = <TitleCard today={today} form={stats.form} />;
+  const titleCard = <TitleCard ref={titleRef} today={today} form={stats.form} />;
   if (points.length === 0) {
     return (
       <>
@@ -154,13 +155,28 @@ function PlayerAwards({ data, seasonId, playerId }: { data: Data; seasonId: stri
   );
 }
 
+const TITLE_FLIP: Keyframe[] = [
+  { opacity: 0, transform: "perspective(800px) rotateY(-80deg)" },
+  { opacity: 1, transform: "perspective(800px) rotateY(0deg)" },
+];
+
 export function PlayerPage() {
   const { id } = useParams();
   const { data, loading } = useData();
+  const titleRef = useRef<HTMLElement>(null);
+  const flipOnce = useRef(createOnce());
   // Coming from (or going back to) the leaderboard: the header's rank and name morph with that row.
   const morph = useViewTransitionState("/");
   const player = data && id ? playerById(data, id) : undefined;
   const season = data ? activeSeason(data) : undefined;
+  const ready = Boolean(player && season);
+
+  // The title card flips in once when the page opens (per player), never on re-renders or a refresh.
+  useLayoutEffect(() => {
+    const el = titleRef.current;
+    if (!el || !id || !flipOnce.current(id) || motionReduced()) return;
+    el.animate(TITLE_FLIP, { duration: 450, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" });
+  }, [id, ready]);
 
   if (loading && !data) return <Loading />;
   if (!data || !id || !player) {
@@ -199,7 +215,7 @@ export function PlayerPage() {
         }
       />
       {season ? (
-        <PlayerSeasonSection data={data} seasonId={season.id} playerId={id} />
+        <PlayerSeasonSection data={data} seasonId={season.id} playerId={id} titleRef={titleRef} />
       ) : (
         <div className="mb-4">
           <EmptyState suit="♠" title="No active season" />

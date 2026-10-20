@@ -78,6 +78,17 @@ export function isInstant(pathname: string, reduced: boolean): boolean {
   return !animationsAllowed({ osReduced: reduced, appOn: true }, pathname);
 }
 
+// Runs `key`'s one-time entrance only the first time that key is shown in a row (the player page title
+// flip: once per page open, never on re-renders, remounts or a data refresh).
+export function createOnce(): (key: string) => boolean {
+  let last: string | null = null;
+  return (key) => {
+    if (key === last) return false;
+    last = key;
+    return true;
+  };
+}
+
 // easeOutCubic between `from` and `to` at progress t ∈ [0, 1], rounded to whole dollars.
 export function countUpValue(from: number, to: number, t: number): number {
   const p = Math.min(1, Math.max(0, t));

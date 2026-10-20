@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   animationsAllowed,
   countUpValue,
+  createOnce,
   currentMotionEnv,
   isInstant,
   MOTION_KEY,
@@ -96,6 +97,22 @@ describe("in-app Animations setting (ct51.motion)", () => {
       },
     };
     withStorage(blocked, () => expect(readMotionSetting()).toBe(true));
+  });
+});
+
+describe("createOnce (player page title flip)", () => {
+  it("flips once per page open: not on re-renders, remounts or a data refresh", () => {
+    const once = createOnce();
+    expect(once("p1")).toBe(true); // page opens
+    expect(once("p1")).toBe(false); // re-render / refresh / title card remounted
+    expect(once("p1")).toBe(false);
+    expect(once("p2")).toBe(true); // a different player (nemesis link)
+    expect(once("p1")).toBe(true); // and back to the first: a new open
+  });
+
+  it("each page instance starts fresh", () => {
+    expect(createOnce()("p1")).toBe(true);
+    expect(createOnce()("p1")).toBe(true);
   });
 });
 
