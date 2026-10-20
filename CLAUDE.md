@@ -650,5 +650,11 @@ data are cleaned up on load. The test fixtures (`src/domain/__fixtures__/seed.js
   (`| tail`, `| head`, `| Select-Object` …): a pipe reports the last command's exit code and hides a failure.
 - Never edit `data/data.json` by hand. This applies from the reset on 2026-10-20 (section 12, Phase 6)
   onward: the real season is live and every change goes through the app.
+  **One owner-approved exception (2026-10-20):** `scripts/import-season1.mjs` imported the real Season 1
+  games played Oct 15–19 before the app was in use (commit "Import: Season 1 games (Oct 15–19)"). It
+  builds the data with the domain functions (`newId`, `addPlayer`, `createFirstSeason`, the live-game
+  flow with the strict chip check), runs `migrate` + validation, asserts the expected season totals, and
+  refuses to run unless `data.json` is the empty §6.3 file. It is a record, not a pattern: never rerun it
+  or write another import without the owner's approval.
 - Don't add dependencies beyond section 3 without asking.
 - If a rule here seems wrong or incomplete, say so instead of silently working around it.
