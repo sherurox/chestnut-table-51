@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Splash, Wordmark } from "../design/components.js";
 import { IconLock, IconRefresh } from "../design/icons.js";
-import { prefersReducedMotion } from "../design/motion.js";
+import { INSTANT_PATHS, prefersReducedMotion } from "../design/motion.js";
 import { useData } from "../state/DataContext.js";
 import { useTheme } from "../state/useTheme.js";
 import { isUpdateReady, reloadIntoNewVersion, reloader, subscribeUpdateReady } from "../lib/appUpdate.js";
@@ -16,8 +16,6 @@ const NAV_ITEMS = [
   { to: "/more", label: "More", suit: "♥" },
 ];
 
-// The live game and end screens are where the admin taps fast: they never animate in.
-const INSTANT_PATHS = ["/admin/live", "/admin/end"];
 const INTRO_KEY = "ct51.introShown";
 
 // The intro plays once per app launch (tab session), never when launching straight into a live game.

@@ -20,6 +20,14 @@ export function useReducedMotion(): boolean {
   return useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => false);
 }
 
+// The live game and end screens are where the admin taps fast: nothing animates there.
+export const INSTANT_PATHS = ["/admin/live", "/admin/end"];
+
+// true = show and hide things at once, no transitions or count-ups (live/end screens, or reduced motion).
+export function isInstant(pathname: string, reduced: boolean): boolean {
+  return reduced || INSTANT_PATHS.includes(pathname);
+}
+
 // easeOutCubic between `from` and `to` at progress t ∈ [0, 1], rounded to whole dollars.
 export function countUpValue(from: number, to: number, t: number): number {
   const p = Math.min(1, Math.max(0, t));

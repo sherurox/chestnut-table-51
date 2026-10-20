@@ -554,7 +554,7 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
   change (`useFlip`); the chip tap "pop" ring + 12ms vibrate on Android (`chipFeedback`).
 - Animation is visual only: values, order and handlers are already final, and nothing ever delays input.
   Chip feedback runs after the buy-in is recorded.
-- **`#/admin/live` and `#/admin/end` never animate** (`INSTANT_PATHS` in `AppShell.tsx`): no screen
+- **`#/admin/live` and `#/admin/end` never animate** (`INSTANT_PATHS` / `isInstant` in `motion.ts`): no screen
   transition, entrance, count-up or FLIP. The only motion there is the chip tap pop.
 - `prefers-reduced-motion: reduce` turns all of it off: no splash (nothing drawn), no transitions,
   entrances, count-ups, FLIP, chip pop or spinner; values show final immediately. Any new animation must
