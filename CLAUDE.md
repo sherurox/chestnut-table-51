@@ -50,7 +50,7 @@ daily home poker game played between friends with **play money** (shown as dolla
 | Fonts | `@fontsource/playfair-display` + `@fontsource/inter` (self-hosted, Latin subset; section 11.1) |
 | PWA | vite-plugin-pwa (installable, offline app shell) |
 | Tests | Vitest |
-| Dev https | `@vitejs/plugin-basic-ssl` (dev server only, self-signed cert: Web Crypto/admin login needs https on a phone over the LAN) |
+| Dev https | `@vitejs/plugin-basic-ssl` (dev server only, self-signed cert: Web Crypto/admin login needs https on a phone over the LAN). `DEV_HTTP=1` skips it and serves plain http on `localhost:5180` only, for desktop review |
 | Crypto | Web Crypto API (browser) and Node's `crypto.webcrypto` (setup script) |
 | Hosting | GitHub Pages, deployed by GitHub Actions |
 | Storage | `data/data.json` in this repo, read and written via the GitHub REST API |

@@ -7,6 +7,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 const DEV_DATA_PATH = "/__dev-data__/data.json";
+// DEV_HTTP=1: a plain-http dev server on http://localhost:5180 for reviewing in a desktop browser
+// (localhost counts as a secure context, so the admin login still works). Never reachable from the LAN.
+const DEV_HTTP = process.env.DEV_HTTP === "1";
 const dataFilePath = fileURLToPath(new URL("./data/data.json", import.meta.url));
 
 function devDataMiddleware(): Plugin {
@@ -28,6 +31,15 @@ function devDataMiddleware(): Plugin {
   };
 }
 
+// A plugin hook, so it wins over a `--host` on the command line: DEV_HTTP stays on this computer.
+function devHttpServer(): Plugin {
+  return {
+    name: "ct51-dev-http",
+    apply: "serve",
+    config: () => ({ server: { host: "localhost", port: 5180, strictPort: true } }),
+  };
+}
+
 export default defineConfig({
   base: "/chestnut-table-51/",
   plugins: [
@@ -35,8 +47,8 @@ export default defineConfig({
     tailwindcss(),
     devDataMiddleware(),
     // Dev server only: a self-signed https certificate, so the admin login (Web Crypto needs a secure
-    // context) works when testing on a phone over the LAN. Production builds are unaffected.
-    { ...basicSsl(), apply: "serve" },
+    // context) works when testing on a phone over the LAN. Production builds are unaffected. DEV_HTTP=1 skips it.
+    ...(DEV_HTTP ? [devHttpServer()] : [{ ...basicSsl(), apply: "serve" as const }]),
     VitePWA({
       registerType: "autoUpdate",
       // Registered by src/lib/appUpdate.ts, which decides whether a new version reloads the page or waits
