@@ -627,6 +627,13 @@ Theme toggle, icons, iOS install hint, empty states, accessibility pass, loading
 remove sample data and reset `data.json` to the initial file (section 6.3).
 **Done when** the owner signs off after a real game night.
 
+**Reset (2026-10-20):** all test data was wiped in the commit "Reset: wipe test data, start real Season 1":
+`data.json` is back to the section 6.3 initial file (preset buy-ins kept), and the real Season 1 is
+created through the app. Git history was not rewritten; the History screen hides the older test commits
+via `HISTORY_SINCE` (section 8.3). Phones with stale `ct51.me` / `ct51.lastSeenGame` keys from the test
+data are cleaned up on load. The test fixtures (`src/domain/__fixtures__/seed.json`) and the dev-only
+`#/style` sample data stay; `npm run check:bundle` proves neither reaches production.
+
 ---
 
 ## 13. Working agreements for Claude Code
@@ -640,6 +647,7 @@ remove sample data and reset `data.json` to the initial file (section 6.3).
   `npm test && npm run build && npm run check:bundle && git commit …`.
 - Run the gate exactly as `npm test && npm run build && npm run check:bundle`, with no pipes
   (`| tail`, `| head`, `| Select-Object` …): a pipe reports the last command's exit code and hides a failure.
-- Never edit `data/data.json` by hand in a real season (Phase 6 onward). Changes go through the app.
+- Never edit `data/data.json` by hand. This applies from the reset on 2026-10-20 (section 12, Phase 6)
+  onward: the real season is live and every change goes through the app.
 - Don't add dependencies beyond section 3 without asking.
 - If a rule here seems wrong or incomplete, say so instead of silently working around it.
