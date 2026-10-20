@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Data } from "../domain/types.js";
-import { fetchCommitHistory, loadData, setAuthTokenProvider } from "./github.js";
+import { commitTitle, fetchCommitHistory, loadData, setAuthTokenProvider } from "./github.js";
 import { HISTORY_SINCE } from "../config.js";
 
 const TOKEN = "fake-token-for-tests-read-path-1";
@@ -100,5 +100,28 @@ describe("fetchCommitHistory and 304s", () => {
     expect(url.searchParams.get("since")).toBe(HISTORY_SINCE);
     expect(url.searchParams.get("path")).toBe("data/data.json");
     expect(new Date(HISTORY_SINCE).toISOString()).toBe("2026-10-20T04:11:01.000Z");
+  });
+});
+
+describe("History shows only the first line of each commit (commitTitle)", () => {
+  it("drops the body and trailer lines like Co-Authored-By", () => {
+    expect(commitTitle("Admin: ended Season 1")).toBe("Admin: ended Season 1");
+    expect(commitTitle("Admin: started Season 2 (closed Season 1)\n\nCo-Authored-By: Someone <x@example.com>")).toBe(
+      "Admin: started Season 2 (closed Season 1)",
+    );
+    expect(commitTitle("Reset: wipe test data\r\n\r\nLonger body\r\nCo-Authored-By: X <y>")).toBe("Reset: wipe test data");
+    expect(commitTitle("  Admin: x  \nbody")).toBe("Admin: x");
+    expect(commitTitle("")).toBe("");
+  });
+
+  it("fetchCommitHistory returns first lines only", async () => {
+    const message = "Admin: renamed season Season 1 to Diwali Cup\n\nCo-Authored-By: Claude <noreply@anthropic.com>";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => json(200, [{ sha: "abc", html_url: "u", commit: { message, author: { date: "d" } } }])),
+    );
+    await expect(fetchCommitHistory()).resolves.toEqual([
+      { sha: "abc", message: "Admin: renamed season Season 1 to Diwali Cup", date: "d", url: "u" },
+    ]);
   });
 });

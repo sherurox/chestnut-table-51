@@ -156,10 +156,10 @@ describe("sandbox reads, login and history", () => {
     expectNoGitHubAndNoToken();
   }, 30_000);
 
-  it("loadData and the history read the sandbox, even when logged in", async () => {
+  it("loadData and the history read the sandbox, even when logged in; history shows first lines only", async () => {
     const pass = (await readFile(paths.passphrase, "utf-8")).trim();
     await login(pass, fetchFn);
-    await saveChange(addPlayer({ id: "R0hanR0h", name: "Rohan", type: "regular", now: NOW }), "Admin: added player Rohan", {
+    await saveChange(addPlayer({ id: "R0hanR0h", name: "Rohan", type: "regular", now: NOW }), "Admin: added player Rohan\n\nCo-Authored-By: X <y@z>", {
       fetch: fetchFn,
       token: SANDBOX_DUMMY_TOKEN,
     });

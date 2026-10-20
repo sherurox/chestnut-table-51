@@ -176,10 +176,15 @@ export async function loadData(): Promise<LoadedData> {
   return { data, lastUpdated, fromCache: false, error: null };
 }
 
+// The History screen shows only a commit's first line: never its body or trailers like "Co-Authored-By".
+export function commitTitle(message: string): string {
+  return message.split(/\r?\n/, 1)[0]!.trim();
+}
+
 export async function fetchCommitHistory(limit = 50): Promise<CommitEntry[]> {
   if (import.meta.env.DEV && __CT51_SANDBOX__) {
     const commits = await sandboxHistory(fetch);
-    return commits.slice(0, limit).map((c) => ({ sha: c.sha, message: c.message, date: c.date, url: "" }));
+    return commits.slice(0, limit).map((c) => ({ sha: c.sha, message: commitTitle(c.message), date: c.date, url: "" }));
   }
   const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/commits?path=${CONFIG.dataPath}&since=${encodeURIComponent(HISTORY_SINCE)}&per_page=${limit}`;
   const res = await fetchRevalidated(url);
@@ -193,7 +198,7 @@ export async function fetchCommitHistory(limit = 50): Promise<CommitEntry[]> {
   }>;
   return commits.map((c) => ({
     sha: c.sha,
-    message: c.commit?.message ?? "",
+    message: commitTitle(c.commit?.message ?? ""),
     date: c.commit?.author?.date ?? "",
     url: c.html_url,
   }));
