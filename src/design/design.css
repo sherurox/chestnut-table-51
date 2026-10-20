@@ -334,6 +334,15 @@
 .ct-row:last-child {
   border-bottom: 0;
 }
+/* Today's line under a leaderboard row, title card, etc.: quieter than body text. */
+.ct-line {
+  font-size: 0.8125rem;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--ct-text-muted);
+  overflow-wrap: anywhere;
+}
+
 .ct-row-me {
   box-shadow: inset 3px 0 0 var(--ct-brass);
   background: linear-gradient(90deg, rgba(214, 179, 94, 0.12), transparent 70%);
