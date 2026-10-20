@@ -13,6 +13,13 @@ export function latestFinishedGame(data: Data): Game | null {
   return finished[0] ?? null;
 }
 
+// The game's season name when it isn't the active season (e.g. a new season with no games yet, or no
+// season active after End season), so Home's last-game card says which season it was from. Else null.
+export function otherSeasonName(data: Data, game: Game): string | null {
+  const season = data.seasons.find((s) => s.id === game.seasonId);
+  return season && season.status !== "active" ? season.name : null;
+}
+
 export interface NightPlayer {
   playerId: ID;
   name: string;

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Crown, Money } from "../design/components.js";
-import { latestFinishedGame, nightSummary, relativeNight } from "../domain/highlights.js";
+import { latestFinishedGame, nightSummary, otherSeasonName, relativeNight } from "../domain/highlights.js";
 import type { Data } from "../domain/types.js";
 import { shareDate } from "../lib/share.js";
 import { Confetti } from "./Confetti.js";
@@ -11,13 +11,15 @@ export function LastNightCard({ data, confetti = false, onConfettiDone }: { data
   const game = latestFinishedGame(data);
   if (!game) return null;
   const { playerCount, winners, roughNight } = nightSummary(data, game);
-  const label = relativeNight(game.date) ?? shareDate(game.date);
+  const when = relativeNight(game.date) ?? shareDate(game.date);
+  const seasonName = otherSeasonName(data, game);
+  const label = seasonName ? `${seasonName} · ${when}` : when;
 
   return (
     <section aria-label="Last game" className="relative mb-4">
       <Link to={`/games/${game.id}`} className="ct-panel ct-focus flex min-h-[56px] flex-col gap-2 p-4">
         <span className="flex flex-wrap items-center justify-between gap-2">
-          <span className="ct-display text-lg font-semibold">{label}</span>
+          <span className="ct-display min-w-0 text-lg font-semibold break-words">{label}</span>
           <span className="flex flex-wrap items-center gap-1.5 text-sm text-ink-muted">
             {game.mode === "incognito" && <span className="ct-tag">♣ Incognito</span>}
             {playerCount} players

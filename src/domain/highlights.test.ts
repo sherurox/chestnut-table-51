@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { latestFinishedGame, nightSummary, rankChanges, relativeNight } from "./highlights.js";
+import { latestFinishedGame, nightSummary, otherSeasonName, rankChanges, relativeNight } from "./highlights.js";
 import type { Data, Game, Player } from "./types.js";
 
 function player(id: string, name: string, overrides: Partial<Player> = {}): Player {
@@ -194,5 +194,23 @@ describe("rankChanges", () => {
     const second = game("g2", "2026-10-11", { a: 500, b: -500 }, { createdAt: "2026-10-11T23:00:00.000Z" });
     // Same date: g2 was saved later, so it is the last game. Before: Bea +2000; after: Bea +1500.
     expect(rankChanges(data([first, second], ab), "s1").size).toBe(0);
+  });
+});
+
+describe("otherSeasonName (Home's last-game card label)", () => {
+  const seasons = (s1: "active" | "closed", s2?: "active") => [
+    { id: "s1", name: "Season 1", status: s1, startedOn: "2026-10-15", ...(s1 === "closed" ? { endedOn: "2026-10-20" } : {}) },
+    ...(s2 ? [{ id: "s2", name: "Season 2", status: s2, startedOn: "2026-10-20" }] : []),
+  ];
+  const g = game("g1", "2026-10-19", { a: 100, b: -100 });
+  const withSeasons = (list: Data["seasons"]): Data => ({ ...data([g]), seasons: list });
+
+  it("is null for a game in the active season", () => {
+    expect(otherSeasonName(withSeasons(seasons("active")), g)).toBeNull();
+  });
+
+  it("names the season when it isn't the active one: new season started, or none active", () => {
+    expect(otherSeasonName(withSeasons(seasons("closed", "active")), g)).toBe("Season 1");
+    expect(otherSeasonName(withSeasons(seasons("closed")), g)).toBe("Season 1");
   });
 });
