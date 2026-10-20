@@ -1,16 +1,16 @@
 import { gameResult } from "../domain/results.js";
 import { seasonStandings } from "../domain/standings.js";
 import type { Data, Game } from "../domain/types.js";
-import { formatSignedDollars } from "./format.js";
+import { calendarDate, formatSignedDollars } from "./format.js";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // "2026-10-24" → "Sat 24 Oct", read as a calendar date (no time zone shift).
 export function shareDate(isoDate: string): string {
-  const [y, m, d] = isoDate.split("-").map(Number) as [number, number, number];
-  const date = new Date(y, m - 1, d);
-  return `${DAYS[date.getDay()]} ${d} ${MONTHS[m - 1]}`;
+  const date = calendarDate(isoDate);
+  if (!date) return isoDate;
+  return `${DAYS[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()]}`;
 }
 
 // Plain text for the group chat after a save (CLAUDE.md §9.8). `data` must already include the game.

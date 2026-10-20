@@ -4,7 +4,7 @@ import type { Award, AwardKind, Badge, FormMark, Nemesis } from "../domain/fun.j
 import type { Data, ID } from "../domain/types.js";
 import { AWARDS, BADGES, SITUATION_NAMES, TIER_NAMES, awardValue, formLabel } from "../lib/funLabels.js";
 import type { TodaysLine } from "../lib/selectors.js";
-import { shareDate } from "../lib/share.js";
+import { formatDate } from "../lib/format.js";
 
 // Stats-engine panels (domain/fun.ts) for the player and season pages. Display only.
 
@@ -142,7 +142,7 @@ export function BadgeList({ earned }: { earned: Badge[] }) {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block font-semibold">{b.name}</span>
-                    <span className="block text-xs text-ink-muted">Earned {shareDate(badge.date)}</span>
+                    <span className="block text-xs text-ink-muted">Earned {formatDate(badge.date)}</span>
                   </span>
                 </Link>
               ) : (

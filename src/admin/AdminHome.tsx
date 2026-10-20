@@ -55,7 +55,7 @@ function CreateFirstSeason() {
 
 function gameLabel(game: Game): string {
   const mode = game.mode === "incognito" ? "Incognito" : "Season";
-  return `${formatDate(`${game.date}T12:00:00`)} · ${mode} · ${game.players.length} players`;
+  return `${formatDate(game.date)} · ${mode} · ${game.players.length} players`;
 }
 
 // §9.8: plain text for the group chat. Falls back to a selectable box if the clipboard is blocked.
