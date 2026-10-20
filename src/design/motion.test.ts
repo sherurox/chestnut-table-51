@@ -147,4 +147,8 @@ describe("motion-off CSS", () => {
     expect(media).toContain(".ct-pulse");
     expect(media).toContain("::view-transition-group(*)");
   });
+
+  it("covers the winner confetti", () => {
+    for (const sel of [".ct-confetti-bit"]) expect(media).toContain(sel);
+  });
 });

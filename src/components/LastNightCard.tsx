@@ -3,16 +3,18 @@ import { Crown, Money } from "../design/components.js";
 import { latestFinishedGame, nightSummary, relativeNight } from "../domain/highlights.js";
 import type { Data } from "../domain/types.js";
 import { shareDate } from "../lib/share.js";
+import { Confetti } from "./Confetti.js";
 
 // Home (#/) recap of the most recent finished game, any mode. Taps through to its detail page.
-export function LastNightCard({ data }: { data: Data }) {
+// confetti: a new game since this phone's last visit (Home decides, animations allowed).
+export function LastNightCard({ data, confetti = false, onConfettiDone }: { data: Data; confetti?: boolean; onConfettiDone?: () => void }) {
   const game = latestFinishedGame(data);
   if (!game) return null;
   const { playerCount, winners, roughNight } = nightSummary(data, game);
   const label = relativeNight(game.date) ?? shareDate(game.date);
 
   return (
-    <section aria-label="Last game" className="mb-4">
+    <section aria-label="Last game" className="relative mb-4">
       <Link to={`/games/${game.id}`} className="ct-panel ct-focus flex min-h-[56px] flex-col gap-2 p-4">
         <span className="flex flex-wrap items-center justify-between gap-2">
           <span className="ct-display text-lg font-semibold">{label}</span>
@@ -36,6 +38,7 @@ export function LastNightCard({ data }: { data: Data }) {
         )}
         <span className="self-end text-sm font-semibold text-brass">See the game ›</span>
       </Link>
+      {confetti && onConfettiDone && <Confetti onDone={onConfettiDone} />}
     </section>
   );
 }

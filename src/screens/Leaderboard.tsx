@@ -1,35 +1,43 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { HomeActions } from "../components/HomeActions.js";
 import { LastNightCard } from "../components/LastNightCard.js";
 import { StandingsList } from "../components/StandingsList.js";
 import { EmptyState, Loading, PageTitle } from "../design/components.js";
 import type { Data } from "../domain/types.js";
-import { rankChanges } from "../domain/highlights.js";
+import { latestFinishedGame, rankChanges } from "../domain/highlights.js";
 import { seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
 import { activeSeason, todaysLines, visibleGames } from "../lib/selectors.js";
 import { useMe } from "../state/useMe.js";
 import { checkLastSeenGame, latestSeasonGameId } from "../lib/lastSeenGame.js";
 import { motionReduced } from "../design/motion.js";
+import { newGameCelebration } from "../lib/celebrations.js";
 import { browserStore } from "../storage/localKeys.js";
 
 const PULSE_MS = 1200;
 
-// Rank arrows pulse once when this phone sees a new season game for the first time (never on the very
-// first visit, never twice for the same game). The key is updated even when animations are off.
-function usePulseOnNewGame(data: Data | null): boolean {
+// One new-game signal for Home: when this phone sees a new season game for the first time (never on the
+// very first visit, never twice for the same game) the rank arrows pulse once and confetti bursts over
+// the "Last night" card (only when the card is showing that game, not a newer incognito one). It is read
+// once, before the key is updated, and the key is updated even when animations are off.
+function useNewGameCelebration(data: Data | null): { pulse: boolean; confetti: boolean; confettiDone: () => void } {
   const season = data ? activeSeason(data) : undefined;
   const latest = data && season ? latestSeasonGameId(data, season.id) : null;
+  const cardGameId = data ? (latestFinishedGame(data)?.id ?? null) : null;
   const [pulse, setPulse] = useState(false);
+  const [confetti, setConfetti] = useState(false);
   useEffect(() => {
-    if (checkLastSeenGame(latest, browserStore()) && !motionReduced()) setPulse(true);
-  }, [latest]);
+    const play = newGameCelebration(checkLastSeenGame(latest, browserStore()), !motionReduced(), latest, cardGameId);
+    if (play.pulse) setPulse(true);
+    if (play.confetti) setConfetti(true);
+  }, [latest, cardGameId]);
   useEffect(() => {
     if (!pulse) return;
     const timer = setTimeout(() => setPulse(false), PULSE_MS);
     return () => clearTimeout(timer);
   }, [pulse]);
-  return pulse;
+  const confettiDone = useCallback(() => setConfetti(false), []);
+  return { pulse, confetti, confettiDone };
 }
 
 function standings(data: Data, me: string | null, pulse: boolean): ReactNode {
@@ -67,7 +75,7 @@ function standings(data: Data, me: string | null, pulse: boolean): ReactNode {
 export function Leaderboard() {
   const { data, loading, error } = useData();
   const { me } = useMe();
-  const pulse = usePulseOnNewGame(data);
+  const { pulse, confetti, confettiDone } = useNewGameCelebration(data);
 
   // The game buttons / "Game on" card come first in every state, so a game on this phone can always be
   // resumed, even offline before any data has loaded.
@@ -82,7 +90,7 @@ export function Leaderboard() {
         </EmptyState>
       ) : (
         <>
-          <LastNightCard data={data} />
+          <LastNightCard data={data} confetti={confetti} onConfettiDone={confettiDone} />
           {standings(data, me, pulse)}
         </>
       )}

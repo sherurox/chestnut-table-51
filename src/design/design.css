@@ -691,6 +691,39 @@ button.ct-list-row:active {
   }
 }
 
+/* Winner confetti over the "Last night" card (Home, after a new game): ≤40 bits, ≤1.5s, never takes taps.
+   Each bit's drift, fall, spin, delay and duration come from lib/celebrations.ts. */
+.ct-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 5;
+}
+.ct-confetti-bit {
+  position: absolute;
+  top: 30%;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: ct-confetti;
+  animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  animation-fill-mode: both;
+}
+@keyframes ct-confetti {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(calc(var(--dx) * 0.4), calc(var(--dy) * -0.6)) rotate(calc(var(--rot) * 0.3)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1);
+  }
+}
+
 /* Screen transitions (View Transitions API, started only through lib/viewTransitions.ts, never on the
    live/end screens). The page crossfades with a short slide; the header and bottom nav stay put. A
    leaderboard row's rank and name (ct-rank-<id> / ct-name-<id>) morph into the player page header. */
@@ -766,7 +799,8 @@ button.ct-list-row:active {
   .ct-splash-suits,
   .ct-chip.ct-pop::after,
   .ct-spin,
-  .ct-pulse {
+  .ct-pulse,
+  .ct-confetti-bit {
     animation: none !important;
   }
   /* Separate rule: a browser without view transitions drops a whole selector list it can't parse. */
@@ -793,7 +827,8 @@ button.ct-list-row:active {
 :root[data-motion="off"] .ct-splash-suits,
 :root[data-motion="off"] .ct-chip.ct-pop::after,
 :root[data-motion="off"] .ct-spin,
-:root[data-motion="off"] .ct-pulse {
+:root[data-motion="off"] .ct-pulse,
+:root[data-motion="off"] .ct-confetti-bit {
   animation: none !important;
 }
 :root[data-motion="off"]::view-transition-group(*),
