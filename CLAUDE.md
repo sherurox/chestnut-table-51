@@ -81,6 +81,7 @@ Node 22+ is required. No backend code, no other external services.
 │  │  ├─ results.ts          # per-game results, chip check
 │  │  ├─ standings.ts        # season standings, ranking, tiebreaks
 │  │  ├─ liveGame.ts         # live game action log, undo, guest choice, end check, finish/marker changes
+│  │  ├─ gameEdits.ts        # edit/delete/restore finished games: draft, edit check, changes (§5.9)
 │  │  ├─ migrations.ts
 │  │  └─ *.test.ts
 │  ├─ devserver/             # sandboxServer.ts: Node-only sandbox middleware for vite.config.ts (§8.6)
@@ -205,6 +206,29 @@ The game stays safely autosaved on the admin's phone until it passes.
   "Deleted games" bin where the admin can restore them. (Git history is the permanent backup.)
 - Every edit, delete and restore is its own commit with a descriptive message (section 8.4).
 - Games that were edited after finishing show an "Edited" badge (`editedAt` is set).
+
+**Phase 5 decisions (owner-approved):**
+- Edit is reached from an "Edit game" button on Game detail, shown only on a phone with admin state
+  (`isAdminDevice()`, no admin code in the viewer shell); the route asks for login. Editable: date (must
+  stay inside its season: start date to end date, or today while active), players (add active players,
+  remove anyone), every buy-in (change, remove, add), every final stack, and mode. The strict chip check
+  reruns live with the end screen's panel (`ChipCheckPanel`); Save is disabled until it passes and
+  something changed. Any edit that leaves guests in a season game asks the §5.5 choice; promotions happen
+  in the edit commit.
+- The Save confirm lists every change (date, mode, players added/removed, each buy-in and final stack
+  old → new, guests promoted). Delete and restore confirms name the game (date, season, players, winner).
+  In a closed season the editor opens behind the warning above (naming the current champion), and every
+  confirm names the champion now versus after the change.
+- Edit, delete and restore are blocked by the same rule as the season actions (a game on this phone, a
+  live marker, or unsynced games); the changes also refuse a live marker in the fresh data.
+- Stale guard: an edit applies only if the game on GitHub still equals the one the admin opened.
+  Duplicate guard: a retry that finds the edit (or delete/restore) already applied commits nothing.
+- Restore removes `deletedAt` and sets `finished`: the game is deep-equal to before deletion. A deleted
+  game's URL shows "Game not found" to everyone; the bin (`#/admin/deleted`, linked from Admin home)
+  shows its results.
+- Celebrations never fire for edits, deletes or restores: Home's new-game signal (rank pulse + confetti)
+  compares the latest season game's `createdAt` with a forward-only watermark (`ct51.seenGamesUpTo`),
+  not game ids or dates. The old `ct51.lastSeenGame` id is migrated once and removed.
 
 ---
 
@@ -406,6 +430,7 @@ All prefixed `Admin:` and human-readable, e.g.:
 - `Admin: finished incognito game 2026-10-24 (4 players)`
 - `Admin: edited game 2026-10-20 (Season 1)`
 - `Admin: deleted game 2026-10-20 (Season 1)` / `Admin: restored game …`
+- `Admin: edited game 2026-10-19 (Season 1; promoted guest Rohan)` (uses the date after the edit)
 - `Admin: started Season 2 (closed Season 1)` / `Admin: started Season 2` (no season was active)
 - `Admin: ended Season 1` / `Admin: renamed season Season 1 to Diwali Cup`
 - `Admin: added player Amit` / `Admin: promoted guest Rohan to regular` / `Admin: archived player …`
@@ -673,7 +698,7 @@ remove sample data and reset `data.json` to the initial file (section 6.3).
 `data.json` is back to the section 6.3 initial file (preset buy-ins kept), and the real Season 1 is
 created through the app. Git history was not rewritten; the History screen hides the older test commits
 via `HISTORY_SINCE` (section 8.3). Phones with stale `ct51.me` / `ct51.lastSeenGame` keys from the test
-data are cleaned up on load. The test fixtures (`src/domain/__fixtures__/seed.json`) and the dev-only
+data are cleaned up on load (`ct51.lastSeenGame` is now migrated to the `ct51.seenGamesUpTo` watermark, §5.9). The test fixtures (`src/domain/__fixtures__/seed.json`) and the dev-only
 `#/style` sample data stay; `npm run check:bundle` proves neither reaches production.
 
 ---
