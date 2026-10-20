@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Splash } from "../design/components.js";
 import { IconLock, IconRefresh } from "../design/icons.js";
-import { INSTANT_PATHS, isInstant, prefersReducedMotion, useReducedMotion } from "../design/motion.js";
+import { isInstant, motionReduced, useMotionReduced } from "../design/motion.js";
 import { useData } from "../state/DataContext.js";
 import { useTheme } from "../state/useTheme.js";
 import { isUpdateReady, reloadIntoNewVersion, reloader, subscribeUpdateReady } from "../lib/appUpdate.js";
@@ -21,7 +21,7 @@ const INTRO_KEY = "ct51.introShown";
 
 // The intro plays once per app launch (tab session), never when launching straight into a live game.
 function shouldPlayIntro(pathname: string): boolean {
-  if (INSTANT_PATHS.includes(pathname) || prefersReducedMotion()) return false;
+  if (isInstant(pathname, motionReduced())) return false;
   try {
     if (sessionStorage.getItem(INTRO_KEY)) return false;
     sessionStorage.setItem(INTRO_KEY, "1");
@@ -83,25 +83,31 @@ function navClassName({ isActive }: { isActive: boolean }): string {
 export function AppShell() {
   const { data, lastUpdated, loading, error, fromCache, refresh } = useData();
   const { pathname } = useLocation();
-  const instant = isInstant(pathname, useReducedMotion());
+  const reduced = useMotionReduced();
+  const instant = isInstant(pathname, reduced);
   const [statsOpen, setStatsOpen] = useState(false);
   const wordmark = useRef<HTMLButtonElement>(null);
   const closeStats = useCallback(() => setStatsOpen(false), []);
   const [intro, setIntro] = useState(() => shouldPlayIntro(pathname));
   const endIntro = useCallback(() => setIntro(false), []);
   const main = useRef<HTMLElement>(null);
-  const firstPath = useRef(true);
+  const prevPath = useRef<string | null>(null);
   useTheme();
 
+  // Motion off (OS setting or Animations: Off on More): CSS animations stop too (design.css).
+  useLayoutEffect(() => {
+    document.documentElement.dataset.motion = reduced ? "off" : "on";
+  }, [reduced]);
+
   // Screen transition: animate the page area in place (never remount it: admin screens keep state).
+  // Never into or out of the live/end screens.
   useEffect(() => {
-    if (firstPath.current) {
-      firstPath.current = false;
-      return;
-    }
+    const from = prevPath.current;
+    prevPath.current = pathname;
+    if (from === null || from === pathname) return;
     setStatsOpen(false);
     window.scrollTo(0, 0);
-    if (INSTANT_PATHS.includes(pathname) || prefersReducedMotion()) return;
+    if (isInstant(from, motionReduced()) || isInstant(pathname, motionReduced())) return;
     main.current?.animate(
       [
         { opacity: 0, transform: "translateX(10px)" },

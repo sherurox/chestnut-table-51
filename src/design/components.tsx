@@ -1,7 +1,7 @@
 import { useEffect, useId, type ReactNode } from "react";
 import { formatSignedDollars } from "../lib/format.js";
 import { appIconSvg, chipSvg } from "./iconSvg.js";
-import { useCountUp, useReducedMotion } from "./motion.js";
+import { useCountUp, useMotionReduced } from "./motion.js";
 
 // Shared brand components. Styling lives in design.css; these only add structure.
 
@@ -108,7 +108,7 @@ export function SuitHeading({ suit = "♠", children, as: Tag = "h2" }: { suit?:
 // fades out. About 1.2s in total and tap to skip. With reduced motion it is skipped entirely (onDone
 // right away, nothing drawn).
 export function Splash({ onDone }: { onDone: () => void }) {
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
   useEffect(() => {
     if (reduced) {
       onDone();

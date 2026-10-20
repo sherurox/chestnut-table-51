@@ -1,31 +1,81 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 
-// Motion helpers. Everything respects prefers-reduced-motion, and nothing here ever delays input:
+// Motion helpers. Everything respects prefers-reduced-motion and the in-app Animations setting
+// (animationsAllowed), and nothing here ever delays input:
 // animations are visual only (the value, list order and handlers are always already up to date).
 
 const QUERY = "(prefers-reduced-motion: reduce)";
-
-function subscribeReducedMotion(listener: () => void): () => void {
-  if (typeof window === "undefined" || !window.matchMedia) return () => {};
-  const mql = window.matchMedia(QUERY);
-  mql.addEventListener("change", listener);
-  return () => mql.removeEventListener("change", listener);
-}
-
-export function prefersReducedMotion(): boolean {
-  return typeof window !== "undefined" && window.matchMedia?.(QUERY).matches === true;
-}
-
-export function useReducedMotion(): boolean {
-  return useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => false);
-}
+// In-app "Animations" setting on More (non-secret). "off" behaves exactly like prefers-reduced-motion.
+export const MOTION_KEY = "ct51.motion";
+const MOTION_EVENT = "ct51-motion-change";
 
 // The live game and end screens are where the admin taps fast: nothing animates there.
 export const INSTANT_PATHS = ["/admin/live", "/admin/end"];
 
-// true = show and hide things at once, no transitions or count-ups (live/end screens, or reduced motion).
+export interface MotionEnv {
+  osReduced: boolean; // prefers-reduced-motion: reduce
+  appOn: boolean; // the in-app Animations setting
+}
+
+// THE animation check: every animation in the app asks this (directly or through the helpers below).
+// Off when the phone asks for reduced motion, when Animations is Off in the app, or on the live/end screens.
+export function animationsAllowed(env: MotionEnv, pathname?: string): boolean {
+  return !env.osReduced && env.appOn && !(pathname !== undefined && INSTANT_PATHS.includes(pathname));
+}
+
+export function readMotionSetting(): boolean {
+  try {
+    return localStorage.getItem(MOTION_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
+export function setMotionSetting(on: boolean): void {
+  try {
+    if (on) localStorage.removeItem(MOTION_KEY);
+    else localStorage.setItem(MOTION_KEY, "off");
+  } catch {
+    // storage unavailable: nothing to remember
+  }
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(MOTION_EVENT));
+}
+
+export function currentMotionEnv(): MotionEnv {
+  const osReduced = typeof window !== "undefined" && window.matchMedia?.(QUERY).matches === true;
+  return { osReduced, appOn: readMotionSetting() };
+}
+
+function subscribeMotion(listener: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const mql = window.matchMedia?.(QUERY);
+  mql?.addEventListener("change", listener);
+  window.addEventListener(MOTION_EVENT, listener);
+  window.addEventListener("storage", listener); // other tabs
+  return () => {
+    mql?.removeEventListener("change", listener);
+    window.removeEventListener(MOTION_EVENT, listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+// true = animations are off everywhere (OS reduced motion or the in-app setting).
+export function motionReduced(): boolean {
+  return !animationsAllowed(currentMotionEnv());
+}
+
+export function useMotionReduced(): boolean {
+  return useSyncExternalStore(subscribeMotion, motionReduced, () => false);
+}
+
+// The in-app setting alone, for the toggle on More.
+export function useMotionSetting(): boolean {
+  return useSyncExternalStore(subscribeMotion, readMotionSetting, () => true);
+}
+
+// true = show and hide things at once, no transitions or count-ups (live/end screens, or motion off).
 export function isInstant(pathname: string, reduced: boolean): boolean {
-  return reduced || INSTANT_PATHS.includes(pathname);
+  return !animationsAllowed({ osReduced: reduced, appOn: true }, pathname);
 }
 
 // easeOutCubic between `from` and `to` at progress t ∈ [0, 1], rounded to whole dollars.
@@ -35,9 +85,9 @@ export function countUpValue(from: number, to: number, t: number): number {
   return Math.round(from + (to - from) * eased);
 }
 
-// Animates a number from 0 (first render) or its previous value to `target`. Reduced motion: no animation.
+// Animates a number from 0 (first render) or its previous value to `target`. Motion off: no animation.
 export function useCountUp(target: number, durationMs = 700): number {
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
   const [shown, setShown] = useState(reduced ? target : 0);
   const fromRef = useRef(reduced ? target : 0);
 
@@ -68,7 +118,7 @@ export function useCountUp(target: number, durationMs = 700): number {
 // changes (rank changes). `deps` should change whenever the order may have changed.
 export function useFlip(container: RefObject<HTMLElement | null>, deps: unknown[]): void {
   const positions = useRef(new Map<string, number>());
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
 
   useLayoutEffect(() => {
     const root = container.current;
@@ -96,7 +146,7 @@ export function useFlip(container: RefObject<HTMLElement | null>, deps: unknown[
 // (Android; iOS Safari has no vibrate). Synchronous and cheap: called inside the click handler after
 // the buy-in is recorded, so it can never delay the input itself.
 export function chipFeedback(el: HTMLElement | null): void {
-  if (el && !prefersReducedMotion()) {
+  if (el && !motionReduced()) {
     el.classList.remove("ct-pop");
     void el.offsetWidth; // restart the animation
     el.classList.add("ct-pop");

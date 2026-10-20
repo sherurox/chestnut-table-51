@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { AppIconSvg, ChipBadge, Crown, Money, RankBadge, Splash, SuitHeading, Wordmark } from "../design/components.js";
-import { chipFeedback, useFlip, useReducedMotion } from "../design/motion.js";
+import { chipFeedback, useFlip, useMotionReduced } from "../design/motion.js";
 import { formatDollars, formatSignedDollars } from "../lib/format.js";
 import { useData } from "../state/DataContext.js";
 import { localIsoDate } from "../domain/dates.js";
@@ -331,7 +331,7 @@ export function StylePreview() {
   const [staggerKey, setStaggerKey] = useState(0);
   const [splash, setSplash] = useState(false);
   const [screen, setScreen] = useState(0);
-  const reduced = useReducedMotion();
+  const reduced = useMotionReduced();
 
   useEffect(() => {
     const before = document.documentElement.getAttribute("data-theme");

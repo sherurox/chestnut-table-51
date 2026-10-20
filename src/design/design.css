@@ -680,6 +680,8 @@ button.ct-list-row:active {
   }
 }
 
+/* Motion off: the phone's reduced-motion setting, or Animations: Off on More (data-motion="off" on
+   <html>). Both blocks list the same selectors (a test keeps them in step). */
 @media (prefers-reduced-motion: reduce) {
   .ct-sheet-backdrop,
   .ct-sheet,
@@ -699,6 +701,25 @@ button.ct-list-row:active {
   .ct-btn {
     transition: none;
   }
+}
+
+:root[data-motion="off"] .ct-sheet-backdrop,
+:root[data-motion="off"] .ct-sheet,
+:root[data-motion="off"] .ct-wordmark-btn .ct-chip-badge,
+:root[data-motion="off"] .ct-rise,
+:root[data-motion="off"] .ct-screen,
+:root[data-motion="off"] .ct-splash,
+:root[data-motion="off"] .ct-splash-glow,
+:root[data-motion="off"] .ct-splash-chip,
+:root[data-motion="off"] .ct-splash-name,
+:root[data-motion="off"] .ct-splash-suits,
+:root[data-motion="off"] .ct-chip.ct-pop::after,
+:root[data-motion="off"] .ct-spin {
+  animation: none !important;
+}
+:root[data-motion="off"] .ct-chip,
+:root[data-motion="off"] .ct-btn {
+  transition: none;
 }
 
 /* Brass pill (status: "Game on", "Not synced: 1", counts). Brass fill with dark ink in both themes. */
