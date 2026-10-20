@@ -4,9 +4,11 @@ import "./design/fonts.js";
 import "./index.css";
 import { App } from "./App.js";
 import { registerServiceWorker } from "./lib/appUpdate.js";
+import { installPromptListener } from "./lib/installPrompt.js";
 import { markSandboxDevice } from "./storage/sandbox.js";
 
 registerServiceWorker();
+installPromptListener(window);
 
 if (import.meta.env.DEV && __CT51_SANDBOX__) {
   markSandboxDevice();

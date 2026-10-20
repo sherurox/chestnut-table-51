@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { HomeActions } from "../components/HomeActions.js";
+import { InstallHint } from "../components/InstallHint.js";
 import { LastNightCard } from "../components/LastNightCard.js";
 import { StandingsList } from "../components/StandingsList.js";
 import { Crown, EmptyState, Loading, Money, PageTitle } from "../design/components.js";
@@ -113,6 +114,7 @@ export function Leaderboard() {
   return (
     <div className="px-4 pt-2 pb-4">
       <HomeActions data={data} />
+      <InstallHint />
       {loading && !data ? (
         <Loading />
       ) : !data ? (
