@@ -107,7 +107,7 @@ export function createFirstSeason(input: { id: ID; today: string }): Change {
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-function assertNoLiveGame(data: Data): void {
+export function assertNoLiveGame(data: Data): void {
   if (data.liveGame) throw new Error("A game is in progress. Finish it (or clear the stuck game) first.");
 }
 

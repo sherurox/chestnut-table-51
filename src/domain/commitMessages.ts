@@ -71,3 +71,21 @@ export function finishedGameMessage(input: {
     ? `Admin: finished game ${input.date} (${input.seasonName}, ${input.playerCount} players${promoted})`
     : `Admin: finished incognito game ${input.date} (${input.playerCount} players)`;
 }
+
+// e.g. "Admin: edited game 2026-10-19 (Season 1)", using the game's date after the edit. Guests promoted
+// in the same save are named the same way as on finish.
+export function editedGameMessage(input: { date: string; seasonName: string; promotedNames: string[] }): string {
+  const promoted =
+    input.promotedNames.length === 0
+      ? ""
+      : `; promoted guest${input.promotedNames.length === 1 ? "" : "s"} ${input.promotedNames.join(", ")}`;
+  return `Admin: edited game ${input.date} (${input.seasonName}${promoted})`;
+}
+
+export function deletedGameMessage(date: string, seasonName: string): string {
+  return `Admin: deleted game ${date} (${seasonName})`;
+}
+
+export function restoredGameMessage(date: string, seasonName: string): string {
+  return `Admin: restored game ${date} (${seasonName})`;
+}
