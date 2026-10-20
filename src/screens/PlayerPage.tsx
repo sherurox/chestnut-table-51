@@ -1,16 +1,18 @@
 import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { AwardsList, BadgeList, NemesisCard, SectionLabel, TitleCard } from "../components/FunPanels.js";
 import { EmptyState, Loading, Money, PageTitle } from "../design/components.js";
 import { useData } from "../state/DataContext.js";
-import { activeSeason, playerById } from "../lib/selectors.js";
-import { bestAndWorstGames, netWinningsOverTime } from "../domain/charts.js";
+import { activeSeason, playerById, todaysLines } from "../lib/selectors.js";
+import { netWinningsOverTime } from "../domain/charts.js";
+import { badges, nemesis, playerSeasonStats, seasonAwards, type Streak } from "../domain/fun.js";
 import { formatDate, formatSignedDollars } from "../lib/format.js";
 import type { Data } from "../domain/types.js";
 
 const tick = { fontSize: 11, style: { fill: "var(--ct-text-muted)" } };
 
-function Stat({ label, children, to }: { label: string; children: ReactNode; to?: string }) {
+function Stat({ label, children, to, wide = false }: { label: string; children: ReactNode; to?: string; wide?: boolean }) {
   const body = (
     <>
       <span className="block text-[0.7rem] font-semibold tracking-wide text-ink-muted uppercase">{label}</span>
@@ -18,40 +20,75 @@ function Stat({ label, children, to }: { label: string; children: ReactNode; to?
     </>
   );
   return to ? (
-    <Link to={to} className="ct-panel ct-focus block p-3">
+    <Link to={to} className={`ct-panel ct-focus block p-3 ${wide ? "col-span-2" : ""}`}>
       {body}
     </Link>
   ) : (
-    <div className="ct-panel p-3">{body}</div>
+    <div className={`ct-panel p-3 ${wide ? "col-span-2" : ""}`}>{body}</div>
   );
+}
+
+function streakText(streak: Streak | null): string {
+  if (!streak) return "—";
+  const word = streak.kind === "win" ? "win" : "loss";
+  return `${streak.length} ${streak.length === 1 ? word : `${word}${word === "loss" ? "es" : "s"}`}`;
 }
 
 function PlayerSeasonSection({ data, seasonId, playerId }: { data: Data; seasonId: string; playerId: string }) {
   const points = netWinningsOverTime(data, seasonId, playerId);
-  const { best, worst } = bestAndWorstGames(data, seasonId, playerId);
+  const stats = playerSeasonStats(data, seasonId, playerId);
+  const today = todaysLines(data, seasonId).get(playerId);
+  const fresh = (today?.mood.tier ?? "freshBlood") === "freshBlood";
 
+  const titleCard = <TitleCard today={today} form={stats.form} />;
   if (points.length === 0) {
     return (
-      <EmptyState suit="♣" title="No games yet this season">
-        Season games show up here once they're played.
-      </EmptyState>
+      <>
+        {titleCard}
+        <EmptyState suit="♣" title="No games yet this season">
+          Season games show up here once they're played.
+        </EmptyState>
+      </>
     );
   }
 
   const net = points[points.length - 1]!.net;
+  const { bestNight: best, worstNight: worst } = stats;
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-3 gap-2">
-        <Stat label="Season">
+      {titleCard}
+      {/* Fresh blood (under 3 games): rates don't mean much yet, so only the totals. */}
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        <Stat label="Season" wide>
           <Money value={net} animate />
         </Stat>
-        <Stat label="Best" to={best ? `/games/${best.gameId}` : undefined}>
+        {!fresh && (
+          <>
+            <Stat label="Win rate">
+              <span className="ct-num font-semibold">{Math.round(stats.winRate * 100)}%</span>
+            </Stat>
+            <Stat label="Avg per game">
+              <Money value={Math.round(stats.avgPerGame)} />
+            </Stat>
+          </>
+        )}
+        <Stat label="Best night" to={best ? `/games/${best.gameId}` : undefined}>
           {best ? <Money value={best.result} /> : "—"}
         </Stat>
-        <Stat label="Worst" to={worst ? `/games/${worst.gameId}` : undefined}>
+        <Stat label="Worst night" to={worst ? `/games/${worst.gameId}` : undefined}>
           {worst ? <Money value={worst.result} /> : "—"}
         </Stat>
+        {!fresh && (
+          <>
+            <Stat label="Current streak">
+              <span className="font-semibold">{streakText(stats.streak)}</span>
+            </Stat>
+            <Stat label="Rebuys per game">
+              <span className="ct-num font-semibold">{Math.round(stats.rebuysPerGame * 10) / 10}</span>
+            </Stat>
+          </>
+        )}
       </div>
 
       <div className="ct-panel mb-4 p-3">
@@ -80,7 +117,11 @@ function PlayerSeasonSection({ data, seasonId, playerId }: { data: Data; seasonI
         </div>
       </div>
 
-      <div className="ct-panel overflow-hidden">
+      <PlayerAwards data={data} seasonId={seasonId} playerId={playerId} />
+      <NemesisCard nemesis={nemesis(data, seasonId, playerId)} />
+
+      <SectionLabel>Games this season</SectionLabel>
+      <div className="ct-panel mb-4 overflow-hidden">
         <ul>
           {points
             .slice()
@@ -96,6 +137,18 @@ function PlayerSeasonSection({ data, seasonId, playerId }: { data: Data; seasonI
         </ul>
       </div>
     </>
+  );
+}
+
+function PlayerAwards({ data, seasonId, playerId }: { data: Data; seasonId: string; playerId: string }) {
+  const awards = seasonAwards(data, seasonId);
+  if (!Object.values(awards).some((a) => a?.playerIds.includes(playerId))) return null;
+  const final = Object.values(awards).some((a) => a?.final);
+  return (
+    <section className="mb-4" aria-label="Awards">
+      <SectionLabel>{final ? "Awards · final" : "Awards · so far"}</SectionLabel>
+      <AwardsList data={data} awards={awards} playerId={playerId} />
+    </section>
   );
 }
 
@@ -131,8 +184,11 @@ export function PlayerPage() {
       {season ? (
         <PlayerSeasonSection data={data} seasonId={season.id} playerId={id} />
       ) : (
-        <EmptyState suit="♠" title="No active season" />
+        <div className="mb-4">
+          <EmptyState suit="♠" title="No active season" />
+        </div>
       )}
+      <BadgeList earned={badges(data, id)} />
     </div>
   );
 }

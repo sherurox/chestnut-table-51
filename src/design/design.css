@@ -343,6 +343,43 @@
   overflow-wrap: anywhere;
 }
 
+/* Form dots on the player page: W / L / E in a ring. The letter is the signal; colour only adds to it. */
+.ct-form-dot {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 2px solid var(--ct-line);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--ct-text-muted);
+}
+.ct-form-dot[data-mark="W"] {
+  border-color: var(--ct-win);
+  color: var(--ct-win);
+}
+.ct-form-dot[data-mark="L"] {
+  border-color: var(--ct-loss);
+  color: var(--ct-loss);
+}
+
+/* Badge star: brass when earned, a muted outline when not. */
+.ct-badge-icon {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px dashed var(--ct-line);
+  color: var(--ct-text-muted);
+}
+.ct-badge-icon[data-earned="true"] {
+  border: 1px solid var(--ct-brass-lo);
+  background: rgba(214, 179, 94, 0.14);
+  color: var(--ct-brass-text);
+}
 .ct-row-me {
   box-shadow: inset 3px 0 0 var(--ct-brass);
   background: linear-gradient(90deg, rgba(214, 179, 94, 0.12), transparent 70%);
