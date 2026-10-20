@@ -138,6 +138,17 @@ describe("statsPanelContent", () => {
     expect(c.incognitoGames).toBe(0);
   });
 
+  it("a 1-game win streak is not shown; 2 in a row is", () => {
+    const one = data([game("g1", "2026-10-02", [["a", [1000], 1400], ["b", [1000], 600]])]);
+    expect(seasonSummary(one, "s1", TODAY)!.longestWinStreak).toEqual({ playerIds: ["a"], length: 1 });
+    expect(statsPanelContent(one, TODAY)!.winStreak).toBeNull();
+    const html = render(createElement(StatsPanelBody, { content: statsPanelContent(one, TODAY), animate: false, onLeaderboard: () => {} }));
+    expect(html).not.toContain("Longest win streak");
+
+    const two = data([...one.games, game("g2", "2026-10-03", [["a", [1000], 1200], ["b", [1000], 800]])]);
+    expect(statsPanelContent(two, TODAY)!.winStreak).toEqual({ names: "Alice", length: 2 });
+  });
+
   it("no active season → null", () => {
     const closed = { ...busy, seasons: [{ ...busy.seasons[0]!, status: "closed" as const, endedOn: "2026-10-09" }] };
     expect(statsPanelContent(closed, TODAY)).toBeNull();

@@ -33,6 +33,9 @@ function biggestNightTies(data: Data, seasonId: ID, amount: number): BiggestNigh
   return { playerIds, names: namesOf(data, playerIds), amount, date: playerIds.length >= 3 ? null : latest };
 }
 
+// A single win isn't a streak: the "Longest win streak" row needs 2+ in a row.
+const MIN_WIN_STREAK = 2;
+
 export interface StatsPanelContent {
   seasonName: string;
   day: number;
@@ -62,10 +65,10 @@ export function statsPanelContent(data: Data, today: string): StatsPanelContent 
     leader: summary.leader && { ...summary.leader, line: leaderLine },
     biggestNight: summary.biggestNight && biggestNightTies(data, season.id, summary.biggestNight.amount),
     rebuyKing: summary.rebuyKings.length > 0 ? { names: namesOf(data, summary.rebuyKings) } : null,
-    winStreak: summary.longestWinStreak && {
-      names: namesOf(data, summary.longestWinStreak.playerIds),
-      length: summary.longestWinStreak.length,
-    },
+    winStreak:
+      summary.longestWinStreak && summary.longestWinStreak.length >= MIN_WIN_STREAK
+        ? { names: namesOf(data, summary.longestWinStreak.playerIds), length: summary.longestWinStreak.length }
+        : null,
     awards: AWARDS.flatMap(({ kind, name }) => {
       const award = awards[kind];
       return award ? [{ kind, name, holders: namesOf(data, award.playerIds), value: awardValue(kind, award.value) }] : [];
