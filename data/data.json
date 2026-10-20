@@ -7,8 +7,251 @@
       2000
     ]
   },
-  "players": [],
-  "seasons": [],
-  "games": [],
+  "players": [
+    {
+      "id": "Di2USM-i",
+      "name": "Selmon Bhai",
+      "type": "regular",
+      "status": "active",
+      "createdAt": "2026-10-16T01:00:00.000Z"
+    },
+    {
+      "id": "2rylYTr8",
+      "name": "Dinosaur",
+      "type": "regular",
+      "status": "active",
+      "createdAt": "2026-10-16T01:00:00.000Z"
+    },
+    {
+      "id": "cKc2LnIe",
+      "name": "Muthmare",
+      "type": "regular",
+      "status": "active",
+      "createdAt": "2026-10-16T01:00:00.000Z"
+    },
+    {
+      "id": "IqhoGQt_",
+      "name": "Kaka",
+      "type": "regular",
+      "status": "active",
+      "createdAt": "2026-10-16T01:00:00.000Z"
+    }
+  ],
+  "seasons": [
+    {
+      "id": "dOj0daIq",
+      "name": "Season 1",
+      "status": "active",
+      "startedOn": "2026-10-15"
+    }
+  ],
+  "games": [
+    {
+      "id": "bA2u10sk",
+      "seasonId": "dOj0daIq",
+      "date": "2026-10-15",
+      "mode": "season",
+      "status": "finished",
+      "players": [
+        "Di2USM-i",
+        "2rylYTr8",
+        "cKc2LnIe",
+        "IqhoGQt_"
+      ],
+      "buyIns": [
+        {
+          "player": "Di2USM-i",
+          "amount": 1000,
+          "at": "2026-10-16T01:00:00.000Z"
+        },
+        {
+          "player": "2rylYTr8",
+          "amount": 1000,
+          "at": "2026-10-16T01:00:00.000Z"
+        },
+        {
+          "player": "cKc2LnIe",
+          "amount": 1000,
+          "at": "2026-10-16T01:00:00.000Z"
+        },
+        {
+          "player": "IqhoGQt_",
+          "amount": 1000,
+          "at": "2026-10-16T01:00:00.000Z"
+        }
+      ],
+      "cashOuts": [
+        {
+          "player": "Di2USM-i",
+          "amount": 1295
+        },
+        {
+          "player": "2rylYTr8",
+          "amount": 1230
+        },
+        {
+          "player": "cKc2LnIe",
+          "amount": 0
+        },
+        {
+          "player": "IqhoGQt_",
+          "amount": 1475
+        }
+      ],
+      "createdAt": "2026-10-16T01:00:00.000Z"
+    },
+    {
+      "id": "UHmDzEil",
+      "seasonId": "dOj0daIq",
+      "date": "2026-10-16",
+      "mode": "season",
+      "status": "finished",
+      "players": [
+        "Di2USM-i",
+        "2rylYTr8",
+        "cKc2LnIe"
+      ],
+      "buyIns": [
+        {
+          "player": "Di2USM-i",
+          "amount": 1000,
+          "at": "2026-10-17T01:00:00.000Z"
+        },
+        {
+          "player": "2rylYTr8",
+          "amount": 1000,
+          "at": "2026-10-17T01:00:00.000Z"
+        },
+        {
+          "player": "cKc2LnIe",
+          "amount": 1000,
+          "at": "2026-10-17T01:00:00.000Z"
+        }
+      ],
+      "cashOuts": [
+        {
+          "player": "Di2USM-i",
+          "amount": 2945
+        },
+        {
+          "player": "2rylYTr8",
+          "amount": 0
+        },
+        {
+          "player": "cKc2LnIe",
+          "amount": 55
+        }
+      ],
+      "createdAt": "2026-10-17T01:00:00.000Z"
+    },
+    {
+      "id": "OjUehTsb",
+      "seasonId": "dOj0daIq",
+      "date": "2026-10-18",
+      "mode": "season",
+      "status": "finished",
+      "players": [
+        "Di2USM-i",
+        "2rylYTr8",
+        "cKc2LnIe",
+        "IqhoGQt_"
+      ],
+      "buyIns": [
+        {
+          "player": "Di2USM-i",
+          "amount": 1000,
+          "at": "2026-10-19T01:00:00.000Z"
+        },
+        {
+          "player": "2rylYTr8",
+          "amount": 1000,
+          "at": "2026-10-19T01:00:00.000Z"
+        },
+        {
+          "player": "cKc2LnIe",
+          "amount": 1000,
+          "at": "2026-10-19T01:00:00.000Z"
+        },
+        {
+          "player": "IqhoGQt_",
+          "amount": 1000,
+          "at": "2026-10-19T01:00:00.000Z"
+        }
+      ],
+      "cashOuts": [
+        {
+          "player": "Di2USM-i",
+          "amount": 140
+        },
+        {
+          "player": "2rylYTr8",
+          "amount": 1810
+        },
+        {
+          "player": "cKc2LnIe",
+          "amount": 845
+        },
+        {
+          "player": "IqhoGQt_",
+          "amount": 1205
+        }
+      ],
+      "createdAt": "2026-10-19T01:00:00.000Z"
+    },
+    {
+      "id": "cqRz4kZZ",
+      "seasonId": "dOj0daIq",
+      "date": "2026-10-19",
+      "mode": "season",
+      "status": "finished",
+      "players": [
+        "Di2USM-i",
+        "2rylYTr8",
+        "cKc2LnIe",
+        "IqhoGQt_"
+      ],
+      "buyIns": [
+        {
+          "player": "Di2USM-i",
+          "amount": 1000,
+          "at": "2026-10-20T01:00:00.000Z"
+        },
+        {
+          "player": "2rylYTr8",
+          "amount": 1000,
+          "at": "2026-10-20T01:00:00.000Z"
+        },
+        {
+          "player": "cKc2LnIe",
+          "amount": 1000,
+          "at": "2026-10-20T01:00:00.000Z"
+        },
+        {
+          "player": "IqhoGQt_",
+          "amount": 1000,
+          "at": "2026-10-20T01:00:00.000Z"
+        }
+      ],
+      "cashOuts": [
+        {
+          "player": "Di2USM-i",
+          "amount": 815
+        },
+        {
+          "player": "2rylYTr8",
+          "amount": 810
+        },
+        {
+          "player": "cKc2LnIe",
+          "amount": 1605
+        },
+        {
+          "player": "IqhoGQt_",
+          "amount": 770
+        }
+      ],
+      "createdAt": "2026-10-20T01:00:00.000Z"
+    }
+  ],
   "liveGame": null
 }
