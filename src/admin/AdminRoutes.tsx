@@ -3,6 +3,8 @@ import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { getTokenExpiresOn } from "../storage/auth.js";
 import { ADMIN_DEVICE_KEY, browserStore } from "../storage/localKeys.js";
 import { AdminHome } from "./AdminHome.js";
+import { DeletedGames } from "./DeletedGames.js";
+import { EditGame } from "./EditGame.js";
 import { EndGame } from "./EndGame.js";
 import { ExpiryGate } from "./ExpiryGate.js";
 import { needsLogin, NO_LOGIN_PATHS } from "./gate.js";
@@ -56,6 +58,8 @@ function AdminScreens() {
         <Route path="players" element={<Players />} />
         <Route path="seasons" element={<Seasons />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="games/:id/edit" element={<EditGame />} />
+        <Route path="deleted" element={<DeletedGames />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </ExpiryGate>

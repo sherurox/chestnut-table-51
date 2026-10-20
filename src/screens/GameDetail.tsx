@@ -4,13 +4,16 @@ import { useData } from "../state/DataContext.js";
 import { gameById, playerById, seasonById } from "../lib/selectors.js";
 import { finalStack, gameResult, totalBuyIns } from "../domain/results.js";
 import { formatDate, formatDollars } from "../lib/format.js";
+import { isAdminDevice } from "../storage/localKeys.js";
 
 export function GameDetail() {
   const { id } = useParams();
   const { data, loading } = useData();
 
   if (loading && !data) return <Loading />;
-  const game = data && id ? gameById(data, id) : undefined;
+  // Deleted games are gone for everyone; the admin's Deleted games bin shows them.
+  const found = data && id ? gameById(data, id) : undefined;
+  const game = found?.status === "finished" ? found : undefined;
   if (!data || !game) {
     return (
       <div className="p-4">
@@ -79,6 +82,13 @@ export function GameDetail() {
           ))}
         </ul>
       </div>
+
+      {/* Only on a phone that has logged in as admin (non-secret flag, no admin code); the route asks to log in. */}
+      {isAdminDevice() && (
+        <Link to={`/admin/games/${game.id}/edit`} className="ct-btn ct-btn-secondary ct-focus mt-4 w-full">
+          Edit game
+        </Link>
+      )}
     </div>
   );
 }

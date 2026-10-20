@@ -52,7 +52,8 @@ export function SaveStatus({ state }: { state: SaveState }) {
 
 // Inline confirm (CLAUDE.md §11): the first tap asks, the second does it. `steps` > 1 asks again with
 // each further prompt (e.g. discarding a live game asks twice). `validate` runs on the first tap: when it
-// returns false (the form shows its own inline errors) the confirm doesn't open.
+// returns false (the form shows its own inline errors) the confirm doesn't open. `details` shows under
+// the last prompt (e.g. an edit's list of changes).
 export function ConfirmButton({
   label,
   prompts,
@@ -61,6 +62,7 @@ export function ConfirmButton({
   className = btnSecondary,
   disabled,
   validate,
+  details,
 }: {
   label: ReactNode;
   prompts: string[];
@@ -69,6 +71,7 @@ export function ConfirmButton({
   className?: string;
   disabled?: boolean;
   validate?: () => boolean;
+  details?: ReactNode;
 }) {
   const [step, setStep] = useState(0);
   if (step === 0) {
@@ -82,6 +85,7 @@ export function ConfirmButton({
   return (
     <div role="group" className="ct-panel ct-panel-brass flex flex-col gap-2 p-3">
       <p className="font-medium">{prompts[step - 1]}</p>
+      {last && details}
       <div className="flex flex-wrap gap-2">
         <button
           type="button"

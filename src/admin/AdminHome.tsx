@@ -5,6 +5,7 @@ import { IconChevron } from "../design/icons.js";
 import { createFirstSeason } from "../domain/adminOps.js";
 import { startedSeasonMessage } from "../domain/commitMessages.js";
 import { localIsoDate } from "../domain/dates.js";
+import { deletedGames } from "../domain/gameEdits.js";
 import { newId } from "../domain/ids.js";
 import type { Data, Game } from "../domain/types.js";
 import { formatDate } from "../lib/format.js";
@@ -159,6 +160,7 @@ export function AdminHome() {
   }, [syncNow]);
 
   if (loading && !data) return <Loading />;
+  const deletedCount = data ? deletedGames(data).length : 0;
 
   return (
     <div className="px-4 pt-2 pb-4">
@@ -189,6 +191,15 @@ export function AdminHome() {
           <li>
             <Link to="/admin/seasons" className="ct-list-row ct-focus">
               <span className="flex-1">Seasons</span>
+              <span className={muted}>
+                <IconChevron />
+              </span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/deleted" className="ct-list-row ct-focus">
+              <span className="flex-1">Deleted games</span>
+              {deletedCount > 0 && <span className={`ct-num text-sm ${muted}`}>{deletedCount}</span>}
               <span className={muted}>
                 <IconChevron />
               </span>
