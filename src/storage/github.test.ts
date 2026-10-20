@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Data } from "../domain/types.js";
 import { fetchCommitHistory, loadData, setAuthTokenProvider } from "./github.js";
+import { HISTORY_SINCE } from "../config.js";
 
 const TOKEN = "fake-token-for-tests-read-path-1";
 
@@ -89,5 +90,15 @@ describe("fetchCommitHistory and 304s", () => {
     );
     vi.stubGlobal("fetch", fetchFn);
     await expect(fetchCommitHistory()).resolves.toEqual([{ sha: "abc", message: "Admin: x", date: "d", url: "u" }]);
+  });
+
+  it("asks only for commits since the test-data reset (HISTORY_SINCE)", async () => {
+    const fetchFn = vi.fn(async (_u: string | URL | Request) => json(200, []));
+    vi.stubGlobal("fetch", fetchFn);
+    await fetchCommitHistory();
+    const url = new URL(String(fetchFn.mock.calls[0]![0]));
+    expect(url.searchParams.get("since")).toBe(HISTORY_SINCE);
+    expect(url.searchParams.get("path")).toBe("data/data.json");
+    expect(new Date(HISTORY_SINCE).toISOString()).toBe("2026-10-20T04:11:01.000Z");
   });
 });

@@ -383,8 +383,9 @@ admin code: `#/admin/*` routes use `React.lazy` + `Suspense`).
 Express every change as a function `(data: Data) => Data` so it can be reapplied on retry.
 
 ### 8.3 Edit history
-`GET /repos/{owner}/{repo}/commits?path={dataPath}&per_page=50` gives the History screen
-(message + time). Each entry links to the commit on GitHub.
+`GET /repos/{owner}/{repo}/commits?path={dataPath}&since={HISTORY_SINCE}&per_page=50` gives the History
+screen (message + time). Each entry links to the commit on GitHub. `HISTORY_SINCE` (`src/config.ts`) is the
+timestamp of the test-data reset commit (2026-10-20), so older test commits stay in git but not on screen.
 
 ### 8.4 Commit messages
 All prefixed `Admin:` and human-readable, e.g.:

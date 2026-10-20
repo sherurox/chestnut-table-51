@@ -6,3 +6,7 @@ export const CONFIG = {
   appName: "Chestnut Table 51",
   shortName: "CT51",
 };
+
+// The History screen lists data commits from here on: the reset commit "Reset: wipe test data, start
+// real Season 1" (CLAUDE.md §12). Older commits are test data; git history itself is not rewritten.
+export const HISTORY_SINCE = "2026-10-20T04:11:01Z";

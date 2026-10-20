@@ -1,6 +1,6 @@
 import { migrate } from "../domain/migrations.js";
 import type { Data } from "../domain/types.js";
-import { CONFIG } from "../config.js";
+import { CONFIG, HISTORY_SINCE } from "../config.js";
 
 const DEV_DATA_URL = "/__dev-data__/data.json";
 const CACHE_KEY = "ct51.dataCache";
@@ -159,7 +159,7 @@ export async function loadData(): Promise<LoadedData> {
 }
 
 export async function fetchCommitHistory(limit = 50): Promise<CommitEntry[]> {
-  const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/commits?path=${CONFIG.dataPath}&per_page=${limit}`;
+  const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/commits?path=${CONFIG.dataPath}&since=${encodeURIComponent(HISTORY_SINCE)}&per_page=${limit}`;
   const res = await fetchRevalidated(url);
   if (!res.ok) {
     throw new Error(`Couldn't load edit history (${res.status}).`);
