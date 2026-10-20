@@ -9,6 +9,7 @@ import { newId } from "../domain/ids.js";
 import type { Data, Game } from "../domain/types.js";
 import { formatDate } from "../lib/format.js";
 import { shareText } from "../lib/share.js";
+import { activeSeason } from "../lib/selectors.js";
 import { useData } from "../state/DataContext.js";
 import { logout } from "../storage/auth.js";
 import { useLocalGame, useQueue } from "./localHooks.js";
@@ -165,15 +166,29 @@ export function AdminHome() {
 
       {data && data.seasons.length === 0 && <CreateFirstSeason />}
 
-      <Link to={local ? "/admin/live" : "/admin/start"} className={`${btnPrimary} mb-4 w-full text-lg`}>
-        {local ? "♠ Resume game" : "♠ Start game"}
-      </Link>
+      {!local && data && data.seasons.length > 0 && !activeSeason(data) ? (
+        <Link to="/admin/seasons" className={`${btnPrimary} mb-4 w-full text-lg`}>
+          ♦ Start a new season first
+        </Link>
+      ) : (
+        <Link to={local ? "/admin/live" : "/admin/start"} className={`${btnPrimary} mb-4 w-full text-lg`}>
+          {local ? "♠ Resume game" : "♠ Start game"}
+        </Link>
+      )}
 
       <div className="ct-panel mb-4 overflow-hidden">
         <ul>
           <li>
             <Link to="/admin/players" className="ct-list-row ct-focus">
               <span className="flex-1">Players</span>
+              <span className={muted}>
+                <IconChevron />
+              </span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/seasons" className="ct-list-row ct-focus">
+              <span className="flex-1">Seasons</span>
               <span className={muted}>
                 <IconChevron />
               </span>

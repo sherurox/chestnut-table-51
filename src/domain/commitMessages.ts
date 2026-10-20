@@ -30,8 +30,17 @@ export function presetBuyInsMessage(amounts: number[]): string {
   return `Admin: updated preset buy-ins (${list})`;
 }
 
-export function startedSeasonMessage(seasonName: string): string {
-  return `Admin: started ${seasonName}`;
+// "Admin: started Season 2 (closed Season 1)", or "Admin: started Season 2" when no season was active.
+export function startedSeasonMessage(seasonName: string, closedName?: string): string {
+  return closedName ? `Admin: started ${seasonName} (closed ${closedName})` : `Admin: started ${seasonName}`;
+}
+
+export function endedSeasonMessage(seasonName: string): string {
+  return `Admin: ended ${seasonName}`;
+}
+
+export function renamedSeasonMessage(oldName: string, newName: string): string {
+  return `Admin: renamed season ${oldName} to ${newName}`;
 }
 
 export function startedLiveGameMessage(): string {

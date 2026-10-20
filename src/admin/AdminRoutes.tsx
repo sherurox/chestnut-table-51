@@ -10,6 +10,7 @@ import { LiveGame } from "./LiveGame.js";
 import { useLocalGame } from "./localHooks.js";
 import { Login } from "./Login.js";
 import { Players } from "./Players.js";
+import { Seasons } from "./Seasons.js";
 import { Settings } from "./Settings.js";
 import { StartGame } from "./StartGame.js";
 import { SyncProvider } from "./sync.js";
@@ -53,6 +54,7 @@ function AdminScreens() {
         <Route path="live" element={<LiveGame />} />
         <Route path="end" element={<EndGame />} />
         <Route path="players" element={<Players />} />
+        <Route path="seasons" element={<Seasons />} />
         <Route path="settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>

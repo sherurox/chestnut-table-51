@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { HomeActions } from "../components/HomeActions.js";
 import { LastNightCard } from "../components/LastNightCard.js";
 import { StandingsList } from "../components/StandingsList.js";
-import { EmptyState, Loading, PageTitle } from "../design/components.js";
+import { Crown, EmptyState, Loading, Money, PageTitle } from "../design/components.js";
+import { Link } from "react-router-dom";
 import type { Data } from "../domain/types.js";
 import { latestFinishedGame, rankChanges } from "../domain/highlights.js";
-import { seasonStandings } from "../domain/standings.js";
+import { champion, seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
-import { activeSeason, todaysLines, visibleGames } from "../lib/selectors.js";
+import { activeSeason, allSeasonsNewestFirst, todaysLines, visibleGames } from "../lib/selectors.js";
 import { useMe } from "../state/useMe.js";
 import { checkLastSeenGame, latestSeasonGameId } from "../lib/lastSeenGame.js";
 import { motionReduced } from "../design/motion.js";
@@ -42,8 +43,36 @@ function useNewGameCelebration(data: Data | null): { pulse: boolean; confetti: b
   return { pulse, confetti, confettiDone };
 }
 
+// The last season was ended and no new one has started yet (§5.2): its final standings and champion.
+function seasonOver(data: Data, me: string | null): ReactNode {
+  const last = allSeasonsNewestFirst(data)[0]!;
+  const rows = seasonStandings(data, last.id);
+  const championId = champion(data, last.id);
+  const top = rows.find((r) => r.playerId === championId);
+  return (
+    <>
+      <PageTitle suit="♠" title={`${last.name} is over`} subtitle="The next season hasn't started yet." />
+      {top && (
+        <div className="ct-panel ct-panel-brass mb-4 flex items-center gap-3 p-4">
+          <Crown className="block h-8 w-8 shrink-0" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm text-ink-muted">Champion</span>
+            <span className="block font-semibold break-words">{top.name}</span>
+          </span>
+          <Money value={top.net} className="font-semibold" />
+        </div>
+      )}
+      {rows.length > 0 && <StandingsList rows={rows} me={me} championId={championId} />}
+      <Link to={`/seasons/${last.id}`} className="ct-btn ct-btn-secondary ct-focus mt-4 w-full">
+        Final standings and games
+      </Link>
+    </>
+  );
+}
+
 function standings(data: Data, me: string | null, pulse: boolean): ReactNode {
   const season = activeSeason(data);
+  if (!season && data.seasons.length > 0) return seasonOver(data, me);
   if (!season) {
     return (
       <EmptyState suit="♠" title="No season yet">

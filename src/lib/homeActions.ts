@@ -31,6 +31,13 @@ export function localGameSummary(raw: string | null): LocalGameSummary | null {
   }
 }
 
+// The last season was ended and no new one has started: no games (either mode) until one does (§5.2).
+export function needsNewSeason(data: Data | null): boolean {
+  return !!data && data.seasons.length > 0 && !data.seasons.some((s) => s.status === "active");
+}
+
+export const SEASONS_ADMIN_PATH = "/admin/seasons";
+
 // The live marker, when it belongs to a game that isn't on this phone.
 export function otherPhoneGame(data: Data | null, local: LocalGameSummary | null): LiveMarker | null {
   const marker = data?.liveGame ?? null;

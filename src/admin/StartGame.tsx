@@ -73,11 +73,13 @@ export function StartGame() {
 
   const season = activeSeason(data);
   if (!season) {
+    // No active season (none yet, or the last one was ended): no games of either mode (§5.2).
+    const ended = data.seasons.length > 0;
     return (
       <div className="p-4">
-        <p className="mb-3">Create a season before starting a game.</p>
-        <Link to="/admin" className={`${btnSecondary} inline-flex items-center`}>
-          Back to admin
+        <p className="mb-3">{ended ? "Start a new season first." : "Create a season before starting a game."}</p>
+        <Link to={ended ? "/admin/seasons" : "/admin"} className={`${ended ? btnPrimary : btnSecondary} inline-flex items-center`}>
+          {ended ? "Go to Seasons" : "Back to admin"}
         </Link>
       </div>
     );

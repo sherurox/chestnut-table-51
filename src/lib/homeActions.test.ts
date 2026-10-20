@@ -12,6 +12,7 @@ import {
   formatElapsed,
   formatStarted,
   localGameSummary,
+  needsNewSeason,
   otherPhoneGame,
   startGamePath,
   startModeFromSearch,
@@ -132,6 +133,10 @@ describe("HomeActions", () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
+  const endedData: Data = {
+    ...data(null),
+    seasons: [{ id: "s1", name: "Season 1", status: "closed", startedOn: "2026-10-15", endedOn: "2026-10-20" }],
+  };
   const render = (d: Data | null) =>
     renderToString(createElement(MemoryRouter, null, createElement(HomeActions, { data: d })));
 
@@ -164,5 +169,32 @@ describe("HomeActions", () => {
 
   it("buttons still show before data loads (offline, nothing cached)", () => {
     expect(render(null)).toContain("New season game");
+  });
+
+  it("after End season: one 'Start a new season first' link to Admin → Seasons instead of the game buttons", () => {
+    const html = render(endedData);
+    expect(html).toContain("Start a new season first");
+    expect(html).toContain('href="/admin/seasons"');
+    expect(html).not.toContain("New season game");
+    expect(html).not.toContain("Incognito game");
+  });
+
+  it("after End season, a game still on this phone keeps its Game on card", () => {
+    store.setItem(LIVE_GAME_KEY, JSON.stringify(localGame));
+    const html = render(endedData);
+    expect(html).toContain("Game on");
+    expect(html).not.toContain("Start a new season first");
+  });
+});
+
+describe("needsNewSeason (after End season)", () => {
+  const base: Data = { version: 1, settings: { presetBuyIns: [1000] }, players: [], seasons: [], games: [], liveGame: null };
+  it("only when seasons exist and none is active", () => {
+    expect(needsNewSeason(null)).toBe(false);
+    expect(needsNewSeason(base)).toBe(false);
+    expect(needsNewSeason({ ...base, seasons: [{ id: "s1", name: "Season 1", status: "active", startedOn: "2026-10-15" }] })).toBe(false);
+    expect(
+      needsNewSeason({ ...base, seasons: [{ id: "s1", name: "Season 1", status: "closed", startedOn: "2026-10-15", endedOn: "2026-10-20" }] }),
+    ).toBe(true);
   });
 });

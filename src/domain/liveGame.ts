@@ -107,7 +107,7 @@ export function guestsNeedingChoice(data: Data, playerIds: ID[], mode: Game["mod
 
 export function startGame(data: Data, input: StartInput): LocalGame {
   const season = data.seasons.find((s) => s.status === "active");
-  if (!season) throw new Error("Create a season before starting a game.");
+  if (!season) throw new Error(data.seasons.length > 0 ? "Start a new season first." : "Create a season before starting a game.");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) throw new Error("Pick a valid date.");
   if (new Set(input.playerIds).size !== input.playerIds.length) throw new Error("A player is listed twice.");
   if (input.playerIds.length < 2) throw new Error("A game needs at least 2 players.");

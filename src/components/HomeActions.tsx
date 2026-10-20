@@ -2,7 +2,15 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Link } from "react-router-dom";
 import type { Data } from "../domain/types.js";
 import { formatDollars } from "../lib/format.js";
-import { formatElapsed, formatStarted, localGameSummary, otherPhoneGame, startGamePath } from "../lib/homeActions.js";
+import {
+  formatElapsed,
+  formatStarted,
+  localGameSummary,
+  needsNewSeason,
+  otherPhoneGame,
+  SEASONS_ADMIN_PATH,
+  startGamePath,
+} from "../lib/homeActions.js";
 import { browserStore, LIVE_GAME_KEY, subscribeLocalChange } from "../storage/localKeys.js";
 
 function rawLiveGame(): string | null {
@@ -55,6 +63,17 @@ export function HomeActions({ data }: { data: Data | null }) {
     return (
       <section aria-label="Game in progress" className="mb-4">
         <ResumeCard startedAt={local.startedAt} total={local.tableTotal} />
+      </section>
+    );
+  }
+
+  if (needsNewSeason(data)) {
+    return (
+      <section aria-label="Start a game" className="mb-4">
+        <Link to={SEASONS_ADMIN_PATH} className="ct-btn ct-btn-primary ct-focus w-full flex-col gap-0 text-lg">
+          <span>♦ Start a new season first</span>
+          <span className="text-xs font-normal">The season is over. A new one is needed before the next game.</span>
+        </Link>
       </section>
     );
   }
