@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Splash, Wordmark } from "../design/components.js";
+import { Splash } from "../design/components.js";
 import { IconLock, IconRefresh } from "../design/icons.js";
-import { INSTANT_PATHS, prefersReducedMotion } from "../design/motion.js";
+import { INSTANT_PATHS, isInstant, prefersReducedMotion, useReducedMotion } from "../design/motion.js";
 import { useData } from "../state/DataContext.js";
 import { useTheme } from "../state/useTheme.js";
 import { isUpdateReady, reloadIntoNewVersion, reloader, subscribeUpdateReady } from "../lib/appUpdate.js";
 import { formatLastUpdated } from "../lib/format.js";
 import { hasLocalGame, queuedCount, subscribeLocalChange } from "../storage/localKeys.js";
+import { SeasonStatsPanel, WordmarkButton } from "./SeasonStatsPanel.js";
 
 const NAV_ITEMS = [
   { to: "/", label: "Leaderboard", suit: "♠" },
@@ -80,8 +81,12 @@ function navClassName({ isActive }: { isActive: boolean }): string {
 }
 
 export function AppShell() {
-  const { lastUpdated, loading, error, fromCache, refresh } = useData();
+  const { data, lastUpdated, loading, error, fromCache, refresh } = useData();
   const { pathname } = useLocation();
+  const instant = isInstant(pathname, useReducedMotion());
+  const [statsOpen, setStatsOpen] = useState(false);
+  const wordmark = useRef<HTMLButtonElement>(null);
+  const closeStats = useCallback(() => setStatsOpen(false), []);
   const [intro, setIntro] = useState(() => shouldPlayIntro(pathname));
   const endIntro = useCallback(() => setIntro(false), []);
   const main = useRef<HTMLElement>(null);
@@ -94,6 +99,7 @@ export function AppShell() {
       firstPath.current = false;
       return;
     }
+    setStatsOpen(false);
     window.scrollTo(0, 0);
     if (INSTANT_PATHS.includes(pathname) || prefersReducedMotion()) return;
     main.current?.animate(
@@ -111,9 +117,7 @@ export function AppShell() {
 
       <header className="ct-rail ct-safe-top sticky top-0 z-20">
         <div className="flex min-h-[56px] items-center justify-between gap-1 pr-1 pl-4">
-          <Link to="/" className="ct-focus flex min-h-[48px] min-w-0 items-center rounded-md" aria-label="Chestnut Table 51, leaderboard">
-            <Wordmark size="sm" />
-          </Link>
+          <WordmarkButton ref={wordmark} open={statsOpen} instant={instant} onOpen={() => setStatsOpen(true)} />
           <div className="flex shrink-0 items-center">
             <button
               type="button"
@@ -157,6 +161,14 @@ export function AppShell() {
         </span>
         Paisa he paisa hoga, hehehe 💸
       </footer>
+
+      <SeasonStatsPanel
+        open={statsOpen}
+        instant={instant}
+        data={data}
+        onClose={closeStats}
+        returnFocus={wordmark}
+      />
 
       <nav className="ct-nav" aria-label="Main">
         {NAV_ITEMS.map((item) => (

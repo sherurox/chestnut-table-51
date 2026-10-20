@@ -612,7 +612,78 @@ button.ct-list-row:active {
   }
 }
 
+/* Season stats sheet (header wordmark): slides up over a dimmed backdrop and back down on close. With
+   data-instant (live/end screens, reduced motion) it simply appears and disappears. */
+.ct-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.55);
+}
+.ct-sheet {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 41;
+  margin-inline: auto;
+  max-width: 480px;
+  max-height: 88dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  border: 1px solid var(--ct-brass-lo);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(180deg, var(--ct-felt-hi), var(--ct-felt));
+  box-shadow: 0 -12px 32px -8px var(--ct-shadow);
+}
+.ct-sheet-handle {
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin: 8px auto 0;
+  border-radius: 999px;
+  background: var(--ct-line);
+}
+.ct-sheet-backdrop:not([data-instant]) {
+  animation: ct-fade-in 220ms ease-out both;
+}
+.ct-sheet:not([data-instant]) {
+  animation: ct-sheet-up 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.ct-sheet-backdrop[data-state="closing"]:not([data-instant]) {
+  animation: ct-fade-out 200ms ease-in forwards;
+}
+.ct-sheet[data-state="closing"]:not([data-instant]) {
+  animation: ct-sheet-down 200ms ease-in forwards;
+}
+@keyframes ct-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes ct-sheet-down {
+  to {
+    transform: translateY(100%);
+  }
+}
+/* The brand chip flips once when the wordmark is tapped. */
+.ct-wordmark-btn[data-spin="true"] .ct-chip-badge {
+  animation: ct-chip-flip 480ms cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+@keyframes ct-chip-flip {
+  from {
+    transform: perspective(200px) rotateY(0);
+  }
+  to {
+    transform: perspective(200px) rotateY(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .ct-sheet-backdrop,
+  .ct-sheet,
+  .ct-wordmark-btn .ct-chip-badge,
   .ct-rise,
   .ct-screen,
   .ct-splash,

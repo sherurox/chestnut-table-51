@@ -551,11 +551,14 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
 - What animates: the ~1.2s intro splash (once per tab session, tap to skip, never when launching into a
   live game); a 180ms screen fade/slide; staggered entrance on leaderboard rows, game cards and seasons
   (`.ct-rise`); count-up on leaderboard and player-page totals (`Money animate`); rows sliding on rank
-  change (`useFlip`); the chip tap "pop" ring + 12ms vibrate on Android (`chipFeedback`).
+  change (`useFlip`); the chip tap "pop" ring + 12ms vibrate on Android (`chipFeedback`); the header
+  wordmark (a "Season stats" button on every screen) flips its chip and slides up the season-stats sheet
+  (`SeasonStatsPanel.tsx`, content from `lib/statsPanel.ts`) with count-ups.
 - Animation is visual only: values, order and handlers are already final, and nothing ever delays input.
   Chip feedback runs after the buy-in is recorded.
 - **`#/admin/live` and `#/admin/end` never animate** (`INSTANT_PATHS` / `isInstant` in `motion.ts`): no screen
-  transition, entrance, count-up or FLIP. The only motion there is the chip tap pop.
+  transition, entrance, count-up or FLIP. The only motion there is the chip tap pop. The season-stats sheet
+  still opens there, instantly (no chip flip, slide or count-up).
 - `prefers-reduced-motion: reduce` turns all of it off: no splash (nothing drawn), no transitions,
   entrances, count-ups, FLIP, chip pop or spinner; values show final immediately. Any new animation must
   be added to the reduced-motion block in `design.css` or check `useReducedMotion()`.
