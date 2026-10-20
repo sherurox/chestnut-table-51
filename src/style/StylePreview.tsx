@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { AppIconSvg, ChipBadge, Crown, Money, RankBadge, Splash, SuitHeading, Wordmark } from "../design/components.js";
 import { chipFeedback, useFlip, useReducedMotion } from "../design/motion.js";
 import { formatDollars, formatSignedDollars } from "../lib/format.js";
+import { useData } from "../state/DataContext.js";
+import { localIsoDate } from "../domain/dates.js";
+import { assignQuotes, badges, nemesis, playerMoods, seasonAwards, seasonSummary, typicalBuyIn } from "../domain/fun.js";
 
 // DEV ONLY (#/style): a living style guide for the Phase 4.5 redesign. App.tsx only registers this route
 // when import.meta.env.DEV, and check-bundle fails if the marker below ever reaches dist/.
@@ -262,6 +265,64 @@ function ChipCheck({ pass }: { pass: boolean }) {
   );
 }
 
+// ---- stats engine (domain/fun.ts) against the loaded data ----------------------------------------
+
+function FunStats() {
+  const { data } = useData();
+  const season = data?.seasons.find((x) => x.status === "active") ?? data?.seasons[data.seasons.length - 1];
+  if (!data || !season) return <p className="ct-muted text-sm">No data or no season yet.</p>;
+  const today = localIsoDate();
+  const moods = playerMoods(data, season.id);
+  const lines = new Map(assignQuotes(moods, today, season.id).map((q) => [q.playerId, q]));
+  const awards = seasonAwards(data, season.id);
+  const summary = seasonSummary(data, season.id, today);
+  const name = (id: string) => data.players.find((p) => p.id === id)?.name ?? id;
+  return (
+    <div className="space-y-3">
+      <div className="ct-panel space-y-1 p-4 text-sm">
+        <p>
+          <strong>{season.name}</strong> · {today} · typical buy-in {formatDollars(typicalBuyIn(data, season.id))}
+        </p>
+        <pre className="ct-muted text-xs whitespace-pre-wrap">{JSON.stringify(summary, null, 1)}</pre>
+        <p className="ct-muted text-xs">
+          Awards:{" "}
+          {Object.values(awards)
+            .filter((a) => a !== null)
+            .map((a) => `${a.kind}: ${a.playerIds.map(name).join(" & ")} (${Math.round(a.value * 10) / 10})`)
+            .join(" · ") || "none"}
+        </p>
+      </div>
+      {moods.map((m) => {
+        const nem = nemesis(data, season.id, m.playerId);
+        const q = lines.get(m.playerId);
+        return (
+          <div key={m.playerId} className="ct-panel space-y-1 p-4 text-sm">
+            <p>
+              <strong>{m.name}</strong> · {m.stats.games} games · {formatSignedDollars(m.stats.net)} · avg{" "}
+              {formatSignedDollars(Math.round(m.stats.avgPerGame))}
+            </p>
+            <p>
+              Tier <strong>{m.tier}</strong>
+              {m.situation && (
+                <>
+                  {" "}
+                  · override <strong>{m.situation}</strong>
+                </>
+              )}{" "}
+              · form {m.stats.form.join("") || "–"}
+            </p>
+            <p className="ct-brass">“{q?.line}”</p>
+            <p className="ct-muted text-xs">
+              Badges: {badges(data, m.playerId).map((b) => `${b.kind} (${b.date})`).join(", ") || "none"} · Nemesis:{" "}
+              {nem ? `${nem.name} (${nem.games} games, ${formatDollars(nem.won)})` : "none"}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ---- page ----------------------------------------------------------------------------------------
 
 export function StylePreview() {
@@ -460,6 +521,10 @@ export function StylePreview() {
               </figure>
             </div>
           </div>
+        </Section>
+
+        <Section title="Stats engine (live data)" suit="♦">
+          <FunStats />
         </Section>
 
         <Section title="Motion" suit="♠">
