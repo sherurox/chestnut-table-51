@@ -50,7 +50,7 @@ daily home poker game played between friends with **play money** (shown as dolla
 | Fonts | `@fontsource/playfair-display` + `@fontsource/inter` (self-hosted, Latin subset; section 11.1) |
 | PWA | vite-plugin-pwa (installable, offline app shell) |
 | Tests | Vitest |
-| Dev https | `@vitejs/plugin-basic-ssl` (dev server only, self-signed cert: Web Crypto/admin login needs https on a phone over the LAN). `DEV_HTTP=1` skips it and serves plain http on `localhost:5180` only, for desktop review |
+| Dev https | `@vitejs/plugin-basic-ssl` (dev server only, self-signed cert: Web Crypto/admin login needs https on a phone over the LAN). `DEV_HTTP=1` skips it and serves plain http on `localhost:5180` only, for desktop review. `SANDBOX=1` moves them to 5174 / 5181 (§8.6) |
 | Crypto | Web Crypto API (browser) and Node's `crypto.webcrypto` (setup script) |
 | Hosting | GitHub Pages, deployed by GitHub Actions |
 | Storage | `data/data.json` in this repo, read and written via the GitHub REST API |
@@ -65,7 +65,8 @@ Node 22+ is required. No backend code, no other external services.
 /
 ├─ CLAUDE.md
 ├─ data/
-│  └─ data.json              # THE database (raw facts only)
+│  ├─ data.json              # THE database (raw facts only)
+│  └─ sandbox*.json/.txt     # sandbox mode only, gitignored (§8.6)
 ├─ public/
 │  ├─ admin-key.json         # encrypted token blob (safe to commit)
 │  └─ icons/                 # PWA icons
@@ -82,6 +83,7 @@ Node 22+ is required. No backend code, no other external services.
 │  │  ├─ liveGame.ts         # live game action log, undo, guest choice, end check, finish/marker changes
 │  │  ├─ migrations.ts
 │  │  └─ *.test.ts
+│  ├─ devserver/             # sandboxServer.ts: Node-only sandbox middleware for vite.config.ts (§8.6)
 │  ├─ storage/               # the ONLY code that touches the network
 │  │  ├─ github.ts           # read data.json (viewer + admin), list commits
 │  │  ├─ githubWrite.ts      # admin write path (admin chunk only, see §8.2)
@@ -89,6 +91,7 @@ Node 22+ is required. No backend code, no other external services.
 │  │  ├─ auth.ts             # admin login, session (memory only)
 │  │  ├─ localGame.ts        # live-game autosave + "Not synced" queue in localStorage (no network)
 │  │  ├─ localKeys.ts        # localStorage keys only; safe for the viewer shell (badge, chunk warm-up)
+│  │  ├─ sandbox.ts          # sandbox-mode requests to the dev server (dev only, §8.6)
 │  │  └─ sync.ts             # pushes the queue + a pending live marker (admin chunk only)
 │  ├─ admin/                 # admin screens: lazy-loaded chunk, never shipped to viewers
 │  ├─ screens/               # one file per viewer screen
@@ -124,11 +127,21 @@ Vite `base` must be `/chestnut-table-51/` (the repo name) or assets will 404 on 
 - Promoting a guest sets `type` to `"regular"`. Their past games are not changed.
 
 ### 5.2 Seasons
-- Exactly one season is `"active"` at any time (after the first season is created).
+- At most one season is `"active"` at a time. After **End season** there may be none until a new one
+  starts; while there is none, no game of either mode can start (every game needs a `seasonId`), and the
+  Home / Admin game buttons say "Start a new season first" and link to `#/admin/seasons`. Home then shows
+  the ended season's champion and final standings.
 - No limit on number of games in a season.
 - Everyone starts every season at **$0 net winnings**. Nothing carries over.
-- **Start new season** (admin): closes the current season (`status: "closed"`, `endedOn` set) and creates
-  a new active one. Blocked while a live game exists.
+- **End season** (admin): closes the active season (`status: "closed"`, `endedOn` = today, local date)
+  without starting a new one.
+- **Start new season** (admin): if a season is active, closes it (`endedOn` = today) and creates the new
+  one in **one** commit; otherwise just creates one. Default name "Season N+1" (editable, unique
+  case-insensitively), `startedOn` today (editable: not in the future, not before the latest season's
+  start), fresh random id.
+- Both are blocked while a live marker exists, a game is running on this phone, or this phone has
+  unsynced games. Each confirm names the champion who'll be crowned (the current #1) and says it can't be
+  undone from the app. **Rename season** works on any season (name only).
 - A closed season's champion is computed, never stored: the #1 ranked player in its final standings.
 
 ### 5.3 Games
@@ -384,7 +397,7 @@ Express every change as a function `(data: Data) => Data` so it can be reapplied
 
 ### 8.3 Edit history
 `GET /repos/{owner}/{repo}/commits?path={dataPath}&since={HISTORY_SINCE}&per_page=50` gives the History
-screen (message + time). Each entry links to the commit on GitHub. `HISTORY_SINCE` (`src/config.ts`) is the
+screen (the message's **first line only**, never its body or trailers like `Co-Authored-By`, + time). Each entry links to the commit on GitHub. `HISTORY_SINCE` (`src/config.ts`) is the
 timestamp of the test-data reset commit (2026-10-20), so older test commits stay in git but not on screen.
 
 ### 8.4 Commit messages
@@ -393,7 +406,8 @@ All prefixed `Admin:` and human-readable, e.g.:
 - `Admin: finished incognito game 2026-10-24 (4 players)`
 - `Admin: edited game 2026-10-20 (Season 1)`
 - `Admin: deleted game 2026-10-20 (Season 1)` / `Admin: restored game …`
-- `Admin: started Season 2 (closed Season 1)`
+- `Admin: started Season 2 (closed Season 1)` / `Admin: started Season 2` (no season was active)
+- `Admin: ended Season 1` / `Admin: renamed season Season 1 to Diwali Cup`
 - `Admin: added player Amit` / `Admin: promoted guest Rohan to regular` / `Admin: archived player …`
 - `Admin: started live game` / `Admin: cleared stuck live game` / `Admin: discarded live game`
 - `Admin: finished game 2026-10-24 (Season 1, 5 players; promoted guest Rohan)` (guests promoted in the
@@ -402,6 +416,29 @@ All prefixed `Admin:` and human-readable, e.g.:
 ### 8.5 Deploys must ignore data commits
 `.github/workflows/deploy.yml` builds and deploys to Pages on pushes to `main`, with
 `paths-ignore: ["data/**"]`. Data saves must not trigger a rebuild; the app reads data live from the API.
+
+### 8.6 Sandbox mode (dev server only)
+For developing and reviewing admin flows without touching the real data. Started from PowerShell:
+```
+$env:SANDBOX='1'; npx vite --host                  # https on 5174, for a phone on the LAN
+$env:SANDBOX='1'; $env:DEV_HTTP='1'; npx vite      # http://localhost:5181, desktop review
+```
+- Data comes from `data/sandbox.json`, seeded once from `data/data.json` (delete it to reseed). Every write
+  goes to the dev middleware (`src/devserver/sandboxServer.ts`, `/__sandbox__/*`) instead of the GitHub API,
+  through the same change functions, `migrate` + validation and sha/409 retry loop (`saveWith` in
+  `githubWrite.ts`); the middleware revalidates with the app's own `migrate` and refuses invalid data.
+  Saves are listed in `data/sandbox-history.json` (the History screen in sandbox mode).
+- Login uses a throwaway key, `data/sandbox-admin-key.json`, encrypting a dummy token (never a GitHub
+  token), with a generated passphrase in `data/sandbox-admin-pass.txt`. The GitHub verify call is skipped
+  and the dummy token is never sent anywhere. `public/admin-key.json` is not used. Only the localhost
+  review server serves the passphrase at `/__sandbox__/test-passphrase`.
+- All `data/sandbox*` files are gitignored. A permanent "SANDBOX — not real data" banner shows on every screen.
+- Its own ports (5174 / 5181; the normal dev servers are 5173 / 5180, all `strictPort`) give it separate
+  browser storage, so sandbox games never sit in a real queue. A sandbox browser is marked
+  (`ct51.sandboxDevice`) and a normal dev server refuses to sync its queue.
+- Impossible in production: `__CT51_SANDBOX__` is a compile-time constant that is only true when serving
+  with `SANDBOX=1`, and `npm run check:bundle` fails if any sandbox code, endpoint, key, passphrase route or
+  the dummy token reaches `dist/`.
 
 ---
 
@@ -484,7 +521,7 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 | `#/admin/games/:id/edit` | Edit any game (closed-season warning). Delete from here. |
 | `#/admin/deleted` | Deleted games bin + restore. |
 | `#/admin/players` | Add, rename, archive/unarchive, promote guest. |
-| `#/admin/seasons` | Start new season, rename season. |
+| `#/admin/seasons` | End season, start new season, rename any season (§5.2). Linked from Admin home. |
 | `#/admin/settings` | Preset buy-in amounts. |
 
 ---
@@ -499,10 +536,14 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 - Footer on every screen: "Paisa he paisa hoga, hehehe 💸". The More screen shows the tagline
   "💰 या तो लाखों में या सलाखों में💰" under the wordmark (Devanagari and emoji use system fonts; no
   extra font files).
-- Confirm dialogs for: end game, delete, restore, editing a closed season, start new season, clear stuck game.
+- Confirm dialogs for: end game, delete, restore, editing a closed season, end season, start new season, clear stuck game.
 - Empty states for no seasons, no games, no players.
 - PWA manifest: `name` "Chestnut Table 51", `short_name` "CT51", standalone display, theme color, icons
-  (192px, 512px, maskable). iOS: apple-touch-icon and an "Add to Home Screen" hint for Safari users.
+  (192px, 512px, maskable). iOS: apple-touch-icon.
+- Install hint on Home (`InstallHint`, logic in `lib/installHint.ts`): iOS Safari (not other iOS browsers),
+  when not installed, shows a small dismissible card "Install CT51: tap Share, then Add to Home Screen";
+  Android Chrome shows an "Install app" button once the browser fires `beforeinstallprompt` (caught early in
+  `lib/installPrompt.ts`). Hidden when installed (standalone) and once dismissed (`ct51.installHintDismissed`).
 - Accessible: semantic HTML, labels on inputs, visible focus states, sufficient contrast in both themes.
 
 ### 11.1 Design system ("private club card room")
