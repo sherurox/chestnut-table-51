@@ -3,6 +3,7 @@ import { createHashRouter, RouterProvider } from "react-router-dom";
 import { AppShell } from "./components/AppShell.js";
 import { RouteError } from "./components/RouteError.js";
 import { reloader } from "./lib/appUpdate.js";
+import { installViewTransitionGuard } from "./lib/viewTransitions.js";
 import { DataProvider } from "./state/DataContext.js";
 import { Leaderboard } from "./screens/Leaderboard.js";
 import { GameHistory } from "./screens/GameHistory.js";
@@ -36,6 +37,10 @@ const AdminRoutes = lazy(() =>
 const StylePreview = import.meta.env.DEV
   ? lazy(() => import("./style/StylePreview.js").then((m) => ({ default: m.StylePreview })))
   : null;
+
+// Every screen transition passes this guard (never on live/end screens or with motion off). Installed
+// before the router exists so its popstate listener runs before React Router's (back = back slide).
+installViewTransitionGuard(window);
 
 const router = createHashRouter([
   ...(StylePreview

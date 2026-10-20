@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Splash } from "../design/components.js";
 import { IconLock, IconRefresh } from "../design/icons.js";
 import { isInstant, motionReduced, useMotionReduced } from "../design/motion.js";
+import { noteCommittedPath, useViewTransitionTo, viewTransitionRunning } from "../lib/viewTransitions.js";
 import { useData } from "../state/DataContext.js";
 import { useTheme } from "../state/useTheme.js";
 import { isUpdateReady, reloadIntoNewVersion, reloader, subscribeUpdateReady } from "../lib/appUpdate.js";
@@ -85,6 +86,7 @@ export function AppShell() {
   const { pathname } = useLocation();
   const reduced = useMotionReduced();
   const instant = isInstant(pathname, reduced);
+  const transitionTo = useViewTransitionTo();
   const [statsOpen, setStatsOpen] = useState(false);
   const wordmark = useRef<HTMLButtonElement>(null);
   const closeStats = useCallback(() => setStatsOpen(false), []);
@@ -99,15 +101,16 @@ export function AppShell() {
     document.documentElement.dataset.motion = reduced ? "off" : "on";
   }, [reduced]);
 
-  // Screen transition: animate the page area in place (never remount it: admin screens keep state).
-  // Never into or out of the live/end screens.
+  // Screen change without a view transition (other links, or no API): animate the page area in place
+  // (never remount it: admin screens keep state). Never into or out of the live/end screens.
   useEffect(() => {
     const from = prevPath.current;
     prevPath.current = pathname;
+    noteCommittedPath(pathname);
     if (from === null || from === pathname) return;
     setStatsOpen(false);
     window.scrollTo(0, 0);
-    if (isInstant(from, motionReduced()) || isInstant(pathname, motionReduced())) return;
+    if (viewTransitionRunning() || isInstant(from, motionReduced()) || isInstant(pathname, motionReduced())) return;
     main.current?.animate(
       [
         { opacity: 0, transform: "translateX(10px)" },
@@ -178,7 +181,7 @@ export function AppShell() {
 
       <nav className="ct-nav" aria-label="Main">
         {NAV_ITEMS.map((item) => (
-          <NavLink key={item.to} to={item.to} className={navClassName} end={item.to === "/"}>
+          <NavLink key={item.to} to={item.to} className={navClassName} end={item.to === "/"} viewTransition={transitionTo(item.to)}>
             <span aria-hidden="true" className="text-lg leading-none">
               {item.suit}
             </span>

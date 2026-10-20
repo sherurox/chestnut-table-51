@@ -125,4 +125,8 @@ describe("motion-off CSS", () => {
       .map((r) => ({ selectors: r.selectors.map((s) => s.slice(prefix.length).trim()), decl: r.decl }));
     expect(mirror).toEqual(rules(media));
   });
+
+  it("covers the screen transitions", () => {
+    expect(media).toContain("::view-transition-group(*)");
+  });
 });

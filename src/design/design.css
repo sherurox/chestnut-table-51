@@ -680,6 +680,66 @@ button.ct-list-row:active {
   }
 }
 
+/* Screen transitions (View Transitions API, started only through lib/viewTransitions.ts, never on the
+   live/end screens). The page crossfades with a short slide; the header and bottom nav stay put. A
+   leaderboard row's rank and name (ct-rank-<id> / ct-name-<id>) morph into the player page header. */
+.ct-rail {
+  view-transition-name: ct-header;
+}
+.ct-nav {
+  view-transition-name: ct-nav;
+}
+::view-transition-group(*) {
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+::view-transition-group(ct-header),
+::view-transition-group(ct-nav),
+::view-transition-new(ct-header),
+::view-transition-new(ct-nav) {
+  animation: none;
+}
+::view-transition-old(ct-header),
+::view-transition-old(ct-nav) {
+  display: none;
+}
+::view-transition-old(root) {
+  animation: ct-vt-out 160ms ease-in both;
+}
+::view-transition-new(root) {
+  animation: ct-vt-in 220ms ease-out both;
+}
+:root[data-vt="back"]::view-transition-old(root) {
+  animation-name: ct-vt-out-back;
+}
+:root[data-vt="back"]::view-transition-new(root) {
+  animation-name: ct-vt-in-back;
+}
+@keyframes ct-vt-out {
+  to {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+@keyframes ct-vt-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes ct-vt-out-back {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes ct-vt-in-back {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+
 /* Motion off: the phone's reduced-motion setting, or Animations: Off on More (data-motion="off" on
    <html>). Both blocks list the same selectors (a test keeps them in step). */
 @media (prefers-reduced-motion: reduce) {
@@ -695,6 +755,12 @@ button.ct-list-row:active {
   .ct-splash-suits,
   .ct-chip.ct-pop::after,
   .ct-spin {
+    animation: none !important;
+  }
+  /* Separate rule: a browser without view transitions drops a whole selector list it can't parse. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
     animation: none !important;
   }
   .ct-chip,
@@ -715,6 +781,11 @@ button.ct-list-row:active {
 :root[data-motion="off"] .ct-splash-suits,
 :root[data-motion="off"] .ct-chip.ct-pop::after,
 :root[data-motion="off"] .ct-spin {
+  animation: none !important;
+}
+:root[data-motion="off"]::view-transition-group(*),
+:root[data-motion="off"]::view-transition-old(*),
+:root[data-motion="off"]::view-transition-new(*) {
   animation: none !important;
 }
 :root[data-motion="off"] .ct-chip,

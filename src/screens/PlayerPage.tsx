@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useViewTransitionState } from "react-router-dom";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AwardsList, BadgeList, NemesisCard, SectionLabel, TitleCard } from "../components/FunPanels.js";
-import { EmptyState, Loading, Money, PageTitle } from "../design/components.js";
+import { EmptyState, Loading, Money, PageTitle, RankBadge } from "../design/components.js";
+import { seasonStandings } from "../domain/standings.js";
+import { morphNames } from "../lib/viewTransitions.js";
 import { useData } from "../state/DataContext.js";
 import { activeSeason, playerById, todaysLines } from "../lib/selectors.js";
 import { netWinningsOverTime } from "../domain/charts.js";
@@ -155,9 +157,12 @@ function PlayerAwards({ data, seasonId, playerId }: { data: Data; seasonId: stri
 export function PlayerPage() {
   const { id } = useParams();
   const { data, loading } = useData();
+  // Coming from (or going back to) the leaderboard: the header's rank and name morph with that row.
+  const morph = useViewTransitionState("/");
+  const player = data && id ? playerById(data, id) : undefined;
+  const season = data ? activeSeason(data) : undefined;
 
   if (loading && !data) return <Loading />;
-  const player = data && id ? playerById(data, id) : undefined;
   if (!data || !id || !player) {
     return (
       <div className="p-4">
@@ -166,13 +171,25 @@ export function PlayerPage() {
     );
   }
 
-  const season = activeSeason(data);
+  const rankIndex = season ? seasonStandings(data, season.id).findIndex((r) => r.playerId === id) : -1;
+  const names = morph ? morphNames(id) : null;
 
   return (
     <div className="px-4 pt-2 pb-4">
       <PageTitle
         suit="♥"
-        title={player.name}
+        title={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            {rankIndex >= 0 && (
+              <span className="inline-flex shrink-0 font-sans text-base" style={names ? { viewTransitionName: names.rank } : undefined}>
+                <RankBadge rank={rankIndex + 1} />
+              </span>
+            )}
+            <span className="inline-block min-w-0 break-words" style={names ? { viewTransitionName: names.name } : undefined}>
+              {player.name}
+            </span>
+          </span>
+        }
         subtitle={
           <span className="flex flex-wrap items-center gap-1.5">
             {season ? season.name : "No active season"}
