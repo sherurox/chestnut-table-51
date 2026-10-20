@@ -148,7 +148,7 @@ describe("motion-off CSS", () => {
     expect(media).toContain("::view-transition-group(*)");
   });
 
-  it("covers the celebrations", () => {
-    for (const sel of [".ct-confetti-bit", ".ct-crown-drop"]) expect(media).toContain(sel);
+  it("covers the celebrations and the pull-to-refresh chip", () => {
+    for (const sel of [".ct-confetti-bit", ".ct-crown-drop", ".ct-spin", ".ct-pull"]) expect(media).toContain(sel);
   });
 });

@@ -743,6 +743,38 @@ button.ct-list-row:active {
   }
 }
 
+/* Pull-to-refresh (installed app, Home and Games): the chip slides out from under the header. */
+:root[data-standalone="true"],
+:root[data-standalone="true"] body {
+  overscroll-behavior-y: contain;
+}
+.ct-pull-zone {
+  position: absolute;
+  top: 100%;
+  inset-inline: 0;
+  height: 104px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ct-pull {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: block;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px var(--ct-shadow);
+  transition:
+    transform 180ms ease-out,
+    opacity 180ms ease-out;
+}
+.ct-pull[data-dragging="true"] {
+  transition: none;
+}
+.ct-pull[data-armed="true"] {
+  outline: 2px solid var(--ct-brass-hi);
+  outline-offset: 2px;
+}
+
 /* Screen transitions (View Transitions API, started only through lib/viewTransitions.ts, never on the
    live/end screens). The page crossfades with a short slide; the header and bottom nav stay put. A
    leaderboard row's rank and name (ct-rank-<id> / ct-name-<id>) morph into the player page header. */
@@ -830,7 +862,8 @@ button.ct-list-row:active {
     animation: none !important;
   }
   .ct-chip,
-  .ct-btn {
+  .ct-btn,
+  .ct-pull {
     transition: none;
   }
 }
@@ -858,7 +891,8 @@ button.ct-list-row:active {
   animation: none !important;
 }
 :root[data-motion="off"] .ct-chip,
-:root[data-motion="off"] .ct-btn {
+:root[data-motion="off"] .ct-btn,
+:root[data-motion="off"] .ct-pull {
   transition: none;
 }
 

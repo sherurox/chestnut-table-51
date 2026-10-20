@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Splash } from "../design/components.js";
+import { ChipBadge, Splash } from "../design/components.js";
 import { IconLock, IconRefresh } from "../design/icons.js";
 import { isInstant, motionReduced, useMotionReduced } from "../design/motion.js";
 import { noteCommittedPath, useViewTransitionTo, viewTransitionRunning } from "../lib/viewTransitions.js";
@@ -8,6 +8,8 @@ import { useData } from "../state/DataContext.js";
 import { useTheme } from "../state/useTheme.js";
 import { isUpdateReady, reloadIntoNewVersion, reloader, subscribeUpdateReady } from "../lib/appUpdate.js";
 import { formatLastUpdated } from "../lib/format.js";
+import { isStandalone } from "../lib/platform.js";
+import { usePullToRefresh } from "../lib/pullToRefresh.js";
 import { hasLocalGame, queuedCount, subscribeLocalChange } from "../storage/localKeys.js";
 import { SeasonStatsPanel, WordmarkButton } from "./SeasonStatsPanel.js";
 
@@ -19,6 +21,7 @@ const NAV_ITEMS = [
 ];
 
 const INTRO_KEY = "ct51.introShown";
+const PULL_MIN_SPIN_MS = 600;
 
 // The intro plays once per app launch (tab session), never when launching straight into a live game.
 function shouldPlayIntro(pathname: string): boolean {
@@ -77,6 +80,26 @@ function UpdateBanner() {
   );
 }
 
+// Installed app, Home and Games only (lib/pullToRefresh.ts): the brand chip slides out under the header as
+// you pull, and spins while the refresh it started runs (only when animations are allowed).
+function PullIndicator({ offset, armed, spinning, instant }: { offset: number; armed: boolean; spinning: boolean; instant: boolean }) {
+  const shown = spinning ? 56 : offset;
+  return (
+    <div className="ct-pull-zone" aria-hidden="true">
+      <span
+        className="ct-pull"
+        data-armed={armed || spinning}
+        data-dragging={offset > 0 && !spinning}
+        style={{ transform: `translate(-50%, ${shown - 44}px)`, opacity: shown === 0 ? 0 : Math.min(1, shown / 40) }}
+      >
+        <span className={`block ${spinning && !instant ? "ct-spin" : ""}`}>
+          <ChipBadge size={36} />
+        </span>
+      </span>
+    </div>
+  );
+}
+
 function navClassName({ isActive }: { isActive: boolean }): string {
   return `ct-nav-item ct-focus ${isActive ? "ct-nav-active" : ""}`;
 }
@@ -94,7 +117,27 @@ export function AppShell() {
   const endIntro = useCallback(() => setIntro(false), []);
   const main = useRef<HTMLElement>(null);
   const prevPath = useRef<string | null>(null);
+  const [pullSpin, setPullSpin] = useState(false);
+  const pullStarted = useRef(0);
+  const pullRefresh = useCallback(() => {
+    pullStarted.current = Date.now();
+    setPullSpin(true);
+    refresh();
+  }, [refresh]);
+  const pull = usePullToRefresh(pathname, loading, pullRefresh);
   useTheme();
+
+  // The chip stays out at least PULL_MIN_SPIN_MS, so a fast refresh still shows it happened.
+  useEffect(() => {
+    if (loading || !pullSpin) return;
+    const timer = setTimeout(() => setPullSpin(false), Math.max(0, pullStarted.current + PULL_MIN_SPIN_MS - Date.now()));
+    return () => clearTimeout(timer);
+  }, [loading, pullSpin]);
+
+  // Installed app: keep the browser's own overscroll (pull-to-refresh, bounce chaining) out of the way.
+  useLayoutEffect(() => {
+    if (isStandalone()) document.documentElement.dataset.standalone = "true";
+  }, []);
 
   // Motion off (OS setting or Animations: Off on More): CSS animations stop too (design.css).
   useLayoutEffect(() => {
@@ -142,6 +185,7 @@ export function AppShell() {
             </NavLink>
           </div>
         </div>
+        <PullIndicator offset={pull.offset} armed={pull.armed} spinning={pullSpin} instant={instant} />
       </header>
 
       <div className="flex flex-wrap items-center justify-between gap-x-3 px-4 text-xs text-ink-muted">
