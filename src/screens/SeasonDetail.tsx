@@ -1,6 +1,8 @@
 import { useParams } from "react-router-dom";
+import { AwardsList, SectionLabel } from "../components/FunPanels.js";
 import { StandingsList } from "../components/StandingsList.js";
 import { Crown, EmptyState, Loading, Money, PageTitle } from "../design/components.js";
+import { seasonAwards } from "../domain/fun.js";
 import { champion, seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
 import { useMe } from "../state/useMe.js";
@@ -24,6 +26,8 @@ export function SeasonDetail() {
   const rows = seasonStandings(data, season.id);
   const championId = season.status === "closed" ? champion(data, season.id) : null;
   const championRow = rows.find((r) => r.playerId === championId);
+  const awards = seasonAwards(data, season.id);
+  const anyAward = Object.values(awards).some((a) => a !== null);
 
   return (
     <div className="px-4 pt-2 pb-4">
@@ -49,6 +53,18 @@ export function SeasonDetail() {
       ) : (
         <StandingsList rows={rows} me={me} championId={championId} />
       )}
+
+      {/* Awards need season games; a season with none shows only the empty state above. */}
+      {rows.some((r) => r.gamesPlayed > 0) ? (
+        <section className="mt-6" aria-label="Awards">
+          <SectionLabel>{season.status === "closed" ? "Awards · final" : "Awards · so far"}</SectionLabel>
+          {anyAward ? (
+            <AwardsList data={data} awards={awards} />
+          ) : (
+            <p className="ct-panel p-4 text-sm text-ink-muted">No awards yet. They need a few more games.</p>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }
