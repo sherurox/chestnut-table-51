@@ -724,6 +724,25 @@ button.ct-list-row:active {
   }
 }
 
+/* A closed season's champion crown drops in once per phone (SeasonDetail). */
+.ct-crown-drop {
+  display: inline-block;
+  animation: ct-crown-drop 700ms cubic-bezier(0.25, 0.9, 0.3, 1.25) both;
+}
+@keyframes ct-crown-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-40px) rotate(-18deg) scale(0.8);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(3px) rotate(4deg) scale(1.05);
+  }
+  100% {
+    transform: none;
+  }
+}
+
 /* Screen transitions (View Transitions API, started only through lib/viewTransitions.ts, never on the
    live/end screens). The page crossfades with a short slide; the header and bottom nav stay put. A
    leaderboard row's rank and name (ct-rank-<id> / ct-name-<id>) morph into the player page header. */
@@ -800,7 +819,8 @@ button.ct-list-row:active {
   .ct-chip.ct-pop::after,
   .ct-spin,
   .ct-pulse,
-  .ct-confetti-bit {
+  .ct-confetti-bit,
+  .ct-crown-drop {
     animation: none !important;
   }
   /* Separate rule: a browser without view transitions drops a whole selector list it can't parse. */
@@ -828,7 +848,8 @@ button.ct-list-row:active {
 :root[data-motion="off"] .ct-chip.ct-pop::after,
 :root[data-motion="off"] .ct-spin,
 :root[data-motion="off"] .ct-pulse,
-:root[data-motion="off"] .ct-confetti-bit {
+:root[data-motion="off"] .ct-confetti-bit,
+:root[data-motion="off"] .ct-crown-drop {
   animation: none !important;
 }
 :root[data-motion="off"]::view-transition-group(*),

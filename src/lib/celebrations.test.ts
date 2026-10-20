@@ -4,8 +4,10 @@ import {
   CONFETTI_COLORS,
   CONFETTI_MAX,
   CONFETTI_MS,
+  checkChampionCrown,
   confettiParticles,
   newGameCelebration,
+  SEEN_CHAMPION_PREFIX,
 } from "./celebrations.js";
 import { checkLastSeenGame, LAST_SEEN_GAME_KEY } from "./lastSeenGame.js";
 
@@ -81,5 +83,34 @@ describe("confettiParticles", () => {
 
   it("a seed gives the same burst (reproducible)", () => {
     expect(confettiParticles(32, 7)).toEqual(confettiParticles(32, 7));
+  });
+});
+
+describe("champion crown (once per phone per season)", () => {
+  it("drops the first time a season is opened, never again for that season", () => {
+    const store = memoryStore();
+    expect(checkChampionCrown("s1", store, on)).toBe(true);
+    expect(store.map.get(SEEN_CHAMPION_PREFIX + "s1")).toBe("1");
+    expect(checkChampionCrown("s1", store, on)).toBe(false);
+    expect(checkChampionCrown("s2", store, on)).toBe(true); // a different season drops once too
+    expect(checkChampionCrown("s2", store, on)).toBe(false);
+  });
+
+  it("animations off: no drop, and the season counts as seen", () => {
+    const store = memoryStore();
+    expect(checkChampionCrown("s1", store, off)).toBe(false);
+    expect(store.map.has(SEEN_CHAMPION_PREFIX + "s1")).toBe(true);
+    expect(checkChampionCrown("s1", store, on)).toBe(false);
+  });
+
+  it("storage missing or blocked: plain display", () => {
+    expect(checkChampionCrown("s1", null, on)).toBe(false);
+    const blocked = {
+      getItem: (): string | null => {
+        throw new Error("blocked");
+      },
+      setItem: () => {},
+    };
+    expect(checkChampionCrown("s1", blocked, on)).toBe(false);
   });
 });

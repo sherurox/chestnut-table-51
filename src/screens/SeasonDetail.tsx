@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { AwardsList, SectionLabel } from "../components/FunPanels.js";
 import { StandingsList } from "../components/StandingsList.js";
@@ -7,6 +8,30 @@ import { champion, seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
 import { useMe } from "../state/useMe.js";
 import { seasonById } from "../lib/selectors.js";
+import { checkChampionCrown } from "../lib/celebrations.js";
+import { motionReduced } from "../design/motion.js";
+import { browserStore } from "../storage/localKeys.js";
+
+// A closed season's champion. The crown drops in the first time this phone opens the season
+// (ct51.seenChampion.<seasonId>), plain after that; with animations off it is simply shown.
+function ChampionCard({ seasonId, name, net }: { seasonId: string; name: string; net: number }) {
+  const [drop, setDrop] = useState(false);
+  useEffect(() => {
+    if (checkChampionCrown(seasonId, browserStore(), !motionReduced())) setDrop(true);
+  }, [seasonId]);
+  return (
+    <div className="ct-panel ct-panel-brass mb-4 flex items-center gap-3 p-4">
+      <span className={`shrink-0 ${drop ? "ct-crown-drop" : ""}`} onAnimationEnd={() => setDrop(false)}>
+        <Crown className="block h-9 w-9" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs font-semibold tracking-wide text-ink-muted uppercase">Champion</div>
+        <div className="ct-display text-xl font-semibold break-words">{name}</div>
+      </div>
+      <Money value={net} className="shrink-0 text-lg" />
+    </div>
+  );
+}
 
 export function SeasonDetail() {
   const { id } = useParams();
@@ -37,16 +62,7 @@ export function SeasonDetail() {
         subtitle={season.status === "active" ? `Active since ${season.startedOn}` : `Closed ${season.endedOn ?? ""}`}
       />
 
-      {championRow && (
-        <div className="ct-panel ct-panel-brass mb-4 flex items-center gap-3 p-4">
-          <Crown className="h-9 w-9 shrink-0" />
-          <div className="min-w-0 flex-1">
-            <div className="text-xs font-semibold tracking-wide text-ink-muted uppercase">Champion</div>
-            <div className="ct-display text-xl font-semibold break-words">{championRow.name}</div>
-          </div>
-          <Money value={championRow.net} className="shrink-0 text-lg" />
-        </div>
-      )}
+      {championRow && <ChampionCard seasonId={season.id} name={championRow.name} net={championRow.net} />}
 
       {rows.length === 0 ? (
         <EmptyState suit="♣" title="No games in this season" />

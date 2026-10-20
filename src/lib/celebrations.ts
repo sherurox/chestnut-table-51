@@ -1,4 +1,5 @@
 import type { ID } from "../domain/types.js";
+import type { KeyValueStore } from "../storage/localKeys.js";
 
 // Home and season celebrations (visual only). Every one is gated by animationsAllowed(); the
 // localStorage keys behind them are non-secret and update even when animations are off.
@@ -65,4 +66,22 @@ export function confettiParticles(count = 32, seed = Date.now()): ConfettiPartic
       h: 8 + Math.round(rand() * 6),
     };
   });
+}
+
+// ---- Champion crown ----------------------------------------------------------------------------
+
+export const SEEN_CHAMPION_PREFIX = "ct51.seenChampion.";
+
+// The closed season's crown drops in once per phone per season: true only the first time, and the key
+// is set either way (with animations off it simply shows, and won't drop later either).
+export function checkChampionCrown(seasonId: ID, store: Pick<KeyValueStore, "getItem" | "setItem"> | null, allowed: boolean): boolean {
+  try {
+    if (!store) return false;
+    const key = SEEN_CHAMPION_PREFIX + seasonId;
+    if (store.getItem(key) !== null) return false;
+    store.setItem(key, "1");
+    return allowed;
+  } catch {
+    return false; // storage blocked: plain display
+  }
 }
