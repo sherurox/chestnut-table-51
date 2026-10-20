@@ -4,3 +4,9 @@ coverage/
 .env
 .env.*
 *.tsbuildinfo
+
+# Dev-only sandbox (CLAUDE.md §8.6): never commit
+data/sandbox.json
+data/sandbox-history.json
+data/sandbox-admin-key.json
+data/sandbox-admin-pass.txt

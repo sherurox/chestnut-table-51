@@ -27,19 +27,29 @@ export function EditHistory() {
       {commits && commits.length > 0 && (
         <div className="ct-panel overflow-hidden">
           <ul>
-            {commits.map((c) => (
-              <li key={c.sha}>
-                <a href={c.url} target="_blank" rel="noreferrer" className="ct-list-row ct-focus">
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm break-words">{c.message}</span>
-                    <span className="block text-xs text-ink-muted">{formatDateTime(c.date)}</span>
-                  </span>
-                  <span className="text-ink-muted">
-                    <IconChevron />
-                  </span>
-                </a>
-              </li>
-            ))}
+            {commits.map((c) => {
+              const text = (
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm break-words">{c.message}</span>
+                  <span className="block text-xs text-ink-muted">{formatDateTime(c.date)}</span>
+                </span>
+              );
+              return (
+                <li key={c.sha}>
+                  {/* Sandbox saves (dev only) have no commit on GitHub to link to. */}
+                  {c.url ? (
+                    <a href={c.url} target="_blank" rel="noreferrer" className="ct-list-row ct-focus">
+                      {text}
+                      <span className="text-ink-muted">
+                        <IconChevron />
+                      </span>
+                    </a>
+                  ) : (
+                    <div className="ct-list-row">{text}</div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

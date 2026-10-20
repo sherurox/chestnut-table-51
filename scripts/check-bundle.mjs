@@ -5,6 +5,8 @@
 //  - the dev-only ?forceConflict=1 hook or #/style preview survived into the production bundle (CLAUDE.md §8.2),
 //  - test data (the seed fixture's sequential player ids) is in the bundle,
 //  - anything token-shaped is in dist/,
+//  - any sandbox code, endpoint, test admin key/passphrase or the sandbox dummy token is anywhere in dist/
+//    (sandbox mode is dev-server only, CLAUDE.md §8.6),
 //  - the service worker precaches the admin chunk, lacks the admin runtime-cache rule (offline games,
 //    CLAUDE.md §8.1), caches api.github.com/data at runtime, or the admin chunk imports a chunk that
 //    wouldn't be available offline.
@@ -26,6 +28,18 @@ const ADMIN_MARKERS = [
   "Add a late player",
 ];
 const DEV_ONLY_MARKERS = ["forceConflict", "ct51-style-preview"];
+// Sandbox mode (dev server with SANDBOX=1). Checked in every file in dist/, not only JS. The last one is the
+// sandbox's dummy token (src/devserver/sandboxServer.ts).
+const SANDBOX_MARKERS = [
+  "__sandbox__",
+  "SANDBOX — not real data",
+  "sandboxDevice",
+  "sandbox-admin",
+  "test-passphrase",
+  "sandbox.json",
+  "ct51-sandbox-dummy-token",
+];
+const TEXT_FILE = /\.(js|mjs|css|html|json|webmanifest|txt|svg|map)$/;
 // Test data (src/domain/__fixtures__/seed.json, the wiped sample data) uses sequential player ids like
 // "p1"; real players get random 8-character ids and are only ever fetched live, never bundled.
 const TEST_DATA_PATTERN = /"?id"?\s*:\s*"p\d+"\s*,\s*"?name"?\s*:/;
@@ -69,6 +83,12 @@ for (const file of jsFiles) {
     if (pattern.test(text)) failures.push(`token-shaped string in ${name}`);
   }
 }
+for (const file of (await listFiles(dist)).filter((f) => TEXT_FILE.test(f))) {
+  const text = await readFile(file, "utf8");
+  for (const marker of SANDBOX_MARKERS) {
+    if (text.includes(marker)) failures.push(`sandbox code in production build ${file.slice(dist.length)}: "${marker}"`);
+  }
+}
 if (!adminChunk) failures.push("no separate admin chunk found (is #/admin/* still lazy-loaded?)");
 else {
   const sw = await readFile(join(dist, "sw.js"), "utf8").catch(() => "");
@@ -106,4 +126,4 @@ if (failures.length > 0) {
   console.error("check-bundle FAILED:\n  " + failures.join("\n  "));
   process.exit(1);
 }
-console.log(`check-bundle OK: entry ${entryMatch[1]} has no admin code; admin chunk ${adminChunk}; no dev-only hooks.`);
+console.log(`check-bundle OK: entry ${entryMatch[1]} has no admin code; admin chunk ${adminChunk}; no dev-only hooks, no sandbox.`);

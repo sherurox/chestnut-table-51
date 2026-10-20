@@ -5,6 +5,7 @@ import { migrate } from "../domain/migrations.js";
 import type { Data } from "../domain/types.js";
 import { EXPIRED_MESSAGE, getToken } from "./auth.js";
 import { authHeaders } from "./github.js";
+import { sandboxGetData, sandboxPutData, type SandboxFile } from "./sandbox.js";
 
 // Admin write path (CLAUDE.md §8.2). Lives in the lazy admin chunk only. Every write: fetch fresh +
 // sha → apply the Change → migrate + validate → PUT. 409 is a conflict; 422 is a conflict only if the
@@ -28,7 +29,7 @@ export interface SaveResult {
   unchanged: boolean;
 }
 
-interface Current {
+export interface Current {
   sha: string;
   data: Data;
 }
@@ -144,6 +145,91 @@ function redact(err: unknown, token: string): Error {
   return err instanceof SaveError && safe === message ? err : new SaveError(safe);
 }
 
+// Where a write goes: the GitHub contents API, or (dev server with SANDBOX=1 only) data/sandbox.json.
+// `put` reports a 409/422 as a conflict and throws for anything else; the loop in saveWith decides.
+export interface WriteBackend {
+  fetchCurrent(): Promise<Current>;
+  put(next: Data, sha: string, message: string): Promise<{ ok: true; commitSha: string | null } | { ok: false; status: 409 | 422; message: string }>;
+}
+
+const fileText = (data: Data) => `${JSON.stringify(data, null, 2)}\n`;
+
+function githubBackend(fetchFn: typeof fetch, token: string): WriteBackend {
+  return {
+    fetchCurrent: () => fetchCurrent(fetchFn, token),
+    async put(next, sha, message) {
+      const res = await request(fetchFn, contentsUrl(), {
+        method: "PUT",
+        cache: "no-store",
+        headers: { ...authHeaders(token), "Content-Type": "application/json" },
+        body: JSON.stringify({ message, content: encodeBase64Utf8(fileText(next)), sha, branch: CONFIG.branch }),
+      });
+      if (res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { commit?: { sha?: unknown } };
+        return { ok: true, commitSha: typeof body.commit?.sha === "string" ? body.commit.sha : null };
+      }
+      if (res.status === 409 || res.status === 422) return { ok: false, status: res.status as 409 | 422, message: await githubMessage(res) };
+      throw await statusError("PUT", res);
+    },
+  };
+}
+
+// Sandbox mode (CLAUDE.md §8.6): same change, same migrate + validation, same retry loop, but the file is
+// data/sandbox.json on the dev server. Never sends the token (the sandbox token is a dummy).
+export function sandboxBackend(fetchFn: typeof fetch): WriteBackend {
+  return {
+    async fetchCurrent() {
+      let file: SandboxFile;
+      try {
+        file = await sandboxGetData(fetchFn);
+      } catch {
+        throw new SaveError("Couldn't reach the sandbox server. Nothing was saved.");
+      }
+      try {
+        return { sha: file.sha, data: migrate(JSON.parse(file.content)) };
+      } catch (err) {
+        throw new SaveError(`The sandbox data doesn't pass validation (${firstIssue(err)}). Nothing was saved.`);
+      }
+    },
+    async put(next, sha, message) {
+      let res: Response;
+      try {
+        res = await sandboxPutData(fetchFn, { sha, content: fileText(next), message });
+      } catch {
+        throw new SaveError("Couldn't reach the sandbox server. Nothing was saved.");
+      }
+      if (res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { commit?: { sha?: unknown } };
+        return { ok: true, commitSha: typeof body.commit?.sha === "string" ? body.commit.sha : null };
+      }
+      if (res.status === 409 || res.status === 422) return { ok: false, status: res.status as 409 | 422, message: await githubMessage(res) };
+      throw new SaveError(`Save failed: sandbox PUT ${res.status} — ${await githubMessage(res)}`);
+    },
+  };
+}
+
+// Fetch fresh + sha → apply the Change → migrate + validate → PUT, retrying conflicts (CLAUDE.md §8.2).
+export async function saveWith(backend: WriteBackend, change: Change, message: string): Promise<SaveResult> {
+  let forceConflict = import.meta.env.DEV && devForceConflict();
+  let current = await backend.fetchCurrent();
+  for (let attempt = 0; ; attempt++) {
+    const next = applyChange(change, current.data);
+    if (next === null) return { data: current.data, commitSha: null, unchanged: true };
+    const sentSha = forceConflict ? "0".repeat(40) : current.sha;
+    forceConflict = false;
+
+    const res = await backend.put(next, sentSha, message);
+    if (res.ok) return { data: next, commitSha: res.commitSha, unchanged: false };
+
+    const fresh = await backend.fetchCurrent();
+    if (res.status === 422 && fresh.sha === sentSha) {
+      throw new SaveError(`Save failed: PUT 422 — ${res.message}`);
+    }
+    if (attempt >= MAX_RETRIES) throw new SaveError(CONFLICT_MESSAGE);
+    current = fresh;
+  }
+}
+
 export async function saveChange(
   change: Change,
   message: string,
@@ -153,45 +239,9 @@ export async function saveChange(
   const token = deps.token ?? getToken();
   if (!token) throw new SaveError("You're logged out. Log in again to save.");
 
-  let forceConflict = import.meta.env.DEV && devForceConflict();
+  if (import.meta.env.DEV && __CT51_SANDBOX__) return saveWith(sandboxBackend(fetchFn), change, message);
   try {
-    let current = await fetchCurrent(fetchFn, token);
-    for (let attempt = 0; ; attempt++) {
-      const next = applyChange(change, current.data);
-      if (next === null) return { data: current.data, commitSha: null, unchanged: true };
-      const sentSha = forceConflict ? "0".repeat(40) : current.sha;
-      forceConflict = false;
-
-      const res = await request(fetchFn, contentsUrl(), {
-        method: "PUT",
-        cache: "no-store",
-        headers: { ...authHeaders(token), "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          content: encodeBase64Utf8(`${JSON.stringify(next, null, 2)}\n`),
-          sha: sentSha,
-          branch: CONFIG.branch,
-        }),
-      });
-
-      if (res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { commit?: { sha?: unknown } };
-        return { data: next, commitSha: typeof body.commit?.sha === "string" ? body.commit.sha : null, unchanged: false };
-      }
-
-      if (res.status === 409 || res.status === 422) {
-        const ghMessage = await githubMessage(res);
-        const fresh = await fetchCurrent(fetchFn, token);
-        if (res.status === 422 && fresh.sha === sentSha) {
-          throw new SaveError(`Save failed: PUT 422 — ${ghMessage}`);
-        }
-        if (attempt >= MAX_RETRIES) throw new SaveError(CONFLICT_MESSAGE);
-        current = fresh;
-        continue;
-      }
-
-      throw await statusError("PUT", res);
-    }
+    return await saveWith(githubBackend(fetchFn, token), change, message);
   } catch (err) {
     throw redact(err, token);
   }

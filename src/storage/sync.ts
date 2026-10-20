@@ -4,7 +4,8 @@ import { finishGameChange, startMarkerChange, type FinishedEntry } from "../doma
 import type { Data } from "../domain/types.js";
 import type { SaveResult } from "./githubWrite.js";
 import { loadLocalGame, loadQueue, removeFromQueue, saveLocalGame } from "./localGame.js";
-import type { KeyValueStore } from "./localKeys.js";
+import { browserStore, type KeyValueStore } from "./localKeys.js";
+import { SANDBOX_DEVICE_KEY } from "./sandbox.js";
 
 // Pushes the admin's local state to GitHub (CLAUDE.md §9.2, §9.7): the "Not synced" queue of finished
 // games, then a live marker that couldn't be written at start. Runs on login, on opening Admin home, when
@@ -45,8 +46,17 @@ function messageFor(entry: FinishedEntry, data: Data | null): string {
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : "Sync failed.");
 
+export const SANDBOX_BROWSER_MESSAGE =
+  "This browser was used for the sandbox, so its games may be sandbox games. Not syncing them to GitHub.";
+
 async function run(deps: SyncDeps): Promise<SyncReport> {
   const report: SyncReport = { synced: [], remaining: 0, error: null, data: null };
+  // Dev only: a normal dev server must never push a sandbox phone's queue or marker to the real data (§8.6).
+  if (import.meta.env.DEV && !__CT51_SANDBOX__ && (deps.store === undefined ? browserStore() : deps.store)?.getItem(SANDBOX_DEVICE_KEY)) {
+    report.remaining = loadQueue(deps.store).length;
+    report.error = SANDBOX_BROWSER_MESSAGE;
+    return report;
+  }
   let names = deps.data;
 
   for (const entry of loadQueue(deps.store)) {

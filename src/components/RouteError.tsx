@@ -1,5 +1,6 @@
 import { useRouteError } from "react-router-dom";
 import { ChipBadge } from "../design/components.js";
+import { SandboxBanner } from "./SandboxBanner.js";
 import { isChunkLoadError, reloadIntoNewVersion, reloader } from "../lib/appUpdate.js";
 
 // Router errorElement: a friendly screen instead of React Router's developer error page.
@@ -21,6 +22,7 @@ export function RouteError() {
 
   return (
     <div role="alert" className="ct-app p-4">
+      <SandboxBanner />
       <div className="ct-panel ct-panel-brass mx-auto flex max-w-md flex-col items-center gap-3 px-5 py-8 text-center">
         <ChipBadge size={64} />
         <h1 className="ct-display text-xl font-semibold">{title}</h1>

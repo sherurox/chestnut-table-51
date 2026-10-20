@@ -11,6 +11,7 @@ import { formatLastUpdated } from "../lib/format.js";
 import { isStandalone } from "../lib/platform.js";
 import { usePullToRefresh } from "../lib/pullToRefresh.js";
 import { hasLocalGame, queuedCount, subscribeLocalChange } from "../storage/localKeys.js";
+import { SandboxBanner } from "./SandboxBanner.js";
 import { SeasonStatsPanel, WordmarkButton } from "./SeasonStatsPanel.js";
 
 const NAV_ITEMS = [
@@ -168,6 +169,7 @@ export function AppShell() {
       {intro && <Splash onDone={endIntro} />}
 
       <header className="ct-rail ct-safe-top sticky top-0 z-20">
+        <SandboxBanner />
         <div className="flex min-h-[56px] items-center justify-between gap-1 pr-1 pl-4">
           <WordmarkButton ref={wordmark} open={statsOpen} instant={instant} onOpen={() => setStatsOpen(true)} />
           <div className="flex shrink-0 items-center">

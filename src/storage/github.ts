@@ -1,6 +1,7 @@
 import { migrate } from "../domain/migrations.js";
 import type { Data } from "../domain/types.js";
 import { CONFIG, HISTORY_SINCE } from "../config.js";
+import { sandboxGetData, sandboxHistory } from "./sandbox.js";
 
 const DEV_DATA_URL = "/__dev-data__/data.json";
 const CACHE_KEY = "ct51.dataCache";
@@ -41,7 +42,8 @@ export function authHeaders(authToken: string): Record<string, string> {
 }
 
 function readHeaders(accept?: string): Record<string, string> {
-  const token = authTokenProvider();
+  // The sandbox token is a dummy: never send it anywhere (CLAUDE.md §8.6).
+  const token = import.meta.env.DEV && __CT51_SANDBOX__ ? null : authTokenProvider();
   const headers: Record<string, string> = token ? authHeaders(token) : {};
   if (accept) headers.Accept = accept;
   return headers;
@@ -100,7 +102,23 @@ async function fetchLastUpdated(): Promise<string | null> {
   }
 }
 
+// Sandbox mode (dev server with SANDBOX=1): data/sandbox.json, logged in or not. "Last updated" is the
+// newest sandbox save.
+async function loadSandboxData(): Promise<LoadedData> {
+  try {
+    const file = await sandboxGetData(fetch);
+    const data = migrate(JSON.parse(file.content));
+    const latest = await sandboxHistory(fetch).catch(() => []);
+    const loaded = { data, lastUpdated: latest[0]?.date ?? null, fromCache: false, error: null };
+    writeCache({ data, lastUpdated: loaded.lastUpdated });
+    return loaded;
+  } catch (err) {
+    return cachedFallback(err instanceof Error ? err.message : String(err));
+  }
+}
+
 export async function loadData(): Promise<LoadedData> {
+  if (import.meta.env.DEV && __CT51_SANDBOX__) return loadSandboxData();
   // The local dev file is for logged-out viewing only: a logged-in admin always reads GitHub, which is
   // where saves go (CLAUDE.md §8.1).
   if (import.meta.env.DEV && !authTokenProvider()) {
@@ -159,6 +177,10 @@ export async function loadData(): Promise<LoadedData> {
 }
 
 export async function fetchCommitHistory(limit = 50): Promise<CommitEntry[]> {
+  if (import.meta.env.DEV && __CT51_SANDBOX__) {
+    const commits = await sandboxHistory(fetch);
+    return commits.slice(0, limit).map((c) => ({ sha: c.sha, message: c.message, date: c.date, url: "" }));
+  }
   const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/commits?path=${CONFIG.dataPath}&since=${encodeURIComponent(HISTORY_SINCE)}&per_page=${limit}`;
   const res = await fetchRevalidated(url);
   if (!res.ok) {
