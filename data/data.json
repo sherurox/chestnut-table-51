@@ -307,5 +307,8 @@
       "createdAt": "2026-10-21T04:36:10.136Z"
     }
   ],
-  "liveGame": null
+  "liveGame": {
+    "gameId": "SBacmTkv",
+    "startedAt": "2026-10-22T03:59:45.598Z"
+  }
 }
