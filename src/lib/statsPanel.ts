@@ -1,6 +1,7 @@
 import { playerSeasonStats, seasonAwards, seasonSummary } from "../domain/fun.js";
 import type { Data, ID } from "../domain/types.js";
 import { AWARDS, awardValue } from "./funLabels.js";
+import { seasonProgress } from "./seasonText.js";
 import { activeSeason, todaysLines } from "./selectors.js";
 
 // The header wordmark's season-stats panel (AppShell). Display only: every number comes from
@@ -39,6 +40,7 @@ const MIN_WIN_STREAK = 2;
 export interface StatsPanelContent {
   seasonName: string;
   day: number;
+  progress: string; // "Game 8 of 10"
   gamesPlayed: number;
   totalBuyIns: number;
   leader: { playerId: ID; name: string; net: number; line: string | null } | null;
@@ -60,6 +62,7 @@ export function statsPanelContent(data: Data, today: string): StatsPanelContent 
   return {
     seasonName: summary.name,
     day: summary.daysRunning,
+    progress: seasonProgress(data, season.id),
     gamesPlayed: summary.gamesPlayed,
     totalBuyIns: summary.totalBuyIns,
     leader: summary.leader && { ...summary.leader, line: leaderLine },

@@ -8,7 +8,8 @@ export interface StandingsRow {
   gamesPlayed: number;
 }
 
-function seasonGames(data: Data, seasonId: ID) {
+// The games that count for a season: its finished season-mode games (§5.7).
+export function seasonGames(data: Data, seasonId: ID) {
   return data.games.filter(
     (g) => g.seasonId === seasonId && g.mode === "season" && g.status === "finished",
   );

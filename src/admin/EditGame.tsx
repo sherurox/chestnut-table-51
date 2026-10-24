@@ -11,6 +11,7 @@ import {
   editGameChange,
   parseBuyIn,
   seasonDateRange,
+  seasonFullError,
   type GameDraft,
 } from "../domain/gameEdits.js";
 import { guestsNeedingChoice, parseStack } from "../domain/liveGame.js";
@@ -95,6 +96,8 @@ function EditForm({ data, game, season }: { data: Data; game: Game; season: Seas
   const set = (patch: Partial<GameDraft>) => setDraft((d) => ({ ...d, ...patch }));
   const setBuyIns = (pid: ID, rows: GameDraft["buyIns"][ID]) => setDraft((d) => ({ ...d, buyIns: { ...d.buyIns, [pid]: rows } }));
   const guests = guestsNeedingChoice(data, draft.players, draft.mode);
+  // A full season takes no more season games (§5.2): an incognito game stays incognito.
+  const seasonBlocked = seasonFullError(data, before, { mode: "season" });
   const totalIn = check.game.buyIns.reduce((sum, b) => sum + b.amount, 0);
   const addable = data.players
     .filter((p) => !draft.players.includes(p.id) && (p.status === "active" || before.players.includes(p.id)))
@@ -178,6 +181,7 @@ function EditForm({ data, game, season }: { data: Data; game: Game; season: Seas
             key={m}
             type="button"
             aria-pressed={draft.mode === m}
+            disabled={m === "season" && seasonBlocked !== null}
             onClick={() => set({ mode: m, guestChoice: null })}
             className={`${btnSecondary} ct-choice flex-1`}
           >
@@ -185,6 +189,7 @@ function EditForm({ data, game, season }: { data: Data; game: Game; season: Seas
           </button>
         ))}
       </fieldset>
+      {seasonBlocked && <p className={`-mt-2 mb-4 text-sm ${muted}`}>{seasonBlocked}</p>}
 
       {guests.length > 0 && (
         <section aria-label="Guests in this game" className="ct-panel ct-panel-brass mb-4 p-4">

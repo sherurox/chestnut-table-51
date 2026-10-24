@@ -1,14 +1,27 @@
 import { PageTitle } from "../design/components.js";
 import { Link, useNavigate } from "react-router-dom";
-import { endCheck, finishLocalGame, liveState, parseStack, playerTotal, setFinalStack } from "../domain/liveGame.js";
-import type { ID } from "../domain/types.js";
+import { endCheck, finishGameChange, finishLocalGame, liveState, parseStack, playerTotal, setFinalStack } from "../domain/liveGame.js";
+import type { Data, ID } from "../domain/types.js";
 import { formatDollars, formatSignedDollars } from "../lib/format.js";
+import { seasonCompleteLine } from "../lib/seasonText.js";
 import { useData } from "../state/DataContext.js";
 import { moveToQueue } from "../storage/localGame.js";
 import { useGameUpdater, useLocalGame } from "./localHooks.js";
 import { ChipCheckPanel } from "./ChipCheckPanel.js";
 import { useSync } from "./sync.js";
 import { ConfirmButton, btnPrimary, btnSecondary, input, muted } from "./ui.js";
+
+// When saving this game fills the season (by the data on this phone), the confirm says so and names the
+// champion with tonight's results in. Offline the data may be older; the sync decides for real (§5.2).
+function seasonCompletePrompt(data: Data | null, finish: () => ReturnType<typeof finishLocalGame>): string | null {
+  if (!data) return null;
+  try {
+    const entry = finish();
+    return seasonCompleteLine(data, finishGameChange(entry)(data), entry.game.seasonId);
+  } catch {
+    return null;
+  }
+}
 
 // Final stacks + the strict chip check (CLAUDE.md §5.6, §9.5). Works without login: Save moves the game
 // into the "Not synced" queue on this phone, and it is committed once online and logged in.
@@ -34,6 +47,8 @@ export function EndGame() {
   const state = liveState(game);
   const check = endCheck(game, nameOf);
   const totalIn = state.buyIns.reduce((sum, b) => sum + b.amount, 0);
+  const completes = check.ok ? seasonCompletePrompt(data, () => finishLocalGame(game, nameOf)) : null;
+  const seasonName = data?.seasons.find((s) => s.id === game.seasonId)?.name ?? "the season";
 
   function save() {
     try {
@@ -99,8 +114,10 @@ export function EndGame() {
         <ConfirmButton
           label="Save game"
           className={`${btnPrimary} w-full`}
-          prompts={["End the game and save it? Buy-ins and stacks can only be changed later by editing the game."]}
-          confirmLabel="Yes, save game"
+          prompts={[
+            `${completes ?? "End the game and save it?"} Buy-ins and stacks can only be changed later by editing the game.`,
+          ]}
+          confirmLabel={completes ? `Yes, save and end ${seasonName}` : "Yes, save game"}
           onConfirm={save}
         />
       ) : (

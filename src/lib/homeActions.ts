@@ -1,5 +1,8 @@
 import { liveState, tableTotal, type LocalGame } from "../domain/liveGame.js";
+import { nextSeasonName } from "../domain/adminOps.js";
+import { seasonFullMessage, seasonIsFull } from "../domain/seasonLimit.js";
 import type { Data, Game, LiveMarker } from "../domain/types.js";
+import { seasonCompleteStartText } from "./seasonText.js";
 
 // Home screen game buttons and "Game on" card. Viewer-safe: no admin code, and it only reads the raw
 // ct51.liveGame string (never writes, never sets a corrupt entry aside; that's the admin's job).
@@ -37,6 +40,24 @@ export function needsNewSeason(data: Data | null): boolean {
 }
 
 export const SEASONS_ADMIN_PATH = "/admin/seasons";
+// Opens Admin → Seasons with "Start new season" pre-filled and its confirm already open.
+export const START_SEASON_PATH = "/admin/seasons?start=1";
+
+export function startSeasonFromSearch(search: string): boolean {
+  return new URLSearchParams(search).get("start") === "1";
+}
+
+// Season-limit wording for Home (§5.2). `ended`: the last season closed after filling up, so the one
+// button goes straight to starting the next. `full`: the active season is full but not ended yet (an edit
+// or restore filled it), so the season button asks to end it; incognito still works.
+export function seasonLimitAction(data: Data | null): { kind: "ended" | "full"; text: string } | null {
+  if (!data) return null;
+  const active = data.seasons.find((s) => s.status === "active");
+  if (active) return seasonIsFull(data, active.id) ? { kind: "full", text: seasonFullMessage(active) } : null;
+  const last = data.seasons.slice().sort((a, b) => b.startedOn.localeCompare(a.startedOn))[0];
+  if (!last || !seasonIsFull(data, last.id)) return null;
+  return { kind: "ended", text: seasonCompleteStartText(last, nextSeasonName(data)) };
+}
 
 // The live marker, when it belongs to a game that isn't on this phone.
 export function otherPhoneGame(data: Data | null, local: LocalGameSummary | null): LiveMarker | null {

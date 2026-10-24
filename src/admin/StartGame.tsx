@@ -5,6 +5,7 @@ import { clearedLiveGameMessage } from "../domain/commitMessages.js";
 import { localIsoDate } from "../domain/dates.js";
 import { newId } from "../domain/ids.js";
 import { clearMarkerChange, guestsNeedingChoice, lastGamePlayers, startGame, type GuestChoice } from "../domain/liveGame.js";
+import { seasonFullMessage, seasonIsFull } from "../domain/seasonLimit.js";
 import type { Game, ID } from "../domain/types.js";
 import { formatDateTime } from "../lib/format.js";
 import { startModeFromSearch } from "../lib/homeActions.js";
@@ -55,7 +56,7 @@ export function StartGame() {
   const [selected, setSelected] = useState<ID[]>([]);
   const [search, setSearch] = useState("");
   // Preselected by the Home buttons (`?mode=season` / `?mode=incognito`); still changeable here.
-  const [mode, setMode] = useState<Game["mode"]>(() => startModeFromSearch(query));
+  const [pickedMode, setMode] = useState<Game["mode"]>(() => startModeFromSearch(query));
   const [date, setDate] = useState(() => localIsoDate());
   const [askGuests, setAskGuests] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +94,9 @@ export function StartGame() {
     );
   }
 
+  // A full season takes only incognito games until the admin ends it (§5.2).
+  const full = seasonIsFull(data, season.id);
+  const mode: Game["mode"] = full ? "incognito" : pickedMode;
   const nameOf = (id: ID) => data.players.find((p) => p.id === id)?.name ?? id;
   const guests = guestsNeedingChoice(data, selected, mode);
   const last = lastGamePlayers(data);
@@ -134,6 +138,7 @@ export function StartGame() {
             key={m}
             type="button"
             aria-pressed={mode === m}
+            disabled={m === "season" && full}
             onClick={() => setMode(m)}
             className={`${btnSecondary} ct-choice flex-1`}
           >
@@ -141,6 +146,14 @@ export function StartGame() {
           </button>
         ))}
       </fieldset>
+      {full && (
+        <div role="note" className="-mt-2 mb-4 ct-panel ct-panel-brass px-3 pt-2 text-sm">
+          <p>{seasonFullMessage(season)}. Incognito games are still fine.</p>
+          <Link to="/admin/seasons" className="ct-focus flex min-h-[48px] items-center font-semibold underline">
+            Go to Seasons
+          </Link>
+        </div>
+      )}
 
       <label className="mb-4 flex flex-col">
         <span className="ct-label">Date</span>

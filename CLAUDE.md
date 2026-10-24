@@ -82,6 +82,7 @@ Node 22+ is required. No backend code, no other external services.
 │  │  ├─ standings.ts        # season standings, ranking, tiebreaks
 │  │  ├─ liveGame.ts         # live game action log, undo, guest choice, end check, finish/marker changes
 │  │  ├─ gameEdits.ts        # edit/delete/restore finished games: draft, edit check, changes (§5.9)
+│  │  ├─ seasonLimit.ts      # 10-game season limit: count, full, end date (§5.2)
 │  │  ├─ migrations.ts
 │  │  └─ *.test.ts
 │  ├─ devserver/             # sandboxServer.ts: Node-only sandbox middleware for vite.config.ts (§8.6)
@@ -132,7 +133,27 @@ Vite `base` must be `/chestnut-table-51/` (the repo name) or assets will 404 on 
   starts; while there is none, no game of either mode can start (every game needs a `seasonId`), and the
   Home / Admin game buttons say "Start a new season first" and link to `#/admin/seasons`. Home then shows
   the ended season's champion and final standings.
-- No limit on number of games in a season.
+- **10-game limit** (`MAX_SEASON_GAMES` in `src/config.ts`, logic in `domain/seasonLimit.ts`). The count
+  is the season's finished season-mode games; incognito and deleted games never count. Progress shows as
+  "Game 8 of 10" in the leaderboard header and the season-stats panel.
+  - Starting a season game is blocked once the active season has 10 (in `startGame` and the UI: Home's
+    button, Start's season toggle, the guest "add to season" choice). Incognito is still allowed while the
+    season is active.
+  - **Finishing the game that takes an active season from 9 to 10 closes it in the same commit**
+    (`status: "closed"`, `endedOn` = the latest date among its season games, so a backdated game 10 never
+    leaves a later game outside the season). It doesn't start the next season. The end screen's confirm
+    says "This is game 10 of 10. Saving ends Season 1 and crowns <champion> (<net>)", the champion
+    computed with this game in.
+  - A queued game (offline, or another phone) is always saved, even into a season that is already full
+    or closed: it never closes or reopens anything. A closed season is never reopened.
+  - Edits and restores never auto-close: an incognito → season edit is blocked when the season already
+    has 10, and a restore is blocked if it would go past 10; either may bring it to exactly 10. Deleting
+    never reopens a season.
+  - An active season with 10 or more (by an edit or restore) isn't auto-closed: Home's season button reads
+    "Season 1 is complete: end it to crown the champion" (incognito still available).
+  - After the auto-close there is no active season, so (as above) no game of either mode: Home's single
+    button reads "Season 1 is complete: start Season 2" and opens `#/admin/seasons?start=1`, with Start
+    new season pre-filled (next name, today) and its confirm already open.
 - Everyone starts every season at **$0 net winnings**. Nothing carries over.
 - **End season** (admin): closes the active season (`status: "closed"`, `endedOn` = today, local date)
   without starting a new one.
@@ -437,6 +458,9 @@ All prefixed `Admin:` and human-readable, e.g.:
 - `Admin: started live game` / `Admin: cleared stuck live game` / `Admin: discarded live game`
 - `Admin: finished game 2026-10-24 (Season 1, 5 players; promoted guest Rohan)` (guests promoted in the
   same commit, §9)
+- `Admin: finished game 2026-10-26 (Season 1, 5 players); Season 1 complete` (game 10 closed the season,
+  §5.2; built from each save attempt's fresh data, so a retry after another phone filled the season first
+  drops it)
 
 ### 8.5 Deploys must ignore data commits
 `.github/workflows/deploy.yml` builds and deploys to Pages on pushes to `main`, with
@@ -719,7 +743,7 @@ the season game limit live in `src/config.ts`.
   5 blue, 4 black. Buy-ins must be multiples of $5.
 - **D. Season limit:** 10 season games per season (incognito games don't count). Saving game 10 also
   closes the season (`status: "closed"`, `endedOn`) in the same commit; it does not start the next one.
-  This replaces §5.2's "No limit on number of games in a season" once Step D lands (update §5.2 then).
+  Landed: the rules are in §5.2 (count, auto-close, queued games, edits/restores) and §8.4 (message).
 - **E. Live game chips:** a chip distribution suggestion per buy-in, bank tracking, and per-color counting
   at game end ("enter total instead" stays as a fallback). A per-color mismatch is a hint, never a blocker;
   the strict chip check (§5.6) on dollar totals is unchanged.

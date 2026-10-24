@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { EmptyState, Loading, PageTitle } from "../design/components.js";
 import {
   endSeason,
@@ -16,6 +16,7 @@ import { localIsoDate } from "../domain/dates.js";
 import { newId } from "../domain/ids.js";
 import type { Data, Season } from "../domain/types.js";
 import { formatDate } from "../lib/format.js";
+import { startSeasonFromSearch } from "../lib/homeActions.js";
 import { CANT_UNDO, crownLine } from "../lib/seasonText.js";
 import { activeSeason, allSeasonsNewestFirst } from "../lib/selectors.js";
 import { useData } from "../state/DataContext.js";
@@ -55,9 +56,28 @@ function EndSeason({ data, season, save, saving, blocked }: { data: Data; season
   );
 }
 
-function StartSeason({ data, active, save, saving, blocked }: { data: Data; active: Season | undefined; save: Save; saving: boolean; blocked: boolean }) {
-  const [name, setName] = useState(() => nextSeasonName(data));
-  const [startedOn, setStartedOn] = useState(() => localIsoDate());
+// `ready` (Home's "Season 1 is complete: start Season 2"): the pre-filled confirm opens straight away.
+function StartSeason({
+  data,
+  active,
+  save,
+  saving,
+  blocked,
+  ready,
+}: {
+  data: Data;
+  active: Season | undefined;
+  save: Save;
+  saving: boolean;
+  blocked: boolean;
+  ready: boolean;
+}) {
+  const [defaults] = useState(() => ({ name: nextSeasonName(data), startedOn: localIsoDate() }));
+  const [name, setName] = useState(defaults.name);
+  const [startedOn, setStartedOn] = useState(defaults.startedOn);
+  // Only the untouched pre-filled form opens by itself (editing a field remounts the confirm, closed).
+  const openNow =
+    ready && !blocked && name === defaults.name && startedOn === defaults.startedOn && !seasonNameError(data, name) && !seasonStartError(data, startedOn, localIsoDate());
   const [errors, setErrors] = useState<{ name: string | null; startedOn: string | null }>({ name: null, startedOn: null });
   const trimmed = name.trim();
 
@@ -123,6 +143,7 @@ function StartSeason({ data, active, save, saving, blocked }: { data: Data; acti
         label={`Start ${trimmed || "new season"}`}
         className={btnPrimary}
         disabled={saving || blocked}
+        startOpen={openNow}
         validate={validate}
         prompts={[prompt]}
         confirmLabel={`Yes, start ${trimmed}`}
@@ -211,6 +232,7 @@ export function Seasons() {
   const local = useLocalGame();
   const queue = useQueue();
   const { save, saving, state } = useSave();
+  const { search } = useLocation();
 
   if (loading && !data) return <Loading />;
   if (!data) return <EmptyState suit="♦" title="Couldn't load the data" />;
@@ -232,7 +254,15 @@ export function Seasons() {
       )}
 
       {active && <EndSeason data={data} season={active} save={save} saving={saving} blocked={block !== null} />}
-      <StartSeason key={data.seasons.length} data={data} active={active} save={save} saving={saving} blocked={block !== null} />
+      <StartSeason
+        key={data.seasons.length}
+        data={data}
+        active={active}
+        save={save}
+        saving={saving}
+        blocked={block !== null}
+        ready={!active && startSeasonFromSearch(search)}
+      />
       <SaveStatus state={state} />
 
       {data.seasons.length > 0 && (

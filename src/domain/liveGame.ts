@@ -1,6 +1,8 @@
 import type { Change } from "./adminOps.js";
 import { chipCheck } from "./results.js";
 import { MAX_AMOUNT } from "./schema.js";
+import { MAX_SEASON_GAMES } from "../config.js";
+import { seasonEndDate, seasonFullMessage, seasonGameCount, seasonIsFull } from "./seasonLimit.js";
 import type { BuyIn, Data, Game, ID } from "./types.js";
 
 // A game in progress (CLAUDE.md §9). It lives only on the admin's phone (localStorage) until it is
@@ -118,6 +120,8 @@ export function startGame(data: Data, input: StartInput): LocalGame {
     throw new Error("Choose whether to add the guests to the season or keep the game incognito.");
   }
   const toIncognito = guests.length > 0 && input.guestChoice === "incognito";
+  // A full season takes no more season games; incognito is still fine (§5.2).
+  if (input.mode === "season" && !toIncognito && seasonIsFull(data, season.id)) throw new Error(seasonFullMessage(season));
 
   return {
     v: 1,
@@ -249,17 +253,29 @@ export function finishLocalGame(game: LocalGame, nameOf: (id: ID) => string): Fi
 // The finish commit (§9.5): the game + guest promotions + clearing its live marker, all in one write.
 // Duplicate-save guard: if the game id is already on GitHub (a retry after a save whose response was
 // lost), return the data unchanged so the write path skips the commit.
+// Season limit (§5.2): the season game that takes an active season from below MAX_SEASON_GAMES to it
+// also closes that season. A queued game is always saved, even into a season that is already full or
+// closed (never lose a game); that never reopens or closes anything.
 export function finishGameChange(entry: FinishedEntry): Change {
   return (data) => {
     if (data.games.some((g) => g.id === entry.game.id)) return data;
-    if (!data.seasons.some((s) => s.id === entry.game.seasonId)) throw new Error("This game's season no longer exists.");
+    const season = data.seasons.find((s) => s.id === entry.game.seasonId);
+    if (!season) throw new Error("This game's season no longer exists.");
     const promote = new Set(entry.game.mode === "season" ? entry.promote : []);
-    return {
+    const next: Data = {
       ...data,
       players: data.players.map((p) => (promote.has(p.id) && p.type === "guest" ? { ...p, type: "regular" } : p)),
       games: [...data.games, entry.game],
       liveGame: data.liveGame?.gameId === entry.game.id ? null : data.liveGame,
     };
+    const fills =
+      entry.game.mode === "season" &&
+      season.status === "active" &&
+      seasonGameCount(data, season.id) < MAX_SEASON_GAMES &&
+      seasonGameCount(next, season.id) >= MAX_SEASON_GAMES;
+    if (!fills) return next;
+    const endedOn = seasonEndDate(next, season.id);
+    return { ...next, seasons: next.seasons.map((s) => (s.id === season.id ? { ...s, status: "closed", endedOn } : s)) };
   };
 }
 

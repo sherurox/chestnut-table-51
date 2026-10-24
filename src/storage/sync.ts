@@ -2,6 +2,7 @@ import type { Change } from "../domain/adminOps.js";
 import { finishedGameMessage, startedLiveGameMessage } from "../domain/commitMessages.js";
 import { finishGameChange, startMarkerChange, type FinishedEntry } from "../domain/liveGame.js";
 import type { Data } from "../domain/types.js";
+import { seasonCompletedBy } from "../domain/seasonLimit.js";
 import type { CommitMessage, SaveResult } from "./githubWrite.js";
 import { loadLocalGame, loadQueue, removeFromQueue, saveLocalGame } from "./localGame.js";
 import { browserStore, type KeyValueStore } from "./localKeys.js";
@@ -31,9 +32,10 @@ export interface SyncReport {
   data: Data | null; // the newest data GitHub confirmed, if anything was saved or checked
 }
 
-// Built per save attempt from the fresh data, so names come from what GitHub has now.
+// Built per save attempt from the fresh data, so "; Season 1 complete" appears only when this commit
+// actually closed the season (another phone's game may have filled it first).
 export function messageFor(entry: FinishedEntry): CommitMessage {
-  return (before) => {
+  return (before, after) => {
     const nameOf = (id: string) => before.players.find((p) => p.id === id)?.name ?? id;
     const season = before.seasons.find((s) => s.id === entry.game.seasonId);
     return finishedGameMessage({
@@ -42,6 +44,7 @@ export function messageFor(entry: FinishedEntry): CommitMessage {
       seasonName: season?.name ?? "season",
       playerCount: entry.game.players.length,
       promotedNames: entry.game.mode === "season" ? entry.promote.map(nameOf) : [],
+      seasonComplete: seasonCompletedBy(before, after, entry.game.seasonId),
     });
   };
 }

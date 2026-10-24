@@ -9,9 +9,10 @@ import type { Data } from "../domain/types.js";
 import { latestFinishedGame, rankChanges } from "../domain/highlights.js";
 import { champion, seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
-import { activeSeason, allSeasonsNewestFirst, todaysLines, visibleGames } from "../lib/selectors.js";
+import { activeSeason, allSeasonsNewestFirst, todaysLines } from "../lib/selectors.js";
 import { useMe } from "../state/useMe.js";
 import { checkNewGame, latestSeasonGame } from "../lib/lastSeenGame.js";
+import { seasonProgress } from "../lib/seasonText.js";
 import { motionReduced } from "../design/motion.js";
 import { newGameCelebration } from "../lib/celebrations.js";
 import { browserStore } from "../storage/localKeys.js";
@@ -86,7 +87,6 @@ function standings(data: Data, me: string | null, pulse: boolean): ReactNode {
   }
 
   const rows = seasonStandings(data, season.id);
-  const games = visibleGames(data, season.id).filter((g) => g.mode === "season").length;
   const lines = new Map([...todaysLines(data, season.id)].map(([id, t]) => [id, t.line]));
 
   return (
@@ -94,7 +94,7 @@ function standings(data: Data, me: string | null, pulse: boolean): ReactNode {
       <PageTitle
         suit="♠"
         title={season.name}
-        subtitle={`${rows.length} player${rows.length === 1 ? "" : "s"} · ${games} game${games === 1 ? "" : "s"}`}
+        subtitle={`${rows.length} player${rows.length === 1 ? "" : "s"} · ${seasonProgress(data, season.id)}`}
       />
       {rows.length === 0 ? (
         <EmptyState suit="♣" title="No players yet">

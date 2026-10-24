@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { EmptyState, Loading, Money, PageTitle } from "../design/components.js";
 import { seasonActionBlock } from "../domain/adminOps.js";
 import { restoredGameMessage } from "../domain/commitMessages.js";
-import { deletedGames, restoreGameChange } from "../domain/gameEdits.js";
+import { deletedGames, restoreGameChange, seasonFullError } from "../domain/gameEdits.js";
 import { gameResult } from "../domain/results.js";
 import type { Data, Game } from "../domain/types.js";
 import { formatDate, formatDateTime } from "../lib/format.js";
@@ -20,6 +20,8 @@ function DeletedGame({ data, game, save, saving, blocked }: { data: Data; game: 
   const results = game.players
     .map((pid) => ({ pid, name: playerById(data, pid)?.name ?? pid, result: gameResult(game, pid) }))
     .sort((a, b) => b.result - a.result || a.name.localeCompare(b.name));
+  // Never past the season limit (§5.2).
+  const full = seasonFullError(data, game, game);
   let closedLine = "";
   if (season?.status === "closed") {
     try {
@@ -48,10 +50,11 @@ function DeletedGame({ data, game, save, saving, blocked }: { data: Data; game: 
         ))}
       </ul>
       {game.deletedAt && <p className={`text-sm ${muted}`}>Deleted {formatDateTime(game.deletedAt)}</p>}
+      {full && <p className={`text-sm ${muted}`}>{full}</p>}
       <ConfirmButton
         label="Restore"
         className={btnPrimary}
-        disabled={saving || blocked}
+        disabled={saving || blocked || full !== null}
         prompts={[`Restore ${gameSummary(data, game)}?${closedLine}`]}
         confirmLabel="Yes, restore game"
         onConfirm={() => void save(restoreGameChange(game.id), restoredGameMessage(game.date, seasonName), `Restored the ${formatDate(game.date)} game.`)}

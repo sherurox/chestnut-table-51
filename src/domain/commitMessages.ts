@@ -55,20 +55,22 @@ export function discardedLiveGameMessage(): string {
   return "Admin: discarded live game";
 }
 
-// e.g. "Admin: finished game 2026-10-24 (Season 1, 5 players; promoted guest Rohan)"
+// e.g. "Admin: finished game 2026-10-24 (Season 1, 5 players; promoted guest Rohan)", plus
+// "; Season 1 complete" when the game filled the season and closed it (§5.2).
 export function finishedGameMessage(input: {
   date: string;
   mode: "season" | "incognito";
   seasonName: string;
   playerCount: number;
   promotedNames: string[];
+  seasonComplete?: boolean;
 }): string {
   const promoted =
     input.promotedNames.length === 0
       ? ""
       : `; promoted guest${input.promotedNames.length === 1 ? "" : "s"} ${input.promotedNames.join(", ")}`;
   return input.mode === "season"
-    ? `Admin: finished game ${input.date} (${input.seasonName}, ${input.playerCount} players${promoted})`
+    ? `Admin: finished game ${input.date} (${input.seasonName}, ${input.playerCount} players${promoted})${input.seasonComplete ? `; ${input.seasonName} complete` : ""}`
     : `Admin: finished incognito game ${input.date} (${input.playerCount} players)`;
 }
 

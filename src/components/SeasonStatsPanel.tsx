@@ -267,7 +267,7 @@ export function SeasonStatsPanel({
             </h2>
             {content && (
               <p className="mt-1 text-sm text-ink-muted">
-                Day <Count value={content.day} format={plain} animate={!instant} />
+                Day <Count value={content.day} format={plain} animate={!instant} /> · {content.progress}
               </p>
             )}
           </div>

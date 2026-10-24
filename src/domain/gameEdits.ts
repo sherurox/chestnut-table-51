@@ -1,6 +1,8 @@
 import { assertNoLiveGame, type Change } from "./adminOps.js";
 import { guestsNeedingChoice, parseStack, type GuestChoice } from "./liveGame.js";
 import { chipCheck } from "./results.js";
+import { MAX_SEASON_GAMES } from "../config.js";
+import { seasonGameCount, seasonIsFull } from "./seasonLimit.js";
 import type { BuyIn, Data, Game, ID } from "./types.js";
 
 // Editing, deleting and restoring finished games (CLAUDE.md §5.9). The edit screen holds a GameDraft;
@@ -52,6 +54,18 @@ export function seasonDateRange(data: Data, seasonId: ID, today: string): { min:
   const season = data.seasons.find((s) => s.id === seasonId);
   if (!season) return null;
   return { min: season.startedOn, max: season.status === "closed" && season.endedOn ? season.endedOn : today };
+}
+
+// Season limit (§5.2): an incognito game can't become a season game in a full season, and a deleted
+// season game can't be restored into one. null when the change is fine.
+export function seasonFullError(data: Data, before: Game, after: Pick<Game, "mode">): string | null {
+  if (after.mode !== "season" || (before.mode === "season" && before.status === "finished")) return null;
+  if (!seasonIsFull(data, before.seasonId)) return null;
+  const name = data.seasons.find((s) => s.id === before.seasonId)?.name ?? "This season";
+  const count = seasonGameCount(data, before.seasonId);
+  return before.status === "deleted"
+    ? `${name} already has ${count} of ${MAX_SEASON_GAMES} games, so this game can't be restored.`
+    : `${name} is full (${count} of ${MAX_SEASON_GAMES} games), so this game can't become a season game.`;
 }
 
 function guestsInDraft(data: Data, draft: GameDraft): ID[] {
@@ -166,6 +180,8 @@ export function editCheck(data: Data, original: Game, draft: GameDraft, nameOf: 
   }
 
   const game = buildEditedGame(data, original, draft, now);
+  const full = seasonFullError(data, original, game);
+  if (full) blockers.push(full);
   const promote = draftPromotes(data, draft);
   const chip = chipCheck(game);
   return {
@@ -197,6 +213,8 @@ export function editGameChange(input: { before: Game; after: Game; promote: ID[]
     assertNoLiveGame(data);
     if (!sameJson(fresh, input.before)) throw new Error(STALE);
     if (fresh.status !== "finished") throw new Error("Deleted games can't be edited. Restore it first.");
+    const full = seasonFullError(data, fresh, input.after);
+    if (full) throw new Error(full);
     const promote = new Set(input.after.mode === "season" ? input.promote : []);
     return {
       ...data,
@@ -216,10 +234,14 @@ export function deleteGameChange(id: ID, now: string): Change {
 }
 
 // Brings the game back exactly as it was before it was deleted. Already finished: nothing changes.
+// Never past the season limit; reaching it exactly is fine and doesn't close the season (§5.2).
 export function restoreGameChange(id: ID): Change {
   return (data) => {
-    if (freshGame(data, id).status === "finished") return data;
+    const fresh = freshGame(data, id);
+    if (fresh.status === "finished") return data;
     assertNoLiveGame(data);
+    const full = seasonFullError(data, fresh, fresh);
+    if (full) throw new Error(full);
     return {
       ...data,
       games: data.games.map((g): Game => {

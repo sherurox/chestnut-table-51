@@ -9,6 +9,8 @@ import {
   needsNewSeason,
   otherPhoneGame,
   SEASONS_ADMIN_PATH,
+  seasonLimitAction,
+  START_SEASON_PATH,
   startGamePath,
 } from "../lib/homeActions.js";
 import { browserStore, LIVE_GAME_KEY, subscribeLocalChange } from "../storage/localKeys.js";
@@ -58,11 +60,23 @@ export function HomeActions({ data }: { data: Data | null }) {
   const raw = useSyncExternalStore(subscribeLocalChange, rawLiveGame, rawLiveGame);
   const local = useMemo(() => localGameSummary(raw), [raw]);
   const other = otherPhoneGame(data, local);
+  const limit = seasonLimitAction(data);
 
   if (local) {
     return (
       <section aria-label="Game in progress" className="mb-4">
         <ResumeCard startedAt={local.startedAt} total={local.tableTotal} />
+      </section>
+    );
+  }
+
+  if (limit?.kind === "ended") {
+    return (
+      <section aria-label="Start a game" className="mb-4">
+        <Link to={START_SEASON_PATH} className="ct-btn ct-btn-primary ct-focus w-full flex-col gap-0 text-lg">
+          <span>♦ {limit.text}</span>
+          <span className="text-xs font-normal">The next game needs a new season, incognito too.</span>
+        </Link>
       </section>
     );
   }
@@ -85,9 +99,15 @@ export function HomeActions({ data }: { data: Data | null }) {
           A game is in progress on another phone (started {formatStarted(other.startedAt, new Date())})
         </p>
       )}
-      <Link to={startGamePath("season")} className="ct-btn ct-btn-primary ct-focus w-full text-lg">
-        ♠ New season game
-      </Link>
+      {limit?.kind === "full" ? (
+        <Link to={SEASONS_ADMIN_PATH} className="ct-btn ct-btn-primary ct-focus w-full text-lg">
+          ♦ {limit.text}
+        </Link>
+      ) : (
+        <Link to={startGamePath("season")} className="ct-btn ct-btn-primary ct-focus w-full text-lg">
+          ♠ New season game
+        </Link>
+      )}
       <Link to={startGamePath("incognito")} className="ct-btn ct-btn-offbook ct-focus w-full flex-col gap-0">
         <span>Incognito game</span>
         <span className="text-xs font-normal text-ink-muted">Off the books — doesn't count toward the season</span>
