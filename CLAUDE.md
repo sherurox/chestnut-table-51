@@ -83,6 +83,7 @@ Node 22+ is required. No backend code, no other external services.
 │  │  ├─ liveGame.ts         # live game action log, undo, guest choice, end check, finish/marker changes
 │  │  ├─ gameEdits.ts        # edit/delete/restore finished games: draft, edit check, changes (§5.9)
 │  │  ├─ seasonLimit.ts      # 10-game season limit: count, full, end date (§5.2)
+│  │  ├─ chips.ts / chipBox.ts  # chip split + calculator; live-game box replay and per-colour hint (§9)
 │  │  ├─ migrations.ts
 │  │  └─ *.test.ts
 │  ├─ devserver/             # sandboxServer.ts: Node-only sandbox middleware for vite.config.ts (§8.6)
@@ -540,6 +541,28 @@ $env:SANDBOX='1'; $env:DEV_HTTP='1'; npx vite      # http://localhost:5181, desk
 - A player can be removed from a live game only while they have no buy-ins (picked by mistake).
 - The game date is the phone's **local** date at start (never UTC), editable on Start; a game past
   midnight keeps its start date.
+- **Chip mode (Table tools step E, owner-approved 2026-10-24).** A per-device setting on More
+  (`ct51.chipMode`, default On; Off stores `"off"`). Off hides all of the below and gives the plain dollar
+  flow (a snapshot test proves the live and end screens are unchanged). Nothing here touches `data.json`,
+  the strict chip check or the save path.
+  - **Box tracking is derived, never stored** (`domain/chipBox.ts`): the local game's buy-ins are replayed
+    in order, each through `chipSplit(amount, 1, box)` starting from `CHIP_SET`, giving the chips handed out
+    and left in the box. Undo, late and removed players need nothing special. A buy-in the box can't make
+    is still recorded (never blocked), hands out nothing ("not tracked") and leaves the box as it was.
+  - Live screen: a "Box: 60 white · 10 red · …" line, and after each buy-in a card in that player's row,
+    "Give Andhar: 10 white · 10 red · …" (or "The box can't make $1,500 from what's left; hand out what you
+    can and note it"). It shows only while that buy-in is the last action: the next buy-in, Undo or ✕
+    hides it.
+  - End screen: each player has "Count chips" (a stepper per colour, ≥48px; the final stack is their
+    value) or "Enter total instead" (today's field). Counts live only in the local game
+    (`chipCounts` / `stackMode`, optional fields of `ct51.liveGame`) and never reach the finished game. A
+    player without a choice who already has a typed stack (e.g. an older local game) stays on the total.
+  - Below the chip check, "Chips by colour" compares chips counted with chips handed out ("Black: 2 more
+    counted than handed out", "Box couldn't make $1,500 for Andhar"), noting that swapping chips with the
+    box for change can cause it. A hint only: the dollar chip check is the only thing that blocks Save.
+- **Multiples of $5** (the smallest chip, `chipStepError`), regardless of Chip mode: custom buy-ins on the
+  live screen, buy-ins added or changed in Edit game (untouched older amounts stay editable), and preset
+  buy-ins in Settings (the admin op and the form; not a schema rule).
 - **iOS:** Safari and the installed home-screen app have separate storage, so a game started in one is
   invisible in the other. Start shows "Run games from the CT51 home-screen app, not Safari." on iOS when
   not running standalone.
@@ -765,12 +788,18 @@ the season game limit live in `src/config.ts`.
 - **C. Chip calculator** (standalone, linked from More). Chip set: white $5 ×100, red $10 ×50, green $20
   ×50, blue $50 ×50, black $100 ×50 (box total $9,500). Preferred $1,000 split: 10 white, 10 red, 10 green,
   5 blue, 4 black. Buy-ins must be multiples of $5.
+  Landed (8ef90f4, e4d0dab): `CHIP_SET` / `PREFERRED_SPLITS` in `src/config.ts`; `domain/chips.ts` has
+  `chipSplit` (the preferred split when it fits, otherwise the exact split closest to the nearest preferred
+  one scaled to the amount) and `chipTotal`. `#/chips` (below Hall of Fame in More) has "Hand out"
+  (players 2–12, presets or a custom amount, per-player chips and what's left in the box, remembered in
+  `ct51.chipCalc`) and "Count a stack". Standalone: it never reads or writes game data.
 - **D. Season limit:** 10 season games per season (incognito games don't count). Saving game 10 also
   closes the season (`status: "closed"`, `endedOn`) in the same commit; it does not start the next one.
   Landed: the rules are in §5.2 (count, auto-close, queued games, edits/restores) and §8.4 (message).
 - **E. Live game chips:** a chip distribution suggestion per buy-in, bank tracking, and per-color counting
   at game end ("enter total instead" stays as a fallback). A per-color mismatch is a hint, never a blocker;
   the strict chip check (§5.6) on dollar totals is unchanged.
+  Landed: the rules are in §9 (Chip mode, multiples of $5).
 
 ---
 
