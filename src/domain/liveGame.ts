@@ -1,4 +1,5 @@
 import type { Change } from "./adminOps.js";
+import { chipTotal } from "./chips.js";
 import { chipCheck } from "./results.js";
 import { MAX_AMOUNT } from "./schema.js";
 import { MAX_SEASON_GAMES } from "../config.js";
@@ -10,6 +11,7 @@ import type { BuyIn, Data, Game, ID } from "./types.js";
 // "drop the last action", and the current players/buy-ins/mode are always recomputed from the log.
 
 export type GuestChoice = "promote" | "incognito";
+export type StackMode = "chips" | "total";
 
 export type LiveAction =
   | { type: "buyIn"; player: ID; amount: number; at: string }
@@ -29,6 +31,10 @@ export interface LocalGame {
   startPromote: ID[]; // guests the admin chose to add to the season at start
   actions: LiveAction[];
   finalStacks: Record<ID, string>; // as typed on the end screen; not part of undo
+  // Chip mode (Table tools step E), local only, never in the finished game. Optional: older local games
+  // have neither and finish exactly as before. chipCounts are per colour in CHIP_SET order (null = blank).
+  chipCounts?: Record<ID, (number | null)[]>;
+  stackMode?: Record<ID, StackMode>;
   markerSynced: boolean; // false until the §9.2 live marker commit succeeds
 }
 
@@ -186,6 +192,31 @@ export function undo(game: LocalGame): LocalGame {
 
 export function setFinalStack(game: LocalGame, player: ID, text: string): LocalGame {
   return { ...game, finalStacks: { ...game.finalStacks, [player]: text } };
+}
+
+// Count chips: stores the counts and fills the final stack with their value (blank while nothing is counted,
+// so the "enter the final stack" blocker still shows).
+export function setChipCounts(game: LocalGame, player: ID, counts: (number | null)[]): LocalGame {
+  const anyCounted = counts.some((n) => n !== null);
+  const total = chipTotal(counts.map((n) => n ?? 0));
+  return {
+    ...game,
+    chipCounts: { ...game.chipCounts, [player]: counts },
+    finalStacks: { ...game.finalStacks, [player]: anyCounted ? String(total) : "" },
+  };
+}
+
+// Switching to "chips" refills the stack from the counts; switching to "total" keeps the stack as it is.
+export function setStackMode(game: LocalGame, player: ID, mode: StackMode): LocalGame {
+  const next = { ...game, stackMode: { ...game.stackMode, [player]: mode } };
+  return mode === "chips" ? setChipCounts(next, player, game.chipCounts?.[player] ?? []) : next;
+}
+
+// Without a choice: a stack typed before chip mode (or in an older local game) stays a total.
+export function stackModeOf(game: LocalGame, player: ID): StackMode {
+  const mode = game.stackMode?.[player];
+  if (mode) return mode;
+  return (game.finalStacks[player] ?? "") !== "" && !game.chipCounts?.[player] ? "total" : "chips";
 }
 
 // Whole dollars, 0 allowed: "1,500" and "$1500" are fine; blank, "12.5" or "abc" are not.
