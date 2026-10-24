@@ -9,6 +9,7 @@ import { deletedGames } from "../domain/gameEdits.js";
 import { newId } from "../domain/ids.js";
 import type { Data, Game } from "../domain/types.js";
 import { formatDate } from "../lib/format.js";
+import { START_SEASON_PATH } from "../lib/homeActions.js";
 import { shareText } from "../lib/share.js";
 import { activeSeason } from "../lib/selectors.js";
 import { useData } from "../state/DataContext.js";
@@ -169,7 +170,7 @@ export function AdminHome() {
       {data && data.seasons.length === 0 && <CreateFirstSeason />}
 
       {!local && data && data.seasons.length > 0 && !activeSeason(data) ? (
-        <Link to="/admin/seasons" className={`${btnPrimary} mb-4 w-full text-lg`}>
+        <Link to={START_SEASON_PATH} className={`${btnPrimary} mb-4 w-full text-lg`}>
           ♦ Start a new season first
         </Link>
       ) : (

@@ -153,7 +153,8 @@ Vite `base` must be `/chestnut-table-51/` (the repo name) or assets will 404 on 
     "Season 1 is complete: end it to crown the champion" (incognito still available).
   - After the auto-close there is no active season, so (as above) no game of either mode: Home's single
     button reads "Season 1 is complete: start Season 2" and opens `#/admin/seasons?start=1`, with Start
-    new season pre-filled (next name, today) and its confirm already open.
+    new season pre-filled (next name, today) and its confirm already open. Admin home's "Start a new
+    season first" button opens the same path whenever no season is active.
 - Everyone starts every season at **$0 net winnings**. Nothing carries over.
 - **End season** (admin): closes the active season (`status: "closed"`, `endedOn` = today, local date)
   without starting a new one.
