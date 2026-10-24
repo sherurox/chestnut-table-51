@@ -701,6 +701,29 @@ via `HISTORY_SINCE` (section 8.3). Phones with stale `ct51.me` / `ct51.lastSeenG
 data are cleaned up on load (`ct51.lastSeenGame` is now migrated to the `ct51.seenGamesUpTo` watermark, §5.9). The test fixtures (`src/domain/__fixtures__/seed.json`) and the dev-only
 `#/style` sample data stay; `npm run check:bundle` proves neither reaches production.
 
+### Table tools (mini-phase, owner-approved 2026-10-24)
+Five steps, in order. Each step is built, reviewed, phone-tested and pushed before the next starts.
+Rules for every step: **no `data.json` format changes** (no new fields, no version bump); the chip set and
+the season game limit live in `src/config.ts`.
+- **A. Poker Guide** (`#/guide`, linked from More). Texas Hold'em, static content (no data, domain or save
+  path). Three tabs: Hands, Ties, Basics (no label may wrap at 360px); the tab is remembered per device
+  in `ct51.guideTab`. Hands: all 10 hand ranks best to worst, each with rank number, name, a 5-card example, one-line description and
+  an "If tied:" line; kickers dimmed. Cards are drawn by the app (`PlayingCard`, CSS, no image files,
+  accessible label like "Queen of spades"). Content lives in `src/lib/pokerGuide.ts` with tests (10 ranks in
+  order, every example is a valid 5-card hand of its type, kickers marked correctly).
+- **B. Hall of Fame** (page linked from More): titles, situational titles, badges, awards and the full
+  phrase list (collapsed by default), each with what it means, how it's earned, and current holders. New
+  badges and phrases in Hindi, English and Marathi: short famous lines, never song lyrics.
+- **C. Chip calculator** (standalone, linked from More). Chip set: white $5 ×100, red $10 ×50, green $20
+  ×50, blue $50 ×50, black $100 ×50 (box total $9,500). Preferred $1,000 split: 10 white, 10 red, 10 green,
+  5 blue, 4 black. Buy-ins must be multiples of $5.
+- **D. Season limit:** 10 season games per season (incognito games don't count). Saving game 10 also
+  closes the season (`status: "closed"`, `endedOn`) in the same commit; it does not start the next one.
+  This replaces §5.2's "No limit on number of games in a season" once Step D lands (update §5.2 then).
+- **E. Live game chips:** a chip distribution suggestion per buy-in, bank tracking, and per-color counting
+  at game end ("enter total instead" stays as a fallback). A per-color mismatch is a hint, never a blocker;
+  the strict chip check (§5.6) on dollar totals is unchanged.
+
 ---
 
 ## 13. Working agreements for Claude Code
