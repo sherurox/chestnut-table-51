@@ -739,6 +739,29 @@ the season game limit live in `src/config.ts`.
 - **B. Hall of Fame** (page linked from More): titles, situational titles, badges, awards and the full
   phrase list (collapsed by default), each with what it means, how it's earned, and current holders. New
   badges and phrases in Hindi, English and Marathi: short famous lines, never song lyrics.
+  Landed: `#/hall` (below Poker Guide in More), built by `lib/hallOfFame.ts` only from `domain/fun.ts` and
+  `lib/funLabels.ts` (every name, icon, how-to-earn, tier and situation rule lives in `funLabels.ts`).
+  Badge rules (all-time, finished season-mode games only; incognito and deleted games never count):
+  - The original six (First blood, Hat trick, Double up, Phoenix, Ten club, Half century) keep their rules;
+    `badges()` still returns them first-earned only.
+  - Per-game (`gameBadges`): Man of the Match ×5 (the night's top result, above $0, 5 times; ties count
+    for all tied), Lucky seven / Double digits (7th / 10th winning night), Triple threat (cash out ≥ 3×
+    total buy-in), Whale (win ≥ $2,000), Lone wolf (the only player up, 3+ players), Giant slayer (win
+    while the season leader going in, #1 from that season's earlier games, played and finished down; no
+    leader before a season's first game), Bounce back (win the night right after the player's own
+    previous season game, across seasons, where they lost at least half a typical buy-in of that game's
+    season: 2 × result ≤ −`typicalBuyIn`), Second wind (2+ buy-ins and finish up), Even Steven (result
+    exactly $0), Felted (cash out $0).
+  - Season close (`seasonCloseBadges`, closed seasons only, players with 1+ game in it, positions in
+    standings order so the podium is always 3 places): Season champion (#1), Podium (top 3), Wooden spoon
+    (last; needs 2+ players with games), Wire to wire (#1 after every game, 5+ games), Perfect attendance
+    (every game of a season with `MAX_SEASON_GAMES`+ games). Dated at the season's `endedOn`, linked to
+    the season.
+  - Counts: every badge records where it was first earned and how many times (`allBadges`, newest first).
+    Repeatable badges show "×N" with the first date. One-time and milestone badges are earned once and
+    never show a count: First blood, Ten club, Half century, Man of the Match ×5, Lucky seven, Double
+    digits. Hat trick counts once per winning run that reaches 3.
+  - Player page: earned badges first (newest first), then unearned ones, dimmed, with how to earn them.
 - **C. Chip calculator** (standalone, linked from More). Chip set: white $5 ×100, red $10 ×50, green $20
   ×50, blue $50 ×50, black $100 ×50 (box total $9,500). Preferred $1,000 split: 10 white, 10 red, 10 green,
   5 blue, 4 black. Buy-ins must be multiples of $5.
