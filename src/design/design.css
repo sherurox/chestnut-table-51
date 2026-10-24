@@ -534,6 +534,82 @@ button.ct-list-row:active {
   background: linear-gradient(180deg, var(--ct-brass-hi), var(--ct-brass));
 }
 
+/* Tabs (Poker Guide): a felt track, the selected tab is a brass fill. */
+.ct-tabs {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid var(--ct-line);
+  background: var(--ct-felt);
+}
+.ct-tab {
+  min-height: 48px;
+  border-radius: 10px;
+  padding: 0.25rem 0.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ct-text-muted);
+}
+.ct-tab[aria-selected="true"] {
+  color: var(--ct-ink-on-brass);
+  background: linear-gradient(180deg, var(--ct-brass-hi), var(--ct-brass));
+}
+
+/* Brass rank disc for every rank (the guide's hand ranks), not gold/silver/bronze. */
+.ct-rank-brass {
+  color: var(--ct-ink-on-brass);
+  background: radial-gradient(circle at 35% 30%, var(--ct-brass-hi), var(--ct-brass) 55%, var(--ct-brass-lo));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+/* Playing cards (PlayingCard): white in both themes; five fit in a row at 360px. */
+.ct-hand {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 3.5rem));
+  gap: 0.4rem;
+}
+.ct-card {
+  position: relative;
+  display: block;
+  aspect-ratio: 5 / 7;
+  border-radius: 6px;
+  border: 1px solid #cfc6b4;
+  background: #ffffff;
+  color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  font-family: "Inter", system-ui, sans-serif;
+}
+.ct-card[data-red="true"] {
+  color: #c0182b;
+}
+.ct-card[data-kicker="true"] {
+  opacity: 0.42;
+}
+.ct-card-corner {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.ct-card-pip {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-top: 0.6rem;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
 /* ---- Motion ---------------------------------------------------------------------------------- */
 
 /* Staggered entrance: style="--i: 3" on each item. */

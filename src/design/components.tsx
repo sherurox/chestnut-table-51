@@ -1,5 +1,6 @@
 import { useEffect, useId, type ReactNode } from "react";
 import { formatSignedDollars } from "../lib/format.js";
+import { cardLabel, cardRankText, isRedSuit, suitSymbol, type GuideCard } from "../lib/pokerGuide.js";
 import { appIconSvg, chipSvg } from "./iconSvg.js";
 import { useCountUp, useMotionReduced } from "./motion.js";
 
@@ -195,5 +196,22 @@ export function EmptyState({ suit = "♣", title, children }: { suit?: "♠" | "
       <p className="ct-display text-lg font-semibold">{title}</p>
       {children && <div className="text-sm text-ink-muted">{children}</div>}
     </div>
+  );
+}
+
+// A playing card drawn in CSS (no image files): white face, rank in the corner, a large suit, red hearts
+// and diamonds. Kickers (cards that aren't part of the hand) are dimmed and say so in their label.
+export function PlayingCard({ card }: { card: GuideCard }) {
+  const suit = suitSymbol(card.suit);
+  return (
+    <span className="ct-card" data-red={isRedSuit(card.suit)} data-kicker={card.kicker === true} role="img" aria-label={cardLabel(card)}>
+      <span className="ct-card-corner" aria-hidden="true">
+        <span>{cardRankText(card.rank)}</span>
+        <span>{suit}</span>
+      </span>
+      <span className="ct-card-pip" aria-hidden="true">
+        {suit}
+      </span>
+    </span>
   );
 }

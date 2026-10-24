@@ -16,6 +16,14 @@ export function More() {
       <div className="ct-panel overflow-hidden">
         <ul>
           <li>
+            <Link to="/guide" className="ct-list-row ct-focus">
+              <span className="flex-1">Poker Guide</span>
+              <span className="text-ink-muted">
+                <IconChevron />
+              </span>
+            </Link>
+          </li>
+          <li>
             <Link to="/history" className="ct-list-row ct-focus">
               <span className="flex-1">Edit history</span>
               <span className="text-ink-muted">

@@ -14,6 +14,7 @@ import { SeasonDetail } from "./screens/SeasonDetail.js";
 import { EditHistory } from "./screens/EditHistory.js";
 import { WhoAmI } from "./screens/WhoAmI.js";
 import { More } from "./screens/More.js";
+import { PokerGuide } from "./screens/PokerGuide.js";
 import { isAdminDevice } from "./storage/localKeys.js";
 
 // Admin code (auth, write path, admin screens) is a separate chunk that viewers never download.
@@ -72,6 +73,7 @@ const router = createHashRouter([
           { path: "/history", element: <EditHistory /> },
           { path: "/me", element: <WhoAmI /> },
           { path: "/more", element: <More /> },
+          { path: "/guide", element: <PokerGuide /> },
           {
             path: "/admin/*",
             element: (
