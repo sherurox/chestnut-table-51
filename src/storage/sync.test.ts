@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Change } from "../domain/adminOps.js";
 import { addBuyIn, finishLocalGame, setFinalStack, startGame, type FinishedEntry } from "../domain/liveGame.js";
 import type { Data } from "../domain/types.js";
-import { saveChange } from "./githubWrite.js";
+import { saveChange, type CommitMessage } from "./githubWrite.js";
 import { loadLocalGame, loadQueue, moveToQueue, saveLocalGame } from "./localGame.js";
 import { MemoryStore } from "./__test__/memoryStore.js";
 import { syncAll } from "./sync.js";
@@ -53,7 +53,7 @@ class FakeGitHub {
     return new Response(JSON.stringify({ commit: { sha: "c" } }), { status: 200 });
   });
 
-  save = (change: Change, message: string) => saveChange(change, message, { fetch: this.fetch as typeof fetch, token: TOKEN });
+  save = (change: Change, message: CommitMessage) => saveChange(change, message, { fetch: this.fetch as typeof fetch, token: TOKEN });
 }
 
 function finishedEntry(id = "G1", guestChoice: "promote" | null = null): FinishedEntry {
@@ -77,12 +77,12 @@ describe("syncAll", () => {
     moveToQueue(finishedEntry("G1", "promote"), store);
 
     gh.offline = true;
-    const offline = await syncAll({ save: gh.save, data: gh.data, store });
+    const offline = await syncAll({ save: gh.save, store });
     expect(offline.error).toMatch(/Couldn't reach GitHub/);
     expect(loadQueue(store)).toHaveLength(1);
 
     gh.offline = false;
-    const online = await syncAll({ save: gh.save, data: gh.data, store });
+    const online = await syncAll({ save: gh.save, store });
     expect(online).toMatchObject({ error: null, remaining: 0 });
     expect(online.synced[0]?.alreadySaved).toBe(false);
     expect(gh.puts).toEqual(["Admin: finished game 2026-10-24 (Season 1, 2 players; promoted guest Rohan)"]);
@@ -97,11 +97,11 @@ describe("syncAll", () => {
     moveToQueue(finishedEntry("G1"), store);
 
     gh.loseNextPutResponse = true;
-    const first = await syncAll({ save: gh.save, data: gh.data, store });
+    const first = await syncAll({ save: gh.save, store });
     expect(first.error).not.toBeNull();
     expect(loadQueue(store)).toHaveLength(1); // the phone doesn't know it worked: never drop it
 
-    const retry = await syncAll({ save: gh.save, data: gh.data, store });
+    const retry = await syncAll({ save: gh.save, store });
     expect(retry.error).toBeNull();
     expect(retry.synced[0]?.alreadySaved).toBe(true);
     expect(gh.puts).toHaveLength(1);
@@ -114,8 +114,8 @@ describe("syncAll", () => {
     const store = new MemoryStore();
     moveToQueue(finishedEntry("G1"), store);
     const [a, b] = await Promise.all([
-      syncAll({ save: gh.save, data: gh.data, store }),
-      syncAll({ save: gh.save, data: gh.data, store }),
+      syncAll({ save: gh.save, store }),
+      syncAll({ save: gh.save, store }),
     ]);
     expect(a).toBe(b);
     expect(gh.puts).toHaveLength(1);
@@ -127,7 +127,7 @@ describe("syncAll", () => {
     moveToQueue(finishedEntry("G1"), store);
     moveToQueue(finishedEntry("G2"), store);
     const save = vi.fn(gh.save).mockRejectedValueOnce(new Error("GitHub is down"));
-    const report = await syncAll({ save, data: gh.data, store });
+    const report = await syncAll({ save, store });
     expect(report).toMatchObject({ error: "GitHub is down", remaining: 2 });
     expect(loadQueue(store).map((e) => e.game.id)).toEqual(["G1", "G2"]);
   });
@@ -138,13 +138,13 @@ describe("syncAll", () => {
     const local = startGame(initialData(), { id: "L1", playerIds: ["a", "r"], mode: "incognito", guestChoice: null, date: "2026-10-24", now: NOW });
     saveLocalGame(local, store);
 
-    const report = await syncAll({ save: gh.save, data: gh.data, store });
+    const report = await syncAll({ save: gh.save, store });
     expect(report.error).toBeNull();
     expect(gh.puts).toEqual(["Admin: started live game"]);
     expect(gh.data.liveGame).toEqual({ gameId: "L1", startedAt: NOW });
     expect(loadLocalGame(store)?.markerSynced).toBe(true);
 
-    await syncAll({ save: gh.save, data: gh.data, store });
+    await syncAll({ save: gh.save, store });
     expect(gh.puts).toHaveLength(1); // already synced: nothing more to write
   });
 });

@@ -208,8 +208,12 @@ export function sandboxBackend(fetchFn: typeof fetch): WriteBackend {
   };
 }
 
+// A commit message, or one built from each attempt's data (before and after the change), for messages
+// that depend on what the change did to the fresh data (e.g. "; Season 1 complete").
+export type CommitMessage = string | ((before: Data, after: Data) => string);
+
 // Fetch fresh + sha → apply the Change → migrate + validate → PUT, retrying conflicts (CLAUDE.md §8.2).
-export async function saveWith(backend: WriteBackend, change: Change, message: string): Promise<SaveResult> {
+export async function saveWith(backend: WriteBackend, change: Change, message: CommitMessage): Promise<SaveResult> {
   let forceConflict = import.meta.env.DEV && devForceConflict();
   let current = await backend.fetchCurrent();
   for (let attempt = 0; ; attempt++) {
@@ -218,7 +222,7 @@ export async function saveWith(backend: WriteBackend, change: Change, message: s
     const sentSha = forceConflict ? "0".repeat(40) : current.sha;
     forceConflict = false;
 
-    const res = await backend.put(next, sentSha, message);
+    const res = await backend.put(next, sentSha, typeof message === "string" ? message : message(current.data, next));
     if (res.ok) return { data: next, commitSha: res.commitSha, unchanged: false };
 
     const fresh = await backend.fetchCurrent();
@@ -232,7 +236,7 @@ export async function saveWith(backend: WriteBackend, change: Change, message: s
 
 export async function saveChange(
   change: Change,
-  message: string,
+  message: CommitMessage,
   deps: { fetch?: typeof fetch; token?: string } = {},
 ): Promise<SaveResult> {
   const fetchFn = deps.fetch ?? globalThis.fetch.bind(globalThis);

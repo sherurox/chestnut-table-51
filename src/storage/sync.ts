@@ -2,7 +2,7 @@ import type { Change } from "../domain/adminOps.js";
 import { finishedGameMessage, startedLiveGameMessage } from "../domain/commitMessages.js";
 import { finishGameChange, startMarkerChange, type FinishedEntry } from "../domain/liveGame.js";
 import type { Data } from "../domain/types.js";
-import type { SaveResult } from "./githubWrite.js";
+import type { CommitMessage, SaveResult } from "./githubWrite.js";
 import { loadLocalGame, loadQueue, removeFromQueue, saveLocalGame } from "./localGame.js";
 import { browserStore, type KeyValueStore } from "./localKeys.js";
 import { SANDBOX_DEVICE_KEY } from "./sandbox.js";
@@ -14,8 +14,7 @@ import { SANDBOX_DEVICE_KEY } from "./sandbox.js";
 // in finishGameChange (saveChange skips the commit when nothing changes).
 
 export interface SyncDeps {
-  save: (change: Change, message: string) => Promise<SaveResult>;
-  data: Data | null; // latest data in the app, for names in commit messages
+  save: (change: Change, message: CommitMessage) => Promise<SaveResult>;
   store?: KeyValueStore | null;
 }
 
@@ -32,16 +31,19 @@ export interface SyncReport {
   data: Data | null; // the newest data GitHub confirmed, if anything was saved or checked
 }
 
-function messageFor(entry: FinishedEntry, data: Data | null): string {
-  const nameOf = (id: string) => data?.players.find((p) => p.id === id)?.name ?? id;
-  const season = data?.seasons.find((s) => s.id === entry.game.seasonId);
-  return finishedGameMessage({
-    date: entry.game.date,
-    mode: entry.game.mode,
-    seasonName: season?.name ?? "season",
-    playerCount: entry.game.players.length,
-    promotedNames: entry.game.mode === "season" ? entry.promote.map(nameOf) : [],
-  });
+// Built per save attempt from the fresh data, so names come from what GitHub has now.
+export function messageFor(entry: FinishedEntry): CommitMessage {
+  return (before) => {
+    const nameOf = (id: string) => before.players.find((p) => p.id === id)?.name ?? id;
+    const season = before.seasons.find((s) => s.id === entry.game.seasonId);
+    return finishedGameMessage({
+      date: entry.game.date,
+      mode: entry.game.mode,
+      seasonName: season?.name ?? "season",
+      playerCount: entry.game.players.length,
+      promotedNames: entry.game.mode === "season" ? entry.promote.map(nameOf) : [],
+    });
+  };
 }
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : "Sync failed.");
@@ -57,14 +59,12 @@ async function run(deps: SyncDeps): Promise<SyncReport> {
     report.error = SANDBOX_BROWSER_MESSAGE;
     return report;
   }
-  let names = deps.data;
-
   for (const entry of loadQueue(deps.store)) {
     try {
-      const result = await deps.save(finishGameChange(entry), messageFor(entry, names));
+      const result = await deps.save(finishGameChange(entry), messageFor(entry));
       removeFromQueue(entry.game.id, deps.store);
       report.synced.push({ entry, data: result.data, alreadySaved: result.unchanged });
-      report.data = names = result.data;
+      report.data = result.data;
     } catch (err) {
       report.error = errorText(err);
       break; // keep order; try again next time

@@ -187,7 +187,7 @@ describe("a normal dev server and a sandbox browser", () => {
     const local = new MemoryStore();
     local.setItem(SANDBOX_DEVICE_KEY, "1");
     const save = vi.fn();
-    const report = await syncAll({ save, data: null, store: local });
+    const report = await syncAll({ save, store: local });
     expect(report.error).toBe(SANDBOX_BROWSER_MESSAGE);
     expect(save).not.toHaveBeenCalled();
   });

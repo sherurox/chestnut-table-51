@@ -25,9 +25,7 @@ function hasWork(): boolean {
 
 export function SyncProvider({ children }: { children: ReactNode }) {
   const loggedIn = useLoggedIn();
-  const { data, applySaved } = useData();
-  const dataRef = useRef(data);
-  dataRef.current = data;
+  const { applySaved } = useData();
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recent, setRecent] = useState<SyncedGame[]>([]);
@@ -40,7 +38,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     setSyncing(true);
     running.current = (async () => {
       try {
-        const report = await syncAll({ save: saveChange, data: dataRef.current });
+        const report = await syncAll({ save: saveChange });
         if (report.data) applySaved(report.data);
         if (report.synced.length > 0) setRecent((r) => [...report.synced, ...r]);
         setError(report.error);
