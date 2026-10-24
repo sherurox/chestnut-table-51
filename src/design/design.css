@@ -364,7 +364,7 @@
   color: var(--ct-loss);
 }
 
-/* Badge star: brass when earned, a muted outline when not. */
+/* Badge icon: brass ring when earned; dashed, faded and grey when not (the text says so too). */
 .ct-badge-icon {
   display: inline-grid;
   flex-shrink: 0;
@@ -374,6 +374,25 @@
   border-radius: 999px;
   border: 1px dashed var(--ct-line);
   color: var(--ct-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+}
+.ct-badge-icon:not([data-earned="true"]) > span {
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+.ct-details > summary {
+  list-style: none;
+}
+.ct-details > summary::-webkit-details-marker {
+  display: none;
+}
+.ct-details > summary::after {
+  content: "▸";
+  color: var(--ct-text-muted);
+}
+.ct-details[open] > summary::after {
+  content: "▾";
 }
 .ct-badge-icon[data-earned="true"] {
   border: 1px solid var(--ct-brass-lo);

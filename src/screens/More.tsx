@@ -24,6 +24,14 @@ export function More() {
             </Link>
           </li>
           <li>
+            <Link to="/hall" className="ct-list-row ct-focus">
+              <span className="flex-1">Hall of Fame</span>
+              <span className="text-ink-muted">
+                <IconChevron />
+              </span>
+            </Link>
+          </li>
+          <li>
             <Link to="/history" className="ct-list-row ct-focus">
               <span className="flex-1">Edit history</span>
               <span className="text-ink-muted">
