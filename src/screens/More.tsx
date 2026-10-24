@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { PageTitle, Wordmark } from "../design/components.js";
 import { IconChevron } from "../design/icons.js";
 import { currentMotionEnv, setMotionSetting, useMotionReduced, useMotionSetting } from "../design/motion.js";
+import { saveChipMode, useChipMode } from "../lib/chipMode.js";
 import { useTheme } from "../state/useTheme.js";
 
 export function More() {
@@ -9,6 +10,7 @@ export function More() {
   const animations = useMotionSetting();
   useMotionReduced(); // re-render when the phone's reduced-motion setting changes
   const osReduced = currentMotionEnv().osReduced;
+  const chipMode = useChipMode();
 
   return (
     <div className="px-4 pt-2 pb-4">
@@ -74,6 +76,21 @@ export function More() {
                 {osReduced && <span className="block text-xs text-ink-muted">Off: your phone asks for reduced motion</span>}
               </span>
               <span className="ct-tag ct-tag-brass">{animations ? "On" : "Off"}</span>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={chipMode}
+              onClick={() => saveChipMode(!chipMode)}
+              className="ct-list-row ct-focus w-full text-left"
+            >
+              <span className="flex-1">
+                Chip mode
+                <span className="block text-xs text-ink-muted">Live games: chips to hand out, the box, counting by colour</span>
+              </span>
+              <span className="ct-tag ct-tag-brass">{chipMode ? "On" : "Off"}</span>
             </button>
           </li>
           <li>

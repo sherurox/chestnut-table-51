@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { replayBox } from "../domain/chipBox.js";
+import { chipStepError } from "../domain/chips.js";
 import { discardedLiveGameMessage } from "../domain/commitMessages.js";
 import {
   addBuyIn,
@@ -17,6 +19,8 @@ import {
   type LocalGame,
 } from "../domain/liveGame.js";
 import type { Data, ID } from "../domain/types.js";
+import { useChipMode } from "../lib/chipMode.js";
+import { boxCantMakeText, boxLine, suggestionText } from "../lib/chipText.js";
 import { formatDate, formatDollars } from "../lib/format.js";
 import { useData } from "../state/DataContext.js";
 import { isLoggedIn } from "../storage/auth.js";
@@ -38,32 +42,82 @@ function undoLabel(action: LiveAction, nameOf: (id: ID) => string): string {
   return `Undo: remove ${nameOf(action.player)}`;
 }
 
+// Chip mode: the chips to hand over for the buy-in just added, or why the box can't make it (§9, step E).
+interface Suggestion {
+  text: string | null;
+  warning: string | null;
+}
+
+// "Box: 60 white · 10 red · …": wraps only between colours, never inside "10 red".
+function ChipLine({ text }: { text: string }) {
+  const colon = text.indexOf(": ");
+  const head = colon >= 0 ? text.slice(0, colon + 2) : "";
+  return (
+    <>
+      {head}
+      {text
+        .slice(head.length)
+        .split(" · ")
+        .map((part, i) => (
+          <Fragment key={i}>
+            {i > 0 && " · "}
+            <span className="whitespace-nowrap">{part}</span>
+          </Fragment>
+        ))}
+    </>
+  );
+}
+
+function SuggestionCard({ suggestion, onDismiss }: { suggestion: Suggestion; onDismiss: () => void }) {
+  return (
+    <div role="status" className="ct-panel ct-panel-brass mt-3 flex items-start gap-2 p-3">
+      <div className="min-w-0 flex-1">
+        {suggestion.text && (
+          <p className="ct-num font-semibold break-words">
+            <ChipLine text={suggestion.text} />
+          </p>
+        )}
+        {suggestion.warning && <p className="text-sm font-medium text-loss">⚠ {suggestion.warning}</p>}
+      </div>
+      <button type="button" className={`${btnSecondary} w-12 shrink-0 px-0`} onClick={onDismiss} aria-label="Dismiss chip suggestion">
+        ✕
+      </button>
+    </div>
+  );
+}
+
 function PlayerCard({
   game,
   player,
   name,
   guestNote,
   presets,
+  suggestion,
   onBuyIn,
   onRemove,
+  onDismissSuggestion,
 }: {
   game: LocalGame;
   player: ID;
   name: string;
   guestNote: string | null;
   presets: number[];
+  suggestion: Suggestion | null;
   onBuyIn: (amount: number) => void;
   onRemove: () => void;
+  onDismissSuggestion: () => void;
 }) {
   const [custom, setCustom] = useState<string | null>(null);
   const state = liveState(game);
   const total = playerTotal(state, player);
   const count = state.buyIns.filter((b) => b.player === player).length;
   const customAmount = parseStack(custom ?? "");
+  // The chip set has no $1 chips: custom buy-ins are multiples of $5, in chip mode or not.
+  const customError = customAmount !== null && customAmount >= 1 ? chipStepError(customAmount) : null;
 
   function submitCustom(e: FormEvent) {
     e.preventDefault();
-    if (customAmount === null || customAmount < 1) return;
+    if (customAmount === null || customAmount < 1 || customError) return;
     onBuyIn(customAmount);
     setCustom(null);
   }
@@ -115,17 +169,24 @@ function PlayerCard({
               placeholder="Amount"
               value={custom}
               onChange={(e) => setCustom(e.target.value)}
+              aria-invalid={customError ? true : undefined}
               autoFocus
             />
           </label>
-          <button type="submit" className={btnPrimary} disabled={customAmount === null || customAmount < 1}>
+          <button type="submit" className={btnPrimary} disabled={customAmount === null || customAmount < 1 || customError !== null}>
             Add
           </button>
           <button type="button" className={btnSecondary} onClick={() => setCustom(null)}>
             Cancel
           </button>
+          {customError && (
+            <p role="alert" className="w-full text-sm text-loss">
+              {customError}
+            </p>
+          )}
         </form>
       )}
+      {suggestion && <SuggestionCard suggestion={suggestion} onDismiss={onDismissSuggestion} />}
       {total === 0 && (
         <button type="button" className={`mt-2 min-h-[48px] text-sm underline ${muted}`} onClick={onRemove}>
           Remove {name} (picked by mistake)
@@ -235,6 +296,9 @@ export function LiveGame() {
   const navigate = useNavigate();
   const { update, error } = useGameUpdater();
   const [addingLate, setAddingLate] = useState(false);
+  const chipMode = useChipMode();
+  // The buy-in whose chip suggestion is showing ("player|at"): only while it is still the last action.
+  const [suggestFor, setSuggestFor] = useState<string | null>(null);
 
   if (!game) {
     return (
@@ -255,6 +319,22 @@ export function LiveGame() {
   const season = data?.seasons.find((s) => s.id === game.seasonId);
   const lastAction = game.actions[game.actions.length - 1];
   const now = () => new Date().toISOString();
+  // Box tracking is derived from the buy-ins every render (cached per split), never stored.
+  const replay = chipMode ? replayBox(state.buyIns) : null;
+  const lastStep = replay && lastAction?.type === "buyIn" ? replay.steps[replay.steps.length - 1] : undefined;
+  const suggestion =
+    lastStep && suggestFor === `${lastStep.buyIn.player}|${lastStep.buyIn.at}`
+      ? {
+          player: lastStep.buyIn.player,
+          text: lastStep.split ? suggestionText(nameOf(lastStep.buyIn.player), lastStep.split) : null,
+          warning: lastStep.failure ? boxCantMakeText(lastStep.buyIn.amount, lastStep.failure) : null,
+        }
+      : null;
+
+  function buyIn(player: ID, amount: number) {
+    const at = now();
+    if (update((g) => addBuyIn(g, player, amount, at))) setSuggestFor(`${player}|${at}`);
+  }
 
   function discard() {
     const id = game!.id;
@@ -283,6 +363,11 @@ export function LiveGame() {
           <span className="ct-num text-3xl font-bold text-brass">{formatDollars(tableTotal(state))}</span>
         </div>
       </div>
+      {replay && (
+        <p className={`ct-num mb-3 text-sm ${muted}`}>
+          <ChipLine text={boxLine(replay.left)} />
+        </p>
+      )}
 
       {!loggedIn && (
         <p role="status" className={`ct-panel mb-3 px-3 py-2 text-sm ${muted}`}>
@@ -304,8 +389,10 @@ export function LiveGame() {
             name={nameOf(p)}
             guestNote={state.promote.includes(p) ? "joins season at save" : players.find((x) => x.id === p)?.type === "guest" ? "guest" : null}
             presets={presets}
-            onBuyIn={(amount) => update((g) => addBuyIn(g, p, amount, now()))}
+            suggestion={suggestion?.player === p ? suggestion : null}
+            onBuyIn={(amount) => buyIn(p, amount)}
             onRemove={() => update((g) => removePlayer(g, p, now()))}
+            onDismissSuggestion={() => setSuggestFor(null)}
           />
         ))}
       </ul>
