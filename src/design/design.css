@@ -255,6 +255,23 @@
   --chip: #1d6b45;
   --chip-spot: #f4ecda;
 }
+.ct-chip[data-tone="white"] {
+  --chip: #ece6d6;
+  --chip-spot: #1f4f8c;
+  --chip-ink: #2a1a08;
+}
+/* A small chip that only shows a colour and value (chip calculator), never a button. */
+.ct-chip.ct-chip-swatch {
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
+  flex: none;
+  font-size: 0.7rem;
+  transition: none;
+}
+.ct-chip.ct-chip-swatch:active {
+  transform: none;
+}
 /* "Custom" chip: an empty chip outline. */
 .ct-chip[data-tone="outline"] {
   --chip-ink: var(--ct-text);
