@@ -6,6 +6,7 @@ import { deletedGameMessage, editedGameMessage } from "../domain/commitMessages.
 import { localIsoDate } from "../domain/dates.js";
 import {
   deleteGameChange,
+  draftBuyInStepError,
   draftFromGame,
   editCheck,
   editGameChange,
@@ -232,29 +233,39 @@ function EditForm({ data, game, season }: { data: Data; game: Game; season: Seas
                   Remove
                 </button>
               </div>
-              {rows.map((r, i) => (
-                <div key={i} className="flex items-end gap-2">
-                  <label className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className={`text-sm ${muted}`}>Buy-in {i + 1}</span>
-                    <input
-                      className={input}
-                      inputMode="numeric"
-                      placeholder="Amount"
-                      value={r.amount}
-                      aria-invalid={parseBuyIn(r.amount) === null}
-                      onChange={(e) => setBuyIns(pid, rows.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    className={`${btnSecondary} w-12 shrink-0 px-0`}
-                    aria-label={`Remove ${name}'s buy-in ${i + 1}`}
-                    onClick={() => setBuyIns(pid, rows.filter((_, j) => j !== i))}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
+              {rows.map((r, i) => {
+                const stepError = draftBuyInStepError(before, r);
+                return (
+                  <div key={i}>
+                    <div className="flex items-end gap-2">
+                      <label className="flex min-w-0 flex-1 flex-col gap-1">
+                        <span className={`text-sm ${muted}`}>Buy-in {i + 1}</span>
+                        <input
+                          className={input}
+                          inputMode="numeric"
+                          placeholder="Amount"
+                          value={r.amount}
+                          aria-invalid={parseBuyIn(r.amount) === null || stepError !== null}
+                          onChange={(e) => setBuyIns(pid, rows.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className={`${btnSecondary} w-12 shrink-0 px-0`}
+                        aria-label={`Remove ${name}'s buy-in ${i + 1}`}
+                        onClick={() => setBuyIns(pid, rows.filter((_, j) => j !== i))}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    {stepError && (
+                      <p role="alert" className="mt-1 text-sm text-loss">
+                        {stepError}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
               <button type="button" className={btnSecondary} onClick={() => setBuyIns(pid, [...rows, { amount: "", index: null }])}>
                 + Add buy-in
               </button>

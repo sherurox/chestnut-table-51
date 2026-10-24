@@ -1,4 +1,5 @@
 import { assertNoLiveGame, type Change } from "./adminOps.js";
+import { chipStepError } from "./chips.js";
 import { guestsNeedingChoice, parseStack, type GuestChoice } from "./liveGame.js";
 import { chipCheck } from "./results.js";
 import { MAX_SEASON_GAMES } from "../config.js";
@@ -39,6 +40,15 @@ export function draftFromGame(game: Game): GameDraft {
 export function parseBuyIn(text: string | undefined): number | null {
   const n = parseStack(text);
   return n !== null && n >= 1 ? n : null;
+}
+
+// A buy-in added or changed while editing must be one the chip set can make (multiples of $5). Untouched
+// buy-ins keep their amount, so a game saved before the rule stays editable.
+export function draftBuyInStepError(original: Game, row: DraftBuyIn): string | null {
+  const amount = parseBuyIn(row.amount);
+  if (amount === null) return null;
+  if (row.index !== null && original.buyIns[row.index]?.amount === amount) return null;
+  return chipStepError(amount);
 }
 
 function isCalendarDate(iso: string): boolean {
@@ -171,6 +181,8 @@ export function editCheck(data: Data, original: Game, draft: GameDraft, nameOf: 
     if (rows.some((b) => parseBuyIn(b.amount) === null)) {
       blockers.push(`Each of ${nameOf(p)}'s buy-ins must be whole dollars from $1 up.`);
     }
+    const stepError = rows.map((b) => draftBuyInStepError(original, b)).find((e) => e !== null);
+    if (stepError) blockers.push(`${nameOf(p)}'s buy-ins: ${stepError.charAt(0).toLowerCase()}${stepError.slice(1)}`);
   }
   const missing = draft.players.filter((p) => parseStack(draft.stacks[p]) === null);
   for (const p of missing) blockers.push(`Enter ${nameOf(p)}'s final stack (whole dollars, 0 is fine).`);

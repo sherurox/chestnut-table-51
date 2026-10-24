@@ -1,3 +1,4 @@
+import { chipStepError } from "./chips.js";
 import { MAX_AMOUNT, normalizeName } from "./schema.js";
 import type { Data, ID, Player, Season } from "./types.js";
 
@@ -78,6 +79,8 @@ export function presetBuyInsError(amounts: number[]): string | null {
     if (!Number.isInteger(a) || a < 1 || a > MAX_AMOUNT) {
       return `Each preset must be a whole dollar amount from $1 to $${MAX_AMOUNT.toLocaleString("en-US")}.`;
     }
+    const stepError = chipStepError(a);
+    if (stepError) return `Each preset must be one the chips can make. ${stepError}`;
   }
   if (new Set(amounts).size !== amounts.length) return "Presets must all be different.";
   return null;

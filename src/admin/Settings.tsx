@@ -33,7 +33,7 @@ function PresetForm({ data }: { data: Data }) {
     <form onSubmit={onSubmit} className="flex flex-col gap-2">
       <h2 className="font-semibold">Preset buy-in amounts</h2>
       <p className={`text-sm ${muted}`}>
-        Shown as big buttons during a game. 1 to {MAX_PRESETS} amounts, whole dollars.
+        Shown as big buttons during a game. 1 to {MAX_PRESETS} amounts, whole dollars in multiples of $5 (the smallest chip).
       </p>
       {rows.map((value, i) => (
         <div key={i} className="flex gap-2">

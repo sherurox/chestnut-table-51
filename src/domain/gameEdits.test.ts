@@ -6,6 +6,7 @@ import { badges, playerSeasonStats, seasonAwards, seasonSummary } from "./fun.js
 import {
   deleteGameChange,
   deletedGames,
+  draftBuyInStepError,
   draftFromGame,
   editCheck,
   editGameChange,
@@ -387,7 +388,7 @@ describe("zero-sum invariant after random edits, deletes and restores", () => {
             const buyIns = { ...draft.buyIns };
             if (rand() < 0.3) {
               const p = pick(draft.players);
-              const amount = 1 + Math.floor(rand() * 2000);
+              const amount = 5 * (1 + Math.floor(rand() * 400)); // the chips make multiples of $5
               buyIns[p] = [...buyIns[p]!, { amount: String(amount), index: null }];
               stacks[p] = String(Number(stacks[p]) + amount);
             }
@@ -406,5 +407,33 @@ describe("zero-sum invariant after random edits, deletes and restores", () => {
     }
     expect(edits).toBeGreaterThan(150);
     expect(d.games.every((x) => x.editedAt)).toBe(true);
+  });
+});
+
+describe("Edit game: added or changed buy-ins must be multiples of $5", () => {
+  it("blocks a changed or added buy-in the chips can't make, with an inline error", () => {
+    const d = fixture();
+    const original = g(d, "b1");
+    const draft = draftFromGame(original);
+    const changed = { ...draft, buyIns: { ...draft.buyIns, am: [{ amount: "1003", index: draft.buyIns.am![0]!.index }] }, stacks: { am: "403", sh: "1600" } };
+    expect(draftBuyInStepError(original, changed.buyIns.am[0]!)).toBe("Use a multiple of $5.");
+    const result = check(d, original, changed);
+    expect(result.ok).toBe(false);
+    expect(result.blockers).toContain("Amit's buy-ins: use a multiple of $5.");
+
+    const added = { ...draft, buyIns: { ...draft.buyIns, sh: [...draft.buyIns.sh!, { amount: "7", index: null }] }, stacks: { am: "400", sh: "1607" } };
+    expect(check(d, original, added).blockers).toContain("Shreyas's buy-ins: use a multiple of $5.");
+
+    const fine = { ...draft, buyIns: { ...draft.buyIns, sh: [...draft.buyIns.sh!, { amount: "505", index: null }] }, stacks: { am: "400", sh: "2105" } };
+    expect(check(d, original, fine).ok).toBe(true);
+  });
+
+  it("an untouched buy-in saved before the rule keeps the game editable", () => {
+    const d = fixture();
+    const odd = { ...g(d, "b1"), buyIns: g(d, "b1").buyIns.map((b) => (b.player === "am" ? { ...b, amount: 1003 } : b)), cashOuts: [{ player: "am", amount: 403 }, { player: "sh", amount: 1600 }] };
+    const data = { ...d, games: d.games.map((x) => (x.id === "b1" ? odd : x)) };
+    const draft = { ...draftFromGame(odd), date: "2026-10-13" };
+    expect(draftBuyInStepError(odd, draft.buyIns.am![0]!)).toBeNull();
+    expect(check(data, odd, draft).ok).toBe(true);
   });
 });

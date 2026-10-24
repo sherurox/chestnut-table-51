@@ -36,6 +36,17 @@ function gcd(a: number, b: number): number {
   return b === 0 ? a : gcd(b, a % b);
 }
 
+// The smallest amount the chips can make in steps of: every buy-in must be a multiple of it ($5).
+export function chipStep(chips: readonly ChipDenomination[] = CHIP_SET): number {
+  return chips.reduce((g, c) => gcd(g, c.value), 0);
+}
+
+// The inline error for a buy-in amount the chip set can't make (live custom buy-ins, Edit game, presets).
+export function chipStepError(amount: number, chips: readonly ChipDenomination[] = CHIP_SET): string | null {
+  const step = chipStep(chips);
+  return step > 0 && amount % step !== 0 ? `Use a multiple of $${step}.` : null;
+}
+
 export function boxValue(chips: readonly ChipDenomination[]): number {
   return chips.reduce((sum, c) => sum + c.value * c.count, 0);
 }
@@ -55,7 +66,7 @@ export function chipSplit(
   chips: readonly ChipDenomination[] = CHIP_SET,
   preferred: Readonly<Record<number, readonly number[]>> = PREFERRED_SPLITS,
 ): ChipSplit {
-  const step = chips.reduce((g, c) => gcd(g, c.value), 0);
+  const step = chipStep(chips);
   const box = boxValue(chips);
   const validPlayers = Number.isInteger(players) && players >= 1;
   const caps = chips.map((c) => (validPlayers ? Math.floor(c.count / players) : 0));

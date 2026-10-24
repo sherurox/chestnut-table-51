@@ -128,8 +128,14 @@ describe("setPresetBuyIns", () => {
     expect(() => migrate(next)).not.toThrow();
   });
 
-  it("accepts the 1 and 10,000,000 bounds", () => {
-    expect(setPresetBuyIns([1, 10_000_000])(baseData()).settings.presetBuyIns).toEqual([1, 10_000_000]);
+  it("accepts the $5 and 10,000,000 bounds", () => {
+    expect(setPresetBuyIns([5, 10_000_000])(baseData()).settings.presetBuyIns).toEqual([5, 10_000_000]);
+  });
+
+  it("presets must be multiples of $5, the smallest chip (the schema doesn't require it)", () => {
+    expect(presetBuyInsError([1000, 1500, 2000])).toBeNull();
+    expect(presetBuyInsError([1000, 1234])).toBe("Each preset must be one the chips can make. Use a multiple of $5.");
+    expect(() => setPresetBuyIns([1])(baseData())).toThrow(/multiple of \$5/);
   });
 
   it.each([
