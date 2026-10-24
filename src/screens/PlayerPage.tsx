@@ -9,7 +9,7 @@ import { morphNames } from "../lib/viewTransitions.js";
 import { useData } from "../state/DataContext.js";
 import { activeSeason, playerById, todaysLines } from "../lib/selectors.js";
 import { netWinningsOverTime } from "../domain/charts.js";
-import { badges, nemesis, playerSeasonStats, seasonAwards, type Streak } from "../domain/fun.js";
+import { allBadges, nemesis, playerSeasonStats, seasonAwards, type Streak } from "../domain/fun.js";
 import { formatDate, formatSignedDollars } from "../lib/format.js";
 import type { Data } from "../domain/types.js";
 
@@ -221,7 +221,7 @@ export function PlayerPage() {
           <EmptyState suit="♠" title="No active season" />
         </div>
       )}
-      <BadgeList earned={badges(data, id)} />
+      <BadgeList earned={allBadges(data, id)} />
     </div>
   );
 }

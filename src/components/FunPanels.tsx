@@ -1,9 +1,9 @@
 import type { Ref } from "react";
 import { Link } from "react-router-dom";
 import { Money } from "../design/components.js";
-import type { Award, AwardKind, Badge, FormMark, Nemesis } from "../domain/fun.js";
+import type { Award, AwardKind, EarnedBadge, FormMark, Nemesis } from "../domain/fun.js";
 import type { Data, ID } from "../domain/types.js";
-import { AWARDS, BADGES, SITUATION_NAMES, TIER_NAMES, awardValue, formLabel } from "../lib/funLabels.js";
+import { AWARDS, BADGES, SITUATION_NAMES, TIER_NAMES, awardValue, badgeTitle, formLabel } from "../lib/funLabels.js";
 import type { TodaysLine } from "../lib/selectors.js";
 import { formatDate } from "../lib/format.js";
 
@@ -125,43 +125,48 @@ export function AwardsList({
   );
 }
 
-// Every badge: earned ones with the date (tap through to the game), the rest muted with how to earn them.
-export function BadgeList({ earned }: { earned: Badge[] }) {
-  const byKind = new Map(earned.map((b) => [b.kind, b]));
+// Every badge: earned ones first, newest first, with the date and a ×N count (tap through to the game, or
+// the season for season-close badges); then the rest, dimmed, with how to earn them.
+export function BadgeList({ earned }: { earned: EarnedBadge[] }) {
+  const earnedKinds = new Set(earned.map((b) => b.kind));
+  const label = new Map(BADGES.map((b) => [b.kind, b]));
   return (
     <section className="mb-4" aria-label="Badges">
       <SectionLabel>{`Badges · ${earned.length} of ${BADGES.length} · all-time`}</SectionLabel>
       <ul className="ct-panel overflow-hidden">
-        {BADGES.map((b) => {
-          const badge = byKind.get(b.kind);
+        {earned.map((badge) => {
+          const b = label.get(badge.kind)!;
           return (
             <li key={b.kind}>
-              {badge ? (
-                <Link to={`/games/${badge.gameId}`} className="ct-list-row ct-focus">
-                  <span className="ct-badge-icon" data-earned="true" aria-hidden="true">
-                    ★
+              <Link to={badge.seasonId ? `/seasons/${badge.seasonId}` : `/games/${badge.gameId}`} className="ct-list-row ct-focus">
+                <span className="ct-badge-icon" data-earned="true" aria-hidden="true">
+                  <span>{b.icon}</span>
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{badgeTitle(b.name, badge.count)}</span>
+                  <span className="block text-xs text-ink-muted">
+                    {badge.count > 1 ? "First earned" : "Earned"} {formatDate(badge.date)}
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">{b.name}</span>
-                    <span className="block text-xs text-ink-muted">Earned {formatDate(badge.date)}</span>
-                  </span>
-                </Link>
-              ) : (
-                <div className="ct-list-row">
-                  <span className="ct-badge-icon" aria-hidden="true">
-                    ☆
-                  </span>
-                  <span className="min-w-0 flex-1 text-ink-muted">
-                    <span className="block font-medium">
-                      {b.name} <span className="sr-only">(not earned yet)</span>
-                    </span>
-                    <span className="block text-xs">{b.howToEarn}</span>
-                  </span>
-                </div>
-              )}
+                </span>
+              </Link>
             </li>
           );
         })}
+        {BADGES.filter((b) => !earnedKinds.has(b.kind)).map((b) => (
+          <li key={b.kind}>
+            <div className="ct-list-row">
+              <span className="ct-badge-icon" aria-hidden="true">
+                <span>{b.icon}</span>
+              </span>
+              <span className="min-w-0 flex-1 text-ink-muted">
+                <span className="block font-medium">
+                  {b.name} <span className="sr-only">(not earned yet)</span>
+                </span>
+                <span className="block text-xs">{b.howToEarn}</span>
+              </span>
+            </div>
+          </li>
+        ))}
       </ul>
     </section>
   );
