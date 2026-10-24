@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  allBadges,
   assignQuotes,
   badges,
   nemesis,
@@ -9,7 +10,9 @@ import {
   seasonSummary,
   situation,
   tier,
+  seasonCloseBadges,
   typicalBuyIn,
+  type BadgeKind,
   type PlayerMood,
   type QuotePool,
 } from "./fun.js";
@@ -500,6 +503,220 @@ describe("badges", () => {
       duel("g3", day(3), "a", "b", 5000, { mode: "incognito" }),
     ]);
     expect(badges(d, "a")).toEqual([]);
+  });
+});
+
+// ---- new badges (Hall of Fame step) ---------------------------------------------------------------
+
+describe("gameBadges / seasonCloseBadges / allBadges", () => {
+  const find = (d: Data, id: string, kind: BadgeKind) => allBadges(d, id).find((b) => b.kind === kind);
+  const at = (d: Data, id: string, kind: BadgeKind) => {
+    const b = find(d, id, kind);
+    return b ? `${b.gameId}×${b.count}` : null;
+  };
+  const closedS1 = (endedOn = day(30)) => ({
+    seasons: [{ id: "s1", name: "Season 1", status: "closed" as const, startedOn: day(0), endedOn }],
+  });
+  const wins = (n: number, from = 1) => Array.from({ length: n }, (_, i) => duel(`g${from + i}`, day(from + i), "a", "b", 100));
+
+  it("the original six keep their rules (first earned) and gain counts", () => {
+    const d = data([
+      game("g1", day(1), [["a", [1000], 2000], ["b", [1000], 0]]),
+      game("g2", day(2), [["a", [1000], 2500], ["b", [1000, 500], 0]]),
+    ]);
+    expect(badges(d, "a").map((b) => b.kind)).toEqual(["firstBlood", "doubleUp"]);
+    expect(at(d, "a", "doubleUp")).toBe("g1×2");
+    expect(at(d, "a", "firstBlood")).toBe("g1×1"); // a milestone: never counted again
+  });
+
+  it("hatTrick counts once per winning run that reaches 3", () => {
+    const run = [...wins(6)];
+    expect(at(data(run), "a", "hatTrick")).toBe("g3×1");
+    const twoRuns = [...wins(3), duel("g4", day(4), "b", "a", 100), ...wins(3, 5)];
+    expect(at(data(twoRuns), "a", "hatTrick")).toBe("g3×2");
+  });
+
+  it("manOfTheMatch: the 5th night as the biggest winner; ties count for everyone tied", () => {
+    const tie = (id: string, n: number) => game(id, day(n), [["a", [1000], 1500], ["b", [1000], 1500], ["c", [1000], 0]]);
+    const four = [tie("g1", 1), tie("g2", 2), tie("g3", 3), tie("g4", 4)];
+    expect(find(data(four), "a", "manOfTheMatch")).toBeUndefined();
+    const five = data([...four, tie("g5", 5)]);
+    expect(at(five, "a", "manOfTheMatch")).toBe("g5×1");
+    expect(at(five, "b", "manOfTheMatch")).toBe("g5×1");
+    expect(find(five, "c", "manOfTheMatch")).toBeUndefined();
+    // Up but not the biggest winner doesn't count.
+    const second = (id: string, n: number) => game(id, day(n), [["a", [1000], 1100], ["b", [1000], 1900], ["c", [1000], 0]]);
+    expect(find(data([1, 2, 3, 4, 5].map((n) => second(`g${n}`, n))), "a", "manOfTheMatch")).toBeUndefined();
+  });
+
+  it("luckySeven at the 7th winning night, doubleDigits at the 10th (losses in between are fine)", () => {
+    const games = [duel("g0", day(0), "b", "a", 100), ...wins(10)];
+    const d = data(games);
+    expect(at(d, "a", "luckySeven")).toBe("g7×1");
+    expect(at(d, "a", "doubleDigits")).toBe("g10×1");
+    expect(find(data(games.slice(0, 7)), "a", "luckySeven")).toBeUndefined();
+  });
+
+  it("tripleThreat: cash out ≥ 3× total buy-in", () => {
+    const near = game("g1", day(1), [["a", [1000], 2999], ["b", [1000, 1000], 1001]]);
+    const exact = game("g2", day(2), [["a", [500, 500], 3000], ["b", [2000], 0]]);
+    expect(find(data([near]), "a", "tripleThreat")).toBeUndefined();
+    expect(at(data([near, exact]), "a", "tripleThreat")).toBe("g2×1");
+  });
+
+  it("whale: win ≥ $2,000 in one game", () => {
+    expect(find(data([game("g1", day(1), [["a", [2000], 3999], ["b", [2000], 1]])]), "a", "whale")).toBeUndefined();
+    const big = game("g1", day(1), [["a", [2000], 4000], ["b", [2000], 0]]);
+    expect(at(data([big]), "a", "whale")).toBe("g1×1");
+  });
+
+  it("loneWolf: the only player up, in a game of 3 or more", () => {
+    const lone = game("g1", day(1), [["a", [1000], 1600], ["b", [1000], 700], ["c", [1000], 700]]);
+    const twoUp = game("g2", day(2), [["a", [1000], 1300], ["b", [1000], 1300], ["c", [1000], 400]]);
+    const evenToo = game("g3", day(3), [["a", [1000], 1500], ["b", [1000], 1000], ["c", [1000], 500]]);
+    expect(at(data([lone]), "a", "loneWolf")).toBe("g1×1");
+    expect(find(data([twoUp]), "a", "loneWolf")).toBeUndefined();
+    expect(at(data([evenToo]), "a", "loneWolf")).toBe("g3×1"); // $0 isn't up
+    expect(find(data([duel("g4", day(4), "a", "b", 500)]), "a", "loneWolf")).toBeUndefined(); // 2 players
+  });
+
+  it("giantSlayer: win a game where the season leader going in finished down", () => {
+    const lead = duel("g1", day(1), "b", "a", 500); // b leads
+    const slay = game("g2", day(2), [["c", [1000], 1400], ["b", [1000], 600]]);
+    expect(at(data([lead, slay]), "c", "giantSlayer")).toBe("g2×1");
+    // The leader sat out, or finished even: no slaying.
+    const absent = duel("g2", day(2), "c", "d", 400);
+    const even = game("g2", day(2), [["c", [1000], 1400], ["b", [1000], 1000], ["d", [1000], 600]]);
+    expect(find(data([lead, absent]), "c", "giantSlayer")).toBeUndefined();
+    expect(find(data([lead, even]), "c", "giantSlayer")).toBeUndefined();
+    // No leader before a season's first game; the leader can't slay themselves.
+    expect(find(data([lead]), "b", "giantSlayer")).toBeUndefined();
+    expect(find(data([lead, duel("g2", day(2), "b", "c", 100)]), "b", "giantSlayer")).toBeUndefined();
+    // A new season starts with no leader, whoever led the last one.
+    const twoSeasons = data([lead, duel("g2", day(20), "a", "b", 100, { seasonId: "s2" })], {
+      seasons: [{ id: "s1", name: "Season 1", status: "closed", startedOn: day(0), endedOn: day(10) }, { id: "s2", name: "Season 2", status: "active", startedOn: day(11) }],
+    });
+    expect(find(twoSeasons, "a", "giantSlayer")).toBeUndefined();
+  });
+
+  it("bounceBack: win right after the player's own previous season game lost ≥ ½ a typical buy-in", () => {
+    const lost500 = duel("g1", day(1), "b", "a", 500); // typical buy-in 1000 → ½ is 500
+    const lost499 = duel("g1", day(1), "b", "a", 499);
+    const win = duel("g3", day(3), "a", "b", 100);
+    expect(at(data([lost500, win]), "a", "bounceBack")).toBe("g3×1");
+    expect(find(data([lost499, win]), "a", "bounceBack")).toBeUndefined();
+    // Games a didn't play in don't count as "previous"; a game a did play in (even $0) does.
+    expect(at(data([lost500, duel("g2", day(2), "c", "d", 100), win]), "a", "bounceBack")).toBe("g3×1");
+    const evenNight = game("g2", day(2), [["a", [1000], 1000], ["b", [1000], 1000]]);
+    expect(find(data([lost500, evenNight, win]), "a", "bounceBack")).toBeUndefined();
+    // Across seasons, using the earlier game's season typical buy-in.
+    const s1Loss = game("g1", day(1), [["a", [2000], 1000], ["b", [2000], 3000]]); // −1000, typical 2000 → ½ is 1000
+    const s2Win = duel("g2", day(20), "a", "b", 100, { seasonId: "s2" });
+    const seasons = [{ id: "s1", name: "Season 1", status: "closed" as const, startedOn: day(0), endedOn: day(10) }, { id: "s2", name: "Season 2", status: "active" as const, startedOn: day(11) }];
+    expect(at(data([s1Loss, s2Win], { seasons }), "a", "bounceBack")).toBe("g2×1");
+    const s1SmallLoss = game("g1", day(1), [["a", [2000], 1001], ["b", [2000], 2999]]);
+    expect(find(data([s1SmallLoss, s2Win], { seasons }), "a", "bounceBack")).toBeUndefined();
+  });
+
+  it("secondWind: 2+ buy-ins and still finished up", () => {
+    const up = game("g1", day(1), [["a", [1000, 1000], 2100], ["b", [1000], 900]]);
+    const down = game("g2", day(2), [["a", [1000, 1000], 1900], ["b", [1000], 1100]]);
+    const single = duel("g3", day(3), "a", "b", 100);
+    expect(at(data([up]), "a", "secondWind")).toBe("g1×1");
+    expect(find(data([down, single]), "a", "secondWind")).toBeUndefined();
+  });
+
+  it("evenSteven: exactly $0; felted: cashed out $0 (counted each time)", () => {
+    const even = (id: string, n: number) => game(id, day(n), [["a", [1000], 1000], ["b", [1000], 1000]]);
+    const d = data([even("g1", 1), duel("g2", day(2), "b", "a", 1000), even("g3", 3)]);
+    expect(at(d, "a", "evenSteven")).toBe("g1×2");
+    expect(at(d, "a", "felted")).toBe("g2×1");
+    expect(find(d, "b", "felted")).toBeUndefined();
+  });
+
+  describe("season-close badges", () => {
+    // a +300, b +100, c −100, d −300. e and f are active regulars with 0 games.
+    const night = (id: string, n: number) => game(id, day(n), [["a", [1000], 1300], ["b", [1000], 1100], ["c", [1000], 900], ["d", [1000], 700]]);
+
+    it("only for closed seasons", () => {
+      const d = data([night("g1", 1)]);
+      for (const id of ["a", "b", "c", "d"]) expect(seasonCloseBadges(d, id)).toEqual([]);
+    });
+
+    it("champion, podium (top 3) and wooden spoon (last with a game), dated at the season's end", () => {
+      const d = data([night("g1", 1), night("g2", 2)], closedS1(day(30)));
+      expect(seasonCloseBadges(d, "a").map((b) => b.kind)).toEqual(["champion", "podium"]);
+      expect(seasonCloseBadges(d, "b").map((b) => b.kind)).toEqual(["podium"]);
+      expect(seasonCloseBadges(d, "c").map((b) => b.kind)).toEqual(["podium"]);
+      expect(seasonCloseBadges(d, "d").map((b) => b.kind)).toEqual(["woodenSpoon"]);
+      expect(seasonCloseBadges(d, "e")).toEqual([]); // 0 games: not last, not anything
+      expect(find(d, "a", "champion")).toEqual({ kind: "champion", gameId: "g2", date: day(30), seasonId: "s1", count: 1 });
+    });
+
+    it("podium places follow the tiebreaks, so ties never make a 4th podium spot", () => {
+      const tied = game("g1", day(1), [["a", [1000], 1300], ["b", [1000], 1000], ["c", [1000], 1000], ["d", [1000], 1000], ["e", [1000], 700]]);
+      const d = data([tied], closedS1());
+      expect(["a", "b", "c", "d"].map((id) => Boolean(find(d, id, "podium")))).toEqual([true, true, true, false]); // Bob, Carol before Dave
+    });
+
+    it("champion ×2 across seasons, with the first date", () => {
+      const seasons = [
+        { id: "s1", name: "Season 1", status: "closed" as const, startedOn: day(0), endedOn: day(10) },
+        { id: "s2", name: "Season 2", status: "closed" as const, startedOn: day(11), endedOn: day(20) },
+      ];
+      const d = data([duel("g1", day(1), "a", "b", 100), duel("g2", day(12), "a", "b", 100, { seasonId: "s2" })], { seasons });
+      expect(find(d, "a", "champion")).toMatchObject({ date: day(10), seasonId: "s1", count: 2 });
+      expect(find(d, "b", "woodenSpoon")).toMatchObject({ count: 2 });
+    });
+
+    it("no wooden spoon when only one player has games", () => {
+      const solo = data([game("g1", day(1), [["a", [1000], 1000]])], closedS1());
+      expect(seasonCloseBadges(solo, "a").map((b) => b.kind)).toEqual(["champion", "podium"]);
+    });
+
+    it("wireToWire: #1 after every game of a closed season, 5+ games", () => {
+      expect(at(data(wins(5), closedS1()), "a", "wireToWire")).toBe("g5×1");
+      expect(find(data(wins(4), closedS1()), "a", "wireToWire")).toBeUndefined();
+      expect(find(data(wins(5)), "a", "wireToWire")).toBeUndefined(); // active season
+      const overtaken = [duel("g0", day(0), "b", "a", 100), ...wins(5)];
+      expect(find(data(overtaken, closedS1()), "a", "wireToWire")).toBeUndefined();
+      expect(find(data(overtaken, closedS1()), "a", "champion")).toBeDefined();
+    });
+
+    it("perfectAttendance: every game of a closed season with 10+ games", () => {
+      expect(at(data(wins(10), closedS1()), "a", "perfectAttendance")).toBe("g10×1");
+      expect(at(data(wins(10), closedS1()), "b", "perfectAttendance")).toBe("g10×1");
+      expect(find(data(wins(9), closedS1()), "a", "perfectAttendance")).toBeUndefined();
+      expect(find(data(wins(10)), "a", "perfectAttendance")).toBeUndefined(); // active season
+      const missed = [...wins(9), duel("g10", day(10), "b", "c", 100)];
+      expect(find(data(missed, closedS1()), "a", "perfectAttendance")).toBeUndefined();
+      expect(find(data(missed, closedS1()), "b", "perfectAttendance")).toBeDefined();
+    });
+  });
+
+  it("allBadges: newest first; a season's close badges before its last game's", () => {
+    const d = data([duel("g1", day(1), "a", "b", 100), game("g2", day(2), [["a", [1000], 1000], ["b", [1000], 1000]])], closedS1(day(2)));
+    expect(allBadges(d, "a").map((b) => b.kind)).toEqual(["champion", "podium", "evenSteven", "firstBlood"]);
+  });
+
+  it("incognito and deleted games never count, even in a closed season", () => {
+    const base = [game("g1", day(1), [["a", [1000], 1200], ["b", [1000], 800]])];
+    const noise = [
+      game("x1", day(2), [["a", [500, 500], 9000], ["b", [3000], 0], ["c", [5000], 0]], { mode: "incognito" }),
+      game("x2", day(3), [["b", [500, 500], 9000], ["a", [3000], 0], ["c", [5000], 0]], { status: "deleted" }),
+      ...Array.from({ length: 10 }, (_, i) => duel(`x${i + 3}`, day(4 + i), "b", "a", 900, { mode: i % 2 ? "incognito" : "season", status: i % 2 ? "finished" : "deleted" })),
+    ];
+    const clean = data(base, closedS1());
+    const noisy = data([...base, ...noise], closedS1());
+    for (const id of ["a", "b", "c"]) expect(allBadges(noisy, id)).toEqual(allBadges(clean, id));
+    const onlyIncognito = data([duel("x1", day(1), "a", "b", 5000, { mode: "incognito" })], closedS1());
+    expect(allBadges(onlyIncognito, "a")).toEqual([]);
+  });
+});
+
+describe("quotes", () => {
+  it("no pool has a duplicate line", () => {
+    for (const lines of Object.values(QUOTES)) expect(new Set(lines).size).toBe(lines.length);
   });
 });
 

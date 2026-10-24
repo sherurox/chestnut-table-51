@@ -2,6 +2,7 @@ import type { Data, Game, ID } from "./types.js";
 import { finalStack, gameResult, totalBuyIns } from "./results.js";
 import { seasonStandings } from "./standings.js";
 import { QUOTES } from "./quotes.js";
+import { MAX_SEASON_GAMES } from "../config.js";
 
 // "Home & fun" stats: tiers, situations, daily lines, nemesis, badges, awards, season summary.
 // Everything here counts finished season-mode games only. Incognito and deleted games never count
@@ -376,7 +377,15 @@ export function nemesis(data: Data, seasonId: ID, playerId: ID): Nemesis | null 
 
 // ---- badges (all-time, season games only) ---------------------------------------------------------
 
-export type BadgeKind = "firstBlood" | "hatTrick" | "doubleUp" | "phoenix" | "tenClub" | "halfCentury";
+// The original six (`badges`), then the per-game badges (`gameBadges`), then the season-close ones
+// (`seasonCloseBadges`, closed seasons only).
+export type BadgeKind =
+  | "firstBlood" | "hatTrick" | "doubleUp" | "phoenix" | "tenClub" | "halfCentury"
+  | "manOfTheMatch" | "luckySeven" | "doubleDigits" | "tripleThreat" | "whale" | "loneWolf"
+  | "giantSlayer" | "bounceBack" | "secondWind" | "evenSteven" | "felted"
+  | "champion" | "podium" | "woodenSpoon" | "wireToWire" | "perfectAttendance";
+
+const ORIGINAL_BADGES: readonly BadgeKind[] = ["firstBlood", "hatTrick", "doubleUp", "phoenix", "tenClub", "halfCentury"];
 
 export interface Badge {
   kind: BadgeKind;
@@ -384,28 +393,147 @@ export interface Badge {
   date: string;
 }
 
-// Each badge is earned once, in the game where it first happened. Listed in the order earned.
-export function badges(data: Data, playerId: ID): Badge[] {
-  const earned = new Map<BadgeKind, Badge>();
-  const earn = (kind: BadgeKind, game: Game) => {
-    if (!earned.has(kind)) earned.set(kind, { kind, gameId: game.id, date: game.date });
+// Where a badge was first earned, and how many times. Milestones (First blood, Ten club, Half century,
+// Man of the Match ×5, Lucky seven, Double digits) happen once, so their count is always 1.
+// Season-close badges also name the season; their date is its end date and their game its last game.
+export interface EarnedBadge extends Badge {
+  count: number;
+  seasonId?: ID;
+}
+
+const WHALE_WIN = 2000;
+const MAN_OF_THE_MATCH_TIMES = 5;
+const WIRE_TO_WIRE_GAMES = 5;
+
+// Every time a per-game badge happens, in game order. A badge "happens" once per game, except
+// milestones (once ever) and Hat trick (once per winning run that reaches 3).
+function gameBadgeHits(data: Data, playerId: ID): { kind: BadgeKind; game: Game }[] {
+  const hits: { kind: BadgeKind; game: Game }[] = [];
+  const games = countedGames(data);
+  const typical = new Map<ID, number>();
+  const typicalOf = (seasonId: ID) => {
+    if (!typical.has(seasonId)) typical.set(seasonId, typicalBuyIn(data, seasonId));
+    return typical.get(seasonId)!;
   };
   let played = 0;
+  let run = 0;
   let wins = 0;
-  for (const game of countedGames(data)) {
-    if (!game.players.includes(playerId)) continue;
+  let topNights = 0;
+  let previous: { result: number; seasonId: ID } | null = null;
+
+  games.forEach((game, i) => {
+    if (!game.players.includes(playerId)) return;
+    const hit = (kind: BadgeKind) => hits.push({ kind, game });
     played++;
     const result = gameResult(game, playerId);
     const bought = totalBuyIns(game, playerId);
-    wins = result > 0 ? wins + 1 : 0;
-    if (result > 0) earn("firstBlood", game);
-    if (wins >= 3) earn("hatTrick", game);
-    if (bought > 0 && finalStack(game, playerId) >= 2 * bought) earn("doubleUp", game);
-    if (rebuys(game, playerId) >= 3 && result > 0) earn("phoenix", game);
-    if (played === 10) earn("tenClub", game);
-    if (played === 50) earn("halfCentury", game);
+    const stack = finalStack(game, playerId);
+    const results = game.players.map((p) => gameResult(game, p));
+    const won = result > 0;
+    run = won ? run + 1 : 0;
+    if (won) wins++;
+
+    if (won && wins === 1) hit("firstBlood");
+    if (run === 3) hit("hatTrick");
+    if (bought > 0 && stack >= 2 * bought) hit("doubleUp");
+    if (rebuys(game, playerId) >= 3 && won) hit("phoenix");
+    if (played === 10) hit("tenClub");
+    if (played === 50) hit("halfCentury");
+
+    if (won && result === Math.max(...results) && ++topNights === MAN_OF_THE_MATCH_TIMES) hit("manOfTheMatch");
+    if (won && wins === 7) hit("luckySeven");
+    if (won && wins === 10) hit("doubleDigits");
+    if (bought > 0 && stack >= 3 * bought) hit("tripleThreat");
+    if (result >= WHALE_WIN) hit("whale");
+    if (won && game.players.length >= 3 && results.filter((r) => r > 0).length === 1) hit("loneWolf");
+    if (won) {
+      const leader = leaderBefore(data, games.slice(0, i), game.seasonId);
+      if (leader && leader !== playerId && game.players.includes(leader) && gameResult(game, leader) < 0) hit("giantSlayer");
+    }
+    // Lost at least half a typical buy-in (of that game's season) last time: 2 × result ≤ −typical.
+    if (won && previous && 2 * previous.result <= -typicalOf(previous.seasonId)) hit("bounceBack");
+    if (rebuys(game, playerId) >= 1 && won) hit("secondWind");
+    if (result === 0) hit("evenSteven");
+    if (stack === 0) hit("felted");
+
+    previous = { result, seasonId: game.seasonId };
+  });
+  return hits;
+}
+
+// #1 in the season's standings after `earlier` (counted games, oldest first). null before its first game.
+function leaderBefore(data: Data, earlier: Game[], seasonId: ID): ID | null {
+  if (!earlier.some((g) => g.seasonId === seasonId)) return null;
+  return seasonStandings({ ...data, games: earlier }, seasonId)[0]?.playerId ?? null;
+}
+
+// Each original badge is earned once, in the game where it first happened. Listed in the order earned.
+export function badges(data: Data, playerId: ID): Badge[] {
+  const earned = new Map<BadgeKind, Badge>();
+  for (const { kind, game } of gameBadgeHits(data, playerId)) {
+    if (ORIGINAL_BADGES.includes(kind) && !earned.has(kind)) earned.set(kind, { kind, gameId: game.id, date: game.date });
   }
   return [...earned.values()];
+}
+
+function tally(hits: { kind: BadgeKind; gameId: ID; date: string; seasonId?: ID }[]): EarnedBadge[] {
+  const earned = new Map<BadgeKind, EarnedBadge>();
+  for (const h of hits) {
+    const seen = earned.get(h.kind);
+    if (seen) seen.count++;
+    else earned.set(h.kind, { ...h, count: 1 });
+  }
+  return [...earned.values()];
+}
+
+// Every per-game badge (the original six included), first earned + count, in the order earned.
+export function gameBadges(data: Data, playerId: ID): EarnedBadge[] {
+  return tally(gameBadgeHits(data, playerId).map(({ kind, game }) => ({ kind, gameId: game.id, date: game.date })));
+}
+
+// Badges for a season's final standings: closed seasons only, players with 1+ game in them.
+// Positions follow the standings order (net, games played, name), so the podium is always 3 places.
+export function seasonCloseBadges(data: Data, playerId: ID): EarnedBadge[] {
+  const hits: { kind: BadgeKind; gameId: ID; date: string; seasonId: ID }[] = [];
+  const closed = data.seasons
+    .filter((s) => s.status === "closed")
+    .map((season) => ({ season, games: seasonGames(data, season.id) }))
+    .filter(({ games }) => games.length > 0)
+    .map(({ season, games }) => ({ season, games, date: season.endedOn ?? games[games.length - 1]!.date }))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.season.startedOn.localeCompare(b.season.startedOn));
+
+  for (const { season, games, date } of closed) {
+    const rows = seasonStandings(data, season.id).filter((r) => r.gamesPlayed > 0);
+    const place = rows.findIndex((r) => r.playerId === playerId);
+    if (place < 0) continue;
+    const hit = (kind: BadgeKind) => hits.push({ kind, gameId: games[games.length - 1]!.id, date, seasonId: season.id });
+    if (place === 0) hit("champion");
+    if (place < 3) hit("podium");
+    if (rows.length >= 2 && place === rows.length - 1) hit("woodenSpoon");
+    if (
+      games.length >= WIRE_TO_WIRE_GAMES &&
+      games.every((_, i) => seasonStandings({ ...data, games: games.slice(0, i + 1) }, season.id)[0]?.playerId === playerId)
+    ) {
+      hit("wireToWire");
+    }
+    if (games.length >= MAX_SEASON_GAMES && games.every((g) => g.players.includes(playerId))) hit("perfectAttendance");
+  }
+  return tally(hits);
+}
+
+// Every earned badge, newest first: by date, a season's close badges before its last game's, later games
+// first; badges from the same game or season stay in their listed order.
+export function allBadges(data: Data, playerId: ID): EarnedBadge[] {
+  const earned = [...gameBadges(data, playerId), ...seasonCloseBadges(data, playerId)].map((b, i) => ({ b, i }));
+  const source = (b: EarnedBadge) => b.seasonId ?? b.gameId;
+  return earned
+    .sort(
+      (x, y) =>
+        y.b.date.localeCompare(x.b.date) ||
+        Number(Boolean(y.b.seasonId)) - Number(Boolean(x.b.seasonId)) ||
+        (source(x.b) === source(y.b) ? x.i - y.i : y.i - x.i),
+    )
+    .map(({ b }) => b);
 }
 
 // ---- season awards --------------------------------------------------------------------------------
