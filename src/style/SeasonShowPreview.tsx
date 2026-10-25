@@ -1,0 +1,76 @@
+import { SeasonRace } from "../components/SeasonRace.js";
+import type { Data, Game } from "../domain/types.js";
+import { seasonRace } from "../lib/seasonShow.js";
+
+// DEV ONLY (#/style): Season show previews (the race) on made-up seasons, with the real components.
+const NOW = "2026-10-24T21:00:00.000Z";
+const NAMES = [
+  "Shreyas",
+  "Rohan",
+  "Venkataramanan Subramaniam",
+  "Andhar",
+  "Kabir",
+  "Ishaan Chattopadhyay-Banerjee",
+  "Dev",
+  "Neel",
+  "Arjun",
+  "Tanmay",
+  "Om",
+  "Amit",
+];
+
+// results: one net result per player index (must sum to 0); everyone buys in $1,000.
+function game(n: number, seasonId: string, results: number[]): Game {
+  const date = `2026-10-${String(10 + n).padStart(2, "0")}`;
+  const players = results.map((_, i) => `p${i}`);
+  return {
+    id: `${seasonId}-g${n}`,
+    seasonId,
+    date,
+    mode: "season",
+    status: "finished",
+    players,
+    buyIns: players.map((player) => ({ player, amount: 1000, at: NOW })),
+    cashOuts: results.map((r, i) => ({ player: `p${i}`, amount: 1000 + r })),
+    createdAt: `${date}T21:00:00.000Z`,
+  };
+}
+
+const big = [
+  [800, 400, -200, -300, 100, -500, 0, 200, -100, -200, 100, -300],
+  [-600, 900, 300, 200, -400, 100, -300, 0, 200, -100, -200, -100],
+  [300, -500, 1200, -200, 0, -100, 100, -300, -200, 300, -400, -200],
+  [-200, 300, -600, 900, 500, -100, -400, 200, -300, 100, 0, -400],
+  [500, -300, 200, -400, -500, 1300, -200, -100, 0, -300, 200, -400],
+];
+const pair = [
+  [500, -500],
+  [-800, 800],
+  [0, 0],
+];
+
+const data: Data = {
+  version: 1,
+  settings: { presetBuyIns: [1000] },
+  players: NAMES.map((name, i) => ({ id: `p${i}`, name, type: "regular", status: "active", createdAt: NOW })),
+  seasons: [
+    { id: "big", name: "Twelve players", status: "active", startedOn: "2026-10-01" },
+    { id: "pair", name: "Two players", status: "closed", startedOn: "2026-10-01", endedOn: "2026-10-20" },
+  ],
+  games: [
+    ...big.map((r, n) => game(n + 1, "big", r)),
+    ...pair.map((r, n) => game(n + 1, "pair", r)),
+  ],
+  liveGame: null,
+};
+// Late joiners: game 1 has only the first eight players.
+data.games[0] = game(1, "big", [800, 400, -200, -300, 100, -500, -100, -200]);
+
+export function SeasonRacePreview() {
+  return (
+    <div className="space-y-4">
+      <SeasonRace frames={seasonRace(data, "big")} />
+      <SeasonRace frames={seasonRace(data, "pair")} />
+    </div>
+  );
+}

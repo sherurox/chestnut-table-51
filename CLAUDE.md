@@ -584,6 +584,7 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 | `#/games/:id` | **Game detail**: final stacks, results, and an "Every buy-in" panel listing each player's buy-ins in order (e.g. `$1,000 · $1,500`). "Share card" (the results card image, everyone). |
 | `#/players/:id` | **Player page**: net-winnings-over-time chart for the selected season (season games only), game list, best/worst game. |
 | `#/seasons` | **Seasons**: all seasons; closed ones show champion and final standings (tap through). |
+| `#/seasons/:id` | **Season page**: champion card (closed), standings, **The race** (2+ season games: replay of the standings game by game, §12 Season show), awards. |
 | `#/history` | **Edit history**: commit list. |
 | `#/me` | **Who are you?**: pick your player; stored in localStorage `ct51.me`; used only for highlighting. |
 | `#/more` | **More**: Poker Guide, Hall of Fame, Chip calculator, Theme, Animations, Sounds, Chip mode, Admin. |
@@ -725,6 +726,10 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
   wordmark (a "Season stats" button on every screen) flips its chip and slides up the season-stats sheet
   (`SeasonStatsPanel.tsx`, content from `lib/statsPanel.ts`) with count-ups. Look v2 adds the drifting
   orbs (28s / 34s), the ~5s foil sweep on the header wordmark and the #1 leaderboard name, and the nav bubble's spring (380ms).
+  Season show adds the race replay on the season page: rows slide to their new rank (`top`, 600ms
+  `--ct-spring`) and bars grow or shrink (`left`/`width`, `--ct-spring-soft`) via `.ct-race-anim`, plus
+  autoplay (one game per 1.1s). Motion off: no `.ct-race-anim`, no Play button (step buttons only), and
+  `.ct-race-anim .ct-race-row/.ct-race-bar` are in both motion-off blocks.
 - Animation is visual only: values, order and handlers are already final, and nothing ever delays input.
   Chip feedback runs after the buy-in is recorded.
 - **`#/admin/live` and `#/admin/end` never animate** (`INSTANT_PATHS` / `isInstant` in `motion.ts`): no screen
@@ -897,14 +902,24 @@ change: existing screens, celebrations, tests and build checks stay as they are.
   `seasonGamesInOrder`, each `seasonStandings` over the games up to it (players with 1+ game only, so late
   joiners appear from their first game), with `gameNumber`, `gameId`, `date` (`shareDate`), rows (net,
   rank, places gained or `"new"`) and a caption: "<Name> takes the lead" when #1 changed (never on game
-  1), else "<Name> wins the night +$X" (`nightSummary` winners, ties joined with " & "), else "All
-  square". `seasonPodium(data, seasonId)` (`domain/seasonShow.ts`): the top 3 of the standings among
+  1), or "<Name> takes the lead, +$X tonight" when the new leader is also a (joint) winner of that night;
+  else "<Name> wins the night +$X" / "A & B win the night +$X" (`nightSummary` winners, ties joined with
+  " & "); else "All square". `seasonPodium(data, seasonId)` (`domain/seasonShow.ts`): the top 3 of the standings among
   players with 1+ game, with initials (first letters of the first and last words) and `final` when the
   season is closed; null if nobody has played. `playerTrophies(data, playerId)`: closed seasons only,
   newest first, exactly one trophy per Champion/Podium/Wooden spoon badge `seasonCloseBadges` gives
   (gold/silver/bronze for places 1–3, plus a spoon for last place with 2+ players), so in a 2- or
   3-player season last place holds a medal and the spoon (medal first). A test checks the one-to-one
   match for every player and season.
+- **B. The race** (`components/SeasonRace.tsx`, on the season page between the standings and Awards,
+  2+ season games): one row per player (rank, name that wraps, signed amount) with a bar diverging from a
+  centre zero line, green right / loss colour left, brass for the leader; the largest |net| in any frame
+  is half the track. Rows keep a stable DOM order and are placed by `top` from measured row heights, so
+  wrapped names never overlap. Controls (≥48px): ‹ previous, Play/Pause, › next; the caption panel
+  ("After game n of N · date" + caption) is `aria-live="polite"`; a screen-reader list gives "rank, name,
+  amount" per row (the bars are `aria-hidden`). Opens on the last frame; Play starts from game 1 (also
+  when on the last frame) and stops at the last. Timers clear on pause, unmount and motion off; keyed by
+  season. Preview on `#/style` (12 players with late joiners and long names, and 2 players).
 
 ---
 

@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { AwardsList, SectionLabel } from "../components/FunPanels.js";
 import { StandingsList } from "../components/StandingsList.js";
+import { SeasonRace } from "../components/SeasonRace.js";
 import { Crown, EmptyState, Loading, Money, PageTitle } from "../design/components.js";
 import { seasonAwards } from "../domain/fun.js";
 import { champion, seasonStandings } from "../domain/standings.js";
 import { useData } from "../state/DataContext.js";
 import { useMe } from "../state/useMe.js";
 import { seasonById } from "../lib/selectors.js";
+import { seasonRace } from "../lib/seasonShow.js";
 import { checkChampionCrown } from "../lib/celebrations.js";
 import { motionReduced } from "../design/motion.js";
 import { browserStore } from "../storage/localKeys.js";
@@ -53,6 +55,7 @@ export function SeasonDetail() {
   const championRow = rows.find((r) => r.playerId === championId);
   const awards = seasonAwards(data, season.id);
   const anyAward = Object.values(awards).some((a) => a !== null);
+  const race = seasonRace(data, season.id);
 
   return (
     <div className="px-4 pt-2 pb-4">
@@ -68,6 +71,14 @@ export function SeasonDetail() {
         <EmptyState suit="♣" title="No games in this season" />
       ) : (
         <StandingsList rows={rows} me={me} championId={championId} />
+      )}
+
+      {/* The race replay needs 2+ season games. Keyed by season so a new season starts fresh. */}
+      {race.length >= 2 && (
+        <section className="mt-6" aria-label="The race">
+          <SectionLabel>The race</SectionLabel>
+          <SeasonRace key={season.id} frames={race} />
+        </section>
       )}
 
       {/* Awards need season games; a season with none shows only the empty state above. */}

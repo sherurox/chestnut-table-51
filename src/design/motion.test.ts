@@ -151,4 +151,8 @@ describe("motion-off CSS", () => {
   it("covers the celebrations and the pull-to-refresh chip", () => {
     for (const sel of [".ct-confetti-bit", ".ct-crown-drop", ".ct-spin", ".ct-pull"]) expect(media).toContain(sel);
   });
+
+  it("covers the season race slides", () => {
+    for (const sel of [".ct-race-anim .ct-race-row", ".ct-race-anim .ct-race-bar"]) expect(media).toContain(sel);
+  });
 });

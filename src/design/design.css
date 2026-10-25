@@ -1174,6 +1174,67 @@ button.ct-list-row:active {
   font-variant-numeric: lining-nums;
 }
 
+/* ---- Season show (season page race, podium; player trophy cabinet) ---------------------------- */
+
+/* "The race": rows are absolutely placed (top from measured heights) so a rank change slides them. */
+.ct-race-caption {
+  border: 1px solid var(--ct-glass-line);
+  background: rgba(0, 0, 0, 0.14);
+}
+[data-theme="light"] .ct-race-caption {
+  background: rgba(255, 255, 255, 0.55);
+}
+.ct-race {
+  position: relative;
+}
+.ct-race-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  min-height: 56px;
+  padding: 0.4rem 0;
+}
+.ct-race-track {
+  position: relative;
+  height: 10px;
+  overflow: hidden; /* the spring's overshoot never pokes past the track */
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.16);
+}
+.ct-race-track::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 1px);
+  width: 2px;
+  background: var(--ct-text-muted);
+  opacity: 0.55;
+}
+.ct-race-bar {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  border-radius: 999px;
+}
+.ct-race-bar[data-tone="up"] {
+  background: var(--ct-win);
+}
+.ct-race-bar[data-tone="down"] {
+  background: var(--ct-loss);
+}
+.ct-race-bar[data-tone="lead"] {
+  background: linear-gradient(180deg, var(--ct-brass-hi), var(--ct-brass) 60%, var(--ct-brass-lo));
+}
+.ct-race-anim .ct-race-row {
+  transition: top 600ms var(--ct-spring);
+}
+.ct-race-anim .ct-race-bar {
+  transition:
+    left 600ms var(--ct-spring-soft),
+    width 600ms var(--ct-spring-soft);
+}
+
 /* Motion off: the phone's reduced-motion setting, or Animations: Off on More (data-motion="off" on
    <html>). Both blocks list the same selectors (a test keeps them in step). */
 @media (prefers-reduced-motion: reduce) {
@@ -1210,7 +1271,9 @@ button.ct-list-row:active {
   .ct-btn,
   .ct-pull,
   .ct-nav-item,
-  .ct-nav-bubble {
+  .ct-nav-bubble,
+  .ct-race-anim .ct-race-row,
+  .ct-race-anim .ct-race-bar {
     transition: none;
   }
 }
@@ -1247,7 +1310,9 @@ button.ct-list-row:active {
 :root[data-motion="off"] .ct-btn,
 :root[data-motion="off"] .ct-pull,
 :root[data-motion="off"] .ct-nav-item,
-:root[data-motion="off"] .ct-nav-bubble {
+:root[data-motion="off"] .ct-nav-bubble,
+:root[data-motion="off"] .ct-race-anim .ct-race-row,
+:root[data-motion="off"] .ct-race-anim .ct-race-bar {
   transition: none;
 }
 

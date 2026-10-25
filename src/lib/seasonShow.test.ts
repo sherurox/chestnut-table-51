@@ -106,9 +106,32 @@ describe("seasonRace", () => {
     expect(frames.map((f) => f.caption)).toEqual([
       "Amit wins the night +$500", // frame 1 never "takes the lead"
       "All square",
-      "Bina takes the lead",
-      "Amit & Chetan wins the night +$400", // Bina still leads
+      "Bina takes the lead, +$1,500 tonight", // the new leader also won the night
+      "Amit & Chetan win the night +$400", // Bina still leads; two winners, plural
     ]);
+  });
+
+  it("a new leader who didn't win the night just takes the lead", () => {
+    const frames = seasonRace(
+      data([
+        game("g1", "2026-10-02", { a: [1000, 1500], b: [1000, 1300], c: [1000, 200] }),
+        game("g2", "2026-10-03", { a: [1000, 600], c: [1000, 1400] }),
+      ]),
+      "s",
+    );
+    expect(frames.map((f) => f.caption)).toEqual(["Amit wins the night +$500", "Bina takes the lead"]);
+  });
+
+  it("a joint winner who takes the lead says both", () => {
+    const frames = seasonRace(
+      data([
+        game("g1", "2026-10-02", { a: [1000, 1500], b: [1000, 1100], d: [1000, 400] }),
+        game("g2", "2026-10-03", { b: [1000, 1500], c: [1000, 1500], a: [1000, 0] }),
+      ]),
+      "s",
+    );
+    expect(frames[1]!.rows.map((r) => r.playerId)).toEqual(["b", "c", "a", "d"]);
+    expect(frames[1]!.caption).toBe("Bina takes the lead, +$500 tonight");
   });
 
   it("ties for the night are joined like the Last night card", () => {
@@ -119,6 +142,6 @@ describe("seasonRace", () => {
       ]),
       "s",
     );
-    expect(frames[1]!.caption).toBe("Amit & Chetan wins the night +$200");
+    expect(frames[1]!.caption).toBe("Amit & Chetan win the night +$200");
   });
 });

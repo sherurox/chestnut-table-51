@@ -42,11 +42,14 @@ export function seasonRace(data: Data, seasonId: ID): RaceFrame[] {
     const leader = rows[0];
     const previousLeader = frames[i - 1]?.rows[0];
     const { winners } = nightSummary(data, game);
+    const night = winners.length > 0 ? formatSignedDollars(winners[0]!.result) : "";
     const caption =
       previousLeader && leader && leader.playerId !== previousLeader.playerId
-        ? `${leader.name} takes the lead`
+        ? winners.some((w) => w.playerId === leader.playerId)
+          ? `${leader.name} takes the lead, ${night} tonight`
+          : `${leader.name} takes the lead`
         : winners.length > 0
-          ? `${winners.map((w) => w.name).join(" & ")} wins the night ${formatSignedDollars(winners[0]!.result)}`
+          ? `${winners.map((w) => w.name).join(" & ")} ${winners.length > 1 ? "win" : "wins"} the night ${night}`
           : "All square";
 
     frames.push({ gameNumber: i + 1, gameId: game.id, date: shareDate(game.date), rows, caption });
