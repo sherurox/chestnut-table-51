@@ -491,6 +491,29 @@ export function gameBadges(data: Data, playerId: ID): EarnedBadge[] {
   return tally(gameBadgeHits(data, playerId).map(({ kind, game }) => ({ kind, gameId: game.id, date: game.date })));
 }
 
+// Every per-game badge that happened in one game, for every player in it, repeats included. `count`
+// is which time it was for that player (3 = their third Whale), so a card can show "Whale ×3".
+// Incognito and deleted games have none.
+export function badgesInGame(data: Data, gameId: ID): { playerId: ID; kind: BadgeKind; count: number }[] {
+  const game = countedGames(data).find((g) => g.id === gameId);
+  if (!game) return [];
+  return game.players.flatMap((playerId) => {
+    const seen = new Map<BadgeKind, number>();
+    const found: { playerId: ID; kind: BadgeKind; count: number }[] = [];
+    for (const hit of gameBadgeHits(data, playerId)) {
+      const count = (seen.get(hit.kind) ?? 0) + 1;
+      seen.set(hit.kind, count);
+      if (hit.game.id === gameId) found.push({ playerId, kind: hit.kind, count });
+    }
+    return found;
+  });
+}
+
+// A season's finished season-mode games, oldest first (date, then createdAt, then id): game n is index n − 1.
+export function seasonGamesInOrder(data: Data, seasonId: ID): Game[] {
+  return seasonGames(data, seasonId);
+}
+
 // Badges for a season's final standings: closed seasons only, players with 1+ game in them.
 // Positions follow the standings order (net, games played, name), so the podium is always 3 places.
 export function seasonCloseBadges(data: Data, playerId: ID): EarnedBadge[] {

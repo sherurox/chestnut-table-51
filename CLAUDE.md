@@ -846,6 +846,19 @@ the season game limit live in `src/config.ts`.
   the strict chip check (§5.6) on dollar totals is unchanged.
   Landed: the rules are in §9 (Chip mode, multiples of $5).
 
+### Results card + sounds (mini-phase, owner-approved 2026-10-25)
+Three chunks on the `results-card` branch. Add, don't change: the §9.8 copy text stays as it is.
+- **A. Card data:** `badgesInGame(data, gameId)` (`domain/fun.ts`: every per-game badge hit in that game,
+  repeats included with their running count), `WINNER_LINES` / `winnerLine(gameId)` (`domain/quotes.ts`,
+  separate from QUOTES, picked by an FNV-1a hash of the id) and `resultsCardModel(data, game)`
+  (`lib/resultsCard.ts`). Card: "CHESTNUT TABLE 51", `shareDate`; season games show the season name and
+  "GAME n OF 10" (n = position in `seasonGamesInOrder`; "GAME 11" with no "OF" past `MAX_SEASON_GAMES`);
+  incognito shows "INCOGNITO" only (no number, leader or badges). Man of the Match = the night's top result
+  above $0 (ties joined with " & ") with its result and winner line, none if nobody finished up; the
+  others sorted like `shareText`; badges as "Name: Badge" via `badgeTitle` (×N on repeats). The leader
+  line is as of that game; a closed season's last game (auto-closed or ended by hand) shows
+  "<Season> champion: Name +$X" instead.
+
 ---
 
 ## 13. Working agreements for Claude Code

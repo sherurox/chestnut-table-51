@@ -129,3 +129,22 @@ export const QUOTES: Record<QuotePool, readonly string[]> = {
     "Kahan the itne din?",
   ],
 };
+
+// The results card's line under the Man of the Match (separate from QUOTES and the daily pools).
+export const WINNER_LINES: readonly string[] = [
+  "Haar ke jeetne wale ko baazigar kehte hain.",
+  "Mogambo khush hua.",
+  "Picture abhi baaki hai mere dost.",
+  "Aaj khush to bahut hoge tum.",
+  "Paisa he paisa hoga.",
+  "Winner winner, chicken dinner.",
+  "Lay bhari!",
+  "Ekdum kadak!",
+];
+
+// The same game always gets the same line: FNV-1a of its id.
+export function winnerLine(gameId: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < gameId.length; i++) hash = Math.imul(hash ^ gameId.charCodeAt(i), 0x01000193) >>> 0;
+  return WINNER_LINES[hash % WINNER_LINES.length]!;
+}

@@ -3,6 +3,8 @@ import {
   allBadges,
   assignQuotes,
   badges,
+  badgesInGame,
+  gameBadges,
   nemesis,
   playerMoods,
   playerSeasonStats,
@@ -16,7 +18,9 @@ import {
   type PlayerMood,
   type QuotePool,
 } from "./fun.js";
-import { QUOTES } from "./quotes.js";
+import { QUOTES, WINNER_LINES, winnerLine } from "./quotes.js";
+import { migrate } from "./migrations.js";
+import seedRaw from "./__fixtures__/seed.json" with { type: "json" };
 import { seasonStandings } from "./standings.js";
 import type { Data, Game, Player } from "./types.js";
 
@@ -718,6 +722,60 @@ describe("gameBadges / seasonCloseBadges / allBadges", () => {
     for (const id of ["a", "b", "c"]) expect(allBadges(noisy, id)).toEqual(allBadges(clean, id));
     const onlyIncognito = data([duel("x1", day(1), "a", "b", 5000, { mode: "incognito" })], closedS1());
     expect(allBadges(onlyIncognito, "a")).toEqual([]);
+  });
+});
+
+describe("badgesInGame", () => {
+  it("lists every per-game badge hit in that game, for every player, with which time it was", () => {
+    const d = data([
+      game("g1", day(1), [["a", [1000], 2000], ["b", [1000], 0]]),
+      game("g2", day(2), [["a", [1000], 2500], ["b", [1000, 500], 0]]),
+    ]);
+    expect(badgesInGame(d, "g1")).toEqual([
+      { playerId: "a", kind: "firstBlood", count: 1 },
+      { playerId: "a", kind: "doubleUp", count: 1 },
+      { playerId: "b", kind: "felted", count: 1 },
+    ]);
+    // Repeats are included, with their running count.
+    expect(badgesInGame(d, "g2")).toEqual([
+      { playerId: "a", kind: "doubleUp", count: 2 },
+      { playerId: "b", kind: "felted", count: 2 },
+    ]);
+  });
+
+  it("incognito, deleted and unknown games have none", () => {
+    const d = data([
+      game("g1", day(1), [["a", [1000], 2000], ["b", [1000], 0]], { mode: "incognito" }),
+      game("g2", day(2), [["a", [1000], 2000], ["b", [1000], 0]], { status: "deleted" }),
+    ]);
+    expect(badgesInGame(d, "g1")).toEqual([]);
+    expect(badgesInGame(d, "g2")).toEqual([]);
+    expect(badgesInGame(d, "nope")).toEqual([]);
+  });
+
+  it("adds up to gameBadges' counts on the seed fixture", () => {
+    const seed = migrate(seedRaw);
+    const perGame = new Map<string, number>();
+    for (const g of seed.games) {
+      for (const b of badgesInGame(seed, g.id)) perGame.set(`${b.playerId}:${b.kind}`, (perGame.get(`${b.playerId}:${b.kind}`) ?? 0) + 1);
+    }
+    const totals = new Map(seed.players.flatMap((p) => gameBadges(seed, p.id).map((b) => [`${p.id}:${b.kind}`, b.count] as const)));
+    expect(perGame.size).toBeGreaterThan(0);
+    expect(perGame).toEqual(totals);
+  });
+});
+
+describe("winner lines", () => {
+  it("has the 8 lines, no duplicates", () => {
+    expect(WINNER_LINES).toHaveLength(8);
+    expect(new Set(WINNER_LINES).size).toBe(8);
+  });
+
+  it("the same game always gets the same line, and ids spread across lines", () => {
+    expect(winnerLine("abc12345")).toBe(winnerLine("abc12345"));
+    expect(WINNER_LINES).toContain(winnerLine("abc12345"));
+    const picked = new Set(Array.from({ length: 200 }, (_, i) => winnerLine(`g${i}`)));
+    expect(picked.size).toBe(8);
   });
 });
 
