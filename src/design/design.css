@@ -4,7 +4,7 @@
 
 :root,
 [data-theme="dark"] {
-  --ct-bg: #0b1d16;           /* deep felt, page background */
+  --ct-bg: #0b0405;           /* velvet edge: page background (and overscroll) */
   --ct-felt: #123326;         /* panel felt */
   --ct-felt-hi: #18412f;      /* panel highlight */
   --ct-line: #2c5a46;         /* hairlines on felt */
@@ -42,7 +42,7 @@
 }
 
 [data-theme="light"] {
-  --ct-bg: #f4ecda;           /* ivory card stock */
+  --ct-bg: #f7efdd;           /* ivory velvet edge */
   --ct-felt: #fffaf0;
   --ct-felt-hi: #ffffff;
   --ct-line: #d9caa8;
@@ -86,17 +86,11 @@
   min-height: 100%;
   color: var(--ct-text);
   font-family: "Inter", system-ui, sans-serif;
+  /* Velvet (Luxe v2): oxblood lit from the top of the page; the orbs (Luxe section) drift behind the
+     content, inside this stacking context. */
+  isolation: isolate;
   background-color: var(--ct-bg);
-  /* Felt: a soft overhead light plus a fine weave. Pure CSS, no images. */
-  background-image:
-    radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, 0.07), transparent 60%),
-    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
-}
-[data-theme="light"] .ct-app {
-  background-image:
-    radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, 0.7), transparent 60%),
-    repeating-linear-gradient(45deg, rgba(120, 90, 40, 0.035) 0 1px, transparent 1px 4px);
+  background-image: radial-gradient(130% 80% at 50% 0%, var(--ct-velvet-top), var(--ct-velvet-edge) 75%);
 }
 
 .ct-display {
@@ -128,14 +122,11 @@
 
 /* ---- Surfaces -------------------------------------------------------------------------------- */
 
-/* Wood rail: header/footer bars, like the padded edge of a card table. */
+/* Header: real glass (Luxe section) with a brass hairline. Text follows the theme. */
 .ct-rail {
-  color: #f4ecda;
-  background:
-    repeating-linear-gradient(97deg, rgba(0, 0, 0, 0.1) 0 2px, transparent 2px 9px),
-    linear-gradient(180deg, var(--ct-wood-light), var(--ct-wood) 45%, var(--ct-wood-dark));
+  color: var(--ct-text);
   border-bottom: 1px solid var(--ct-brass-lo);
-  box-shadow: 0 2px 10px var(--ct-shadow);
+  box-shadow: 0 8px 24px -14px var(--ct-shadow);
 }
 
 /* Card-like panel on felt with a brass hairline. */
@@ -458,49 +449,81 @@
 
 :root {
   --ct-nav-h: 60px;
+  /* The floating nav pill's gap to the screen bottom, and everything it covers (pill + gap + safe area).
+     The footer and the live screen's action bar sit above the footprint. */
+  --ct-nav-gap: max(12px, env(safe-area-inset-bottom));
+  --ct-nav-footprint: calc(var(--ct-nav-h) + var(--ct-nav-gap));
 }
 .ct-safe-top {
   padding-top: env(safe-area-inset-top);
 }
-/* Bottom navigation: a dark felt bar; the active tab gets brass text and a brass top edge. */
+/* Bottom navigation: a floating glass pill (Luxe section); a brass bubble sits under the active tab and
+   springs from tab to tab (data-slide, set by AppShell only between two tabs, never on instant paths). */
 .ct-nav {
   position: fixed;
-  inset-inline: 0;
-  bottom: 0;
+  inset-inline: 16px;
+  bottom: var(--ct-nav-gap);
   z-index: 20;
   display: flex;
-  height: calc(var(--ct-nav-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  background: linear-gradient(180deg, var(--ct-felt-hi), var(--ct-felt));
-  border-top: 1px solid var(--ct-brass-lo);
-  box-shadow: 0 -6px 16px -8px var(--ct-shadow);
+  max-width: 448px;
+  height: var(--ct-nav-h);
+  margin-inline: auto;
+  padding: 4px;
+  border: 1px solid var(--ct-glass-line);
+  border-radius: 24px; /* concentric with the bubble (20px + the 4px padding) */
+  box-shadow:
+    inset 0 1px 0 var(--ct-glass-highlight),
+    0 12px 28px -10px var(--ct-shadow);
 }
 .ct-nav-item {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
+  min-width: 0;
   min-height: 48px;
+  border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--ct-text-muted);
-  border-top: 2px solid transparent;
+  transition: color 200ms ease-out;
 }
 .ct-nav-active {
-  color: var(--ct-brass-text);
-  border-top-color: var(--ct-brass);
+  color: var(--ct-ink-on-brass);
 }
-/* Room for the fixed nav (and the live screen's action bar, which sits right above it). */
+/* Four tabs: the bubble is a quarter of the pill's inner width, moved by --i (the tab index). */
+.ct-nav-bubble {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / 4);
+  border-radius: 20px; /* straight sides, so "Leaderboard" fits at 360px */
+  background: linear-gradient(180deg, var(--ct-brass-hi), var(--ct-brass));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 4px 12px -4px var(--ct-shadow);
+  transform: translateX(calc(var(--i, 0) * 100%));
+}
+.ct-nav-bubble[data-shown="false"] {
+  opacity: 0;
+}
+.ct-nav-bubble[data-slide] {
+  transition: transform 380ms var(--ct-spring);
+}
+/* Room for the floating nav (and the live screen's action bar, which sits just above it). */
 .ct-footer {
-  padding-bottom: calc(var(--ct-nav-h) + env(safe-area-inset-bottom) + 1rem);
+  padding-bottom: calc(var(--ct-nav-footprint) + 1rem);
 }
 .ct-above-nav {
   position: fixed;
   inset-inline: 0;
   z-index: 15;
-  bottom: calc(var(--ct-nav-h) + env(safe-area-inset-bottom));
+  bottom: calc(var(--ct-nav-footprint) + 8px);
 }
 /* Live screen's fixed action bar (sits on .ct-above-nav). */
 .ct-action-bar {
@@ -779,7 +802,6 @@ button.ct-list-row:active {
   border: 1px solid var(--ct-brass-lo);
   border-bottom: 0;
   border-radius: 20px 20px 0 0;
-  background: linear-gradient(180deg, var(--ct-felt-hi), var(--ct-felt));
   box-shadow: 0 -12px 32px -8px var(--ct-shadow);
 }
 .ct-sheet-handle {
@@ -794,7 +816,7 @@ button.ct-list-row:active {
   animation: ct-fade-in 220ms ease-out both;
 }
 .ct-sheet:not([data-instant]) {
-  animation: ct-sheet-up 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: ct-sheet-up 280ms var(--ct-spring-soft) both;
 }
 .ct-sheet-backdrop[data-state="closing"]:not([data-instant]) {
   animation: ct-fade-out 200ms ease-in forwards;
@@ -1008,20 +1030,30 @@ button.ct-list-row:active {
   isolation: isolate;
 }
 .ct-orbs::before,
-.ct-orbs::after {
+.ct-orbs::after,
+.ct-app:not(.ct-splash)::before,
+.ct-app:not(.ct-splash)::after {
   content: "";
   position: absolute;
   inset: -15%;
   z-index: -1;
   pointer-events: none;
 }
-.ct-orbs::before {
+/* The app's orbs stay put on screen while the page scrolls. */
+.ct-app:not(.ct-splash)::before,
+.ct-app:not(.ct-splash)::after {
+  position: fixed;
+  inset: -15vmax;
+}
+.ct-orbs::before,
+.ct-app:not(.ct-splash)::before {
   background:
     radial-gradient(38% 30% at 18% 22%, var(--ct-orb-green), transparent),
     radial-gradient(34% 28% at 86% 58%, var(--ct-orb-brass), transparent);
   animation: ct-orb-a 28s ease-in-out infinite alternate;
 }
-.ct-orbs::after {
+.ct-orbs::after,
+.ct-app:not(.ct-splash)::after {
   background: radial-gradient(40% 30% at 38% 92%, var(--ct-orb-chestnut), transparent);
   animation: ct-orb-b 34s ease-in-out infinite alternate;
 }
@@ -1036,15 +1068,31 @@ button.ct-list-row:active {
   }
 }
 
+/* Live and end screens never animate: the orbs hold still where they are, the foil rests. */
+.ct-app[data-route-instant]::before,
+.ct-app[data-route-instant]::after {
+  animation-play-state: paused;
+}
+.ct-app[data-route-instant] .ct-foil,
+.ct-app[data-route-instant] .ct-wordmark-btn .ct-display {
+  animation: none;
+}
+
 /* Real glass (nav, header, sheet only): blurs what's behind it. The tint alone stays readable, for
    view-transition snapshots that render without a backdrop; no backdrop-filter means a solid fill. */
-.ct-glass {
+.ct-glass,
+.ct-rail,
+.ct-nav,
+.ct-sheet {
   background: var(--ct-glass-chrome);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   backdrop-filter: blur(18px) saturate(140%);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .ct-glass {
+  .ct-glass,
+  .ct-rail,
+  .ct-nav,
+  .ct-sheet {
     background: var(--ct-glass-solid);
   }
 }
@@ -1062,11 +1110,13 @@ button.ct-list-row:active {
 
 /* Gold foil text with a slow highlight sweep (#1 on the leaderboard, header wordmark). Static, it rests
    with the highlight in the middle. Plain brass where background-clip: text isn't supported. */
-.ct-foil {
+.ct-foil,
+.ct-wordmark-btn .ct-display {
   color: var(--ct-foil);
 }
 @supports ((background-clip: text) or (-webkit-background-clip: text)) {
-  .ct-foil {
+  .ct-foil,
+  .ct-wordmark-btn .ct-display {
     color: transparent;
     background-image: linear-gradient(100deg, var(--ct-foil) 0%, var(--ct-foil) 38%, var(--ct-foil-hi) 50%, var(--ct-foil) 62%, var(--ct-foil) 100%);
     background-size: 250% 100%;
@@ -1077,7 +1127,8 @@ button.ct-list-row:active {
   }
 }
 @media (forced-colors: active) {
-  .ct-foil {
+  .ct-foil,
+  .ct-wordmark-btn .ct-display {
     color: CanvasText;
     background: none;
   }
@@ -1120,7 +1171,10 @@ button.ct-list-row:active {
   .ct-crown-drop,
   .ct-orbs::before,
   .ct-orbs::after,
-  .ct-foil {
+  .ct-app::before,
+  .ct-app::after,
+  .ct-foil,
+  .ct-wordmark-btn .ct-display {
     animation: none !important;
   }
   /* Separate rule: a browser without view transitions drops a whole selector list it can't parse. */
@@ -1131,7 +1185,9 @@ button.ct-list-row:active {
   }
   .ct-chip,
   .ct-btn,
-  .ct-pull {
+  .ct-pull,
+  .ct-nav-item,
+  .ct-nav-bubble {
     transition: none;
   }
 }
@@ -1153,7 +1209,10 @@ button.ct-list-row:active {
 :root[data-motion="off"] .ct-crown-drop,
 :root[data-motion="off"] .ct-orbs::before,
 :root[data-motion="off"] .ct-orbs::after,
-:root[data-motion="off"] .ct-foil {
+:root[data-motion="off"] .ct-app::before,
+:root[data-motion="off"] .ct-app::after,
+:root[data-motion="off"] .ct-foil,
+:root[data-motion="off"] .ct-wordmark-btn .ct-display {
   animation: none !important;
 }
 :root[data-motion="off"]::view-transition-group(*),
@@ -1163,7 +1222,9 @@ button.ct-list-row:active {
 }
 :root[data-motion="off"] .ct-chip,
 :root[data-motion="off"] .ct-btn,
-:root[data-motion="off"] .ct-pull {
+:root[data-motion="off"] .ct-pull,
+:root[data-motion="off"] .ct-nav-item,
+:root[data-motion="off"] .ct-nav-bubble {
   transition: none;
 }
 

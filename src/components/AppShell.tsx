@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { ChipBadge, Splash } from "../design/components.js";
 import { IconLock, IconRefresh } from "../design/icons.js";
@@ -105,6 +105,25 @@ function navClassName({ isActive }: { isActive: boolean }): string {
   return `ct-nav-item ct-focus ${isActive ? "ct-nav-active" : ""}`;
 }
 
+// The tab NavLink marks active ("/" exactly, the others with their sub-paths), or -1 on other screens.
+function activeNavIndex(pathname: string): number {
+  return NAV_ITEMS.findIndex((item) => (item.to === "/" ? pathname === "/" : pathname === item.to || pathname.startsWith(`${item.to}/`)));
+}
+
+// The nav pill's brass bubble: under the active tab, sliding only from one tab to another (never into
+// view from a screen without a tab, never on instant paths). Hidden, it keeps its last place.
+function NavBubble({ pathname, instant }: { pathname: string; instant: boolean }) {
+  const index = activeNavIndex(pathname);
+  const last = useRef({ index: 0, shown: false });
+  const shown = index >= 0;
+  const place = shown ? index : last.current.index;
+  const slide = shown && last.current.shown && !instant;
+  useEffect(() => {
+    last.current = { index: place, shown };
+  });
+  return <span aria-hidden="true" className="ct-nav-bubble" data-shown={shown} data-slide={slide ? "" : undefined} style={{ "--i": place } as CSSProperties} />;
+}
+
 export function AppShell() {
   const { data, lastUpdated, loading, error, fromCache, refresh } = useData();
   const { pathname } = useLocation();
@@ -165,7 +184,7 @@ export function AppShell() {
   }, [pathname]);
 
   return (
-    <div className="ct-app flex min-h-screen flex-col">
+    <div className="ct-app flex min-h-screen flex-col" data-route-instant={instant ? "" : undefined}>
       {intro && <Splash onDone={endIntro} />}
 
       <header className="ct-rail ct-safe-top sticky top-0 z-20">
@@ -226,6 +245,7 @@ export function AppShell() {
       />
 
       <nav className="ct-nav" aria-label="Main">
+        <NavBubble pathname={pathname} instant={instant} />
         {NAV_ITEMS.map((item) => (
           <NavLink key={item.to} to={item.to} className={navClassName} end={item.to === "/"} viewTransition={transitionTo(item.to)}>
             <span aria-hidden="true" className="text-lg leading-none">

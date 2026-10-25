@@ -631,7 +631,7 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
 | `--ct-bg` | `#0b1d16` deep felt | `#f4ecda` ivory | page background (plus a CSS-only felt weave) |
 | `--ct-felt` / `--ct-felt-hi` | `#123326` / `#18412f` | `#fffaf0` / `#ffffff` | panels, nav, action bar |
 | `--ct-line` | `#2c5a46` | `#d9caa8` | hairlines, dividers |
-| `--ct-wood-dark` / `--ct-wood` / `--ct-wood-light` | mahogany → chestnut | same, slightly deeper | header wood rail |
+| `--ct-wood-dark` / `--ct-wood` / `--ct-wood-light` | mahogany → chestnut | same, slightly deeper | wood accents (the header is glass since Look v2) |
 | `--ct-brass` / `-hi` / `-lo` | `#d6b35e` / `#f0d68b` / `#9c7a34` | `#b8923e` / `#e3c473` / `#7d5f1f` | accents, primary buttons, borders |
 | `--ct-brass-text` | `#d6b35e` | `#7d5f1f` | brass used as **text** (AA in both themes; never use `--ct-brass` for text) |
 | `--ct-ink-on-brass` | `#2a1a08` | `#2a1a08` | text on brass fills |
@@ -664,9 +664,20 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
   - Springs: `--ct-spring` (bouncy, nav bubble) and `--ct-spring-soft` (never overshoots, sheet), `linear()`
     with a `cubic-bezier` fallback.
   - Contrast is checked against the strongest orb at its peak, in both themes (worst cases on `#/style`).
+  - Shell (`AppShell.tsx`): `.ct-app` is the velvet with `isolation: isolate`; its `::before` / `::after`
+    are the orbs, `position: fixed` behind the content (not on the splash, which also uses `.ct-app`).
+    `.ct-rail` (header), `.ct-nav` and `.ct-sheet` are the real glass. On `INSTANT_PATHS` (and with motion
+    off) `.ct-app` gets `data-route-instant` (not `data-instant`, which the sheet uses): the orbs pause
+    where they are and the foil rests.
+  - Bottom nav: a floating glass pill (radius 24px) with a brass bubble (radius 20px) under the active
+    tab (`NavBubble`, `--i` = tab index). It springs from tab to tab only; arriving from a screen without a
+    tab, on instant paths or with motion off it jumps. It's hidden on screens without a tab. The four
+    NavLinks, labels, suits and `viewTransition` are unchanged.
 - **Spacing and sizing:** 16px side gutter (`px-4`) on every screen; panels radius 16px, buttons and
-  inputs radius 12px; buttons and inputs ≥48px tall; list/leaderboard rows ≥56px; bottom nav 60px
-  (`--ct-nav-h`) plus the safe-area inset. Button labels wrap and never truncate.
+  inputs radius 12px; buttons and inputs ≥48px tall; list/leaderboard rows ≥56px; the bottom nav pill is 60px
+  (`--ct-nav-h`), 16px from the sides and `--ct-nav-gap` (`max(12px, safe-area inset)`) from the bottom;
+  `--ct-nav-footprint` (pill + gap) is what `.ct-footer` and `.ct-above-nav` (the live action bar, 8px
+  above the pill) clear. Button labels wrap and never truncate.
 
 **Components**
 - **Brand chip lockups:** `ChipBadge` is the app-icon chip (brass rim, mahogany spots, "51"), same art
@@ -678,7 +689,7 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
   Leaderboard and season standings share `StandingsList`; the "You" row gets a brass left edge
   (`.ct-row-me`). Closed-season champions get a `Crown`.
 - **Cards and surfaces:** `.ct-panel` (felt card with hairline; `.ct-panel-brass` for emphasis),
-  `.ct-rail` (wood header), `.ct-list-row`, `.ct-tag` (Incognito, Edited, Guest), `.ct-pill` (brass
+  `.ct-rail` (glass header), `.ct-list-row`, `.ct-tag` (Incognito, Edited, Guest), `.ct-pill` (brass
   status pill: "Game on", "Not synced"). Buttons: `.ct-btn` + `-primary` (brass) / `-secondary` /
   `-danger`. Headings: `PageTitle` / `SuitHeading` with a suit accent. `Money` renders signed dollars.
   `Loading` and `EmptyState` are used on every screen.
@@ -689,14 +700,16 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
   (`.ct-rise`); count-up on leaderboard and player-page totals (`Money animate`); rows sliding on rank
   change (`useFlip`); the chip tap "pop" ring + 12ms vibrate on Android (`chipFeedback`); the header
   wordmark (a "Season stats" button on every screen) flips its chip and slides up the season-stats sheet
-  (`SeasonStatsPanel.tsx`, content from `lib/statsPanel.ts`) with count-ups.
+  (`SeasonStatsPanel.tsx`, content from `lib/statsPanel.ts`) with count-ups. Look v2 adds the drifting
+  orbs (28s / 34s), the ~5s foil sweep on the header wordmark, and the nav bubble's spring (380ms).
 - Animation is visual only: values, order and handlers are already final, and nothing ever delays input.
   Chip feedback runs after the buy-in is recorded.
 - **`#/admin/live` and `#/admin/end` never animate** (`INSTANT_PATHS` / `isInstant` in `motion.ts`): no screen
   transition, entrance, count-up or FLIP. The only motion there is the chip tap pop. The season-stats sheet
-  still opens there, instantly (no chip flip, slide or count-up).
+  still opens there, instantly (no chip flip, slide or count-up). The orbs hold still and the foil rests
+  (`data-route-instant`); leaving for a tab, the nav bubble jumps.
 - `prefers-reduced-motion: reduce` turns all of it off: no splash (nothing drawn), no transitions,
-  entrances, count-ups, FLIP, chip pop or spinner; values show final immediately. Any new animation must
+  entrances, count-ups, FLIP, chip pop, spinner, orb drift, foil sweep or bubble slide; values show final immediately. Any new animation must
   be added to the reduced-motion block in `design.css` or check `useReducedMotion()`.
 
 **360px check:** before declaring any UI change done, view every screen it touches at 360px wide in
