@@ -38,7 +38,7 @@ function Tile({ label, children }: { label: string; children: ReactNode }) {
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <li className="flex flex-col gap-0.5 px-3 py-2.5">
-      <span className="text-xs font-semibold tracking-wide text-ink-muted uppercase">{label}</span>
+      <span className="ct-eyebrow text-xs text-ink-muted">{label}</span>
       {children}
     </li>
   );
@@ -122,7 +122,7 @@ export function StatsPanelBody({ content, animate, onLeaderboard }: { content: S
 
       {content.awards.length > 0 && (
         <section className="mb-3" aria-label="Awards so far">
-          <h3 className="mb-1.5 px-1 text-xs font-semibold tracking-wide text-ink-muted uppercase">Awards so far</h3>
+          <h3 className="ct-eyebrow mb-1.5 px-1 text-xs text-ink-muted">Awards so far</h3>
           <ul className="ct-panel ct-divided overflow-hidden text-sm">
             {content.awards.map((a) => (
               <li key={a.kind} className="flex flex-wrap items-baseline gap-x-2 px-3 py-2">

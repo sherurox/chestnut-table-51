@@ -17,7 +17,7 @@ function namesOf(data: Data, ids: ID[]): string {
 }
 
 export function SectionLabel({ children }: { children: string }) {
-  return <h2 className="mb-2 text-xs font-semibold tracking-wide text-ink-muted uppercase">{children}</h2>;
+  return <h2 className="ct-eyebrow mb-2 text-xs text-ink-muted">{children}</h2>;
 }
 
 // Last 5 results as dots, oldest first. The letter is the signal; colour only adds to it.

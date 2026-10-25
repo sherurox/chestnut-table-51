@@ -18,7 +18,7 @@ const tick = { fontSize: 11, style: { fill: "var(--ct-text-muted)" } };
 function Stat({ label, children, to, wide = false }: { label: string; children: ReactNode; to?: string; wide?: boolean }) {
   const body = (
     <>
-      <span className="block text-[0.7rem] font-semibold tracking-wide text-ink-muted uppercase">{label}</span>
+      <span className="ct-eyebrow block text-[0.7rem] text-ink-muted">{label}</span>
       <span className="mt-1 block text-lg">{children}</span>
     </>
   );
@@ -95,7 +95,7 @@ function PlayerSeasonSection({ data, seasonId, playerId, titleRef }: { data: Dat
       </div>
 
       <div className="ct-panel mb-4 p-3">
-        <div className="mb-1 text-xs font-semibold tracking-wide text-ink-muted uppercase">Net winnings over the season</div>
+        <div className="ct-eyebrow mb-1 text-xs text-ink-muted">Net winnings over the season</div>
         <div className="h-48 w-full text-brass">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
@@ -111,7 +111,7 @@ function PlayerSeasonSection({ data, seasonId, playerId, titleRef }: { data: Dat
                   borderRadius: 12,
                   color: "var(--ct-text)",
                 }}
-                itemStyle={{ color: "var(--ct-brass)" }}
+                itemStyle={{ color: "var(--ct-brass-text)" }}
                 labelStyle={{ color: "var(--ct-text-muted)" }}
               />
               <Line type="monotone" dataKey="net" name="Net" stroke="currentColor" strokeWidth={2.5} dot={{ r: 3, fill: "currentColor" }} />

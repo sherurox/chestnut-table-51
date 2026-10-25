@@ -25,7 +25,7 @@ function ChampionCard({ seasonId, name, net }: { seasonId: string; name: string;
         <Crown className="block h-9 w-9" />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="text-xs font-semibold tracking-wide text-ink-muted uppercase">Champion</div>
+        <div className="ct-eyebrow text-xs text-ink-muted">Champion</div>
         <div className="ct-display text-xl font-semibold break-words">{name}</div>
       </div>
       <Money value={net} className="shrink-0 text-lg" />

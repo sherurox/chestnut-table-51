@@ -5,8 +5,8 @@
 :root,
 [data-theme="dark"] {
   --ct-bg: #0b0405;           /* velvet edge: page background (and overscroll) */
-  --ct-felt: #123326;         /* panel felt */
-  --ct-felt-hi: #18412f;      /* panel highlight */
+  --ct-felt: #1c0a0d;         /* solid velvet surface (action bar, tooltip); panels are glass */
+  --ct-felt-hi: #2a1116;      /* its highlight */
   --ct-line: #563634;         /* warm hairline on velvet and glass */
   --ct-wood-dark: #2b150d;    /* mahogany */
   --ct-wood: #5b2c19;
@@ -545,12 +545,22 @@
   z-index: 15;
   bottom: calc(var(--ct-nav-footprint) + 8px);
 }
-/* Live screen's fixed action bar (sits on .ct-above-nav). */
+/* Live screen's fixed action bar (sits on .ct-above-nav). Solid, never glass; its fill carries on down to
+   the screen's bottom edge behind the nav pill, so the page never shows through the gap between them. */
 .ct-action-bar {
   padding: 0.5rem 1rem;
   background: linear-gradient(180deg, var(--ct-felt-hi), var(--ct-felt));
   border-top: 1px solid var(--ct-brass-lo);
   box-shadow: 0 -6px 16px -8px var(--ct-shadow);
+}
+.ct-action-bar::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  inset-inline: 0;
+  height: calc(var(--ct-nav-footprint) + 8px);
+  background: var(--ct-felt);
+  pointer-events: none;
 }
 .ct-spin {
   animation: ct-spin 1.2s linear infinite;
@@ -646,7 +656,7 @@ button.ct-list-row:active {
   background: linear-gradient(180deg, var(--ct-brass-hi), var(--ct-brass));
 }
 
-/* Tabs (Poker Guide): a felt track, the selected tab is a brass fill. */
+/* Tabs (Poker Guide): a glass track (no blur), the selected tab is a brass fill. */
 .ct-tabs {
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
@@ -654,8 +664,9 @@ button.ct-list-row:active {
   gap: 4px;
   padding: 4px;
   border-radius: 14px;
-  border: 1px solid var(--ct-line);
-  background: var(--ct-felt);
+  border: 1px solid var(--ct-glass-line);
+  background: var(--ct-glass);
+  box-shadow: inset 0 1px 0 var(--ct-glass-highlight);
 }
 .ct-tab {
   min-height: 48px;

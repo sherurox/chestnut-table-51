@@ -602,7 +602,8 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 ## 11. UI and UX rules
 
 - Mobile-first; designed for a 360–430px wide phone, held one-handed, at night.
-- **Dark theme by default**, with a light theme toggle. Card-table green + warm chestnut accent.
+- **Dark theme by default**, with a light theme toggle. Velvet oxblood + brass ("high-roller luxe", §11.1),
+  felt green as an accent only.
 - Tap targets ≥ 48px. Buy-in buttons are large.
 - Money: whole dollars with separators. Positive green `+$1,100`, negative red `−$300` (true minus sign),
   zero neutral. Never rely on color alone: always show the sign.
@@ -628,8 +629,8 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
 `[data-theme="light"]` overrides every token. The choice is stored in localStorage `ct51.theme`.
 | Token | Dark | Light | Use |
 |---|---|---|---|
-| `--ct-bg` | `#0b1d16` deep felt | `#f4ecda` ivory | page background (plus a CSS-only felt weave) |
-| `--ct-felt` / `--ct-felt-hi` | `#123326` / `#18412f` | `#fffaf0` / `#ffffff` | panels, nav, action bar |
+| `--ct-bg` | `#0b0405` velvet edge | `#f7efdd` ivory | page background and overscroll (`.ct-app` draws the velvet over it) |
+| `--ct-felt` / `--ct-felt-hi` | `#1c0a0d` / `#2a1116` | `#fffaf0` / `#ffffff` | solid surfaces: live action bar, chart tooltip (panels are glass) |
 | `--ct-line` | `#563634` | `#d9caa8` | hairlines, dividers (warm since Look v2) |
 | `--ct-wood-dark` / `--ct-wood` / `--ct-wood-light` | mahogany → chestnut | same, slightly deeper | wood accents (the header is glass since Look v2) |
 | `--ct-brass` / `-hi` / `-lo` | `#d6b35e` / `#f0d68b` / `#9c7a34` | `#b8923e` / `#e3c473` / `#7d5f1f` | accents, primary buttons, borders |
@@ -647,7 +648,8 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
 
 - **Typography:** Playfair Display 600/700 for display (`.ct-display`, headings, wordmark; always
   `lining-nums`), Inter 400–700 for everything else. Numbers use `.ct-num` (tabular, lining figures).
-  Cinzel 700 (all caps, letter-spaced) for small eyebrow labels (`.ct-eyebrow`) and the rank numerals.
+  Cinzel 700 (all caps, letter-spaced) for small eyebrow labels only (`.ct-eyebrow`: stat labels, "Awards
+  so far", "Champion", fun-panel headings). The live screen's "Table total" stays Inter. Ranks use Playfair.
   Fonts are self-hosted via `@fontsource` (`src/design/fonts.ts`, Latin subset only) and precached;
   never load Google Fonts. Inputs are ≥16px so iOS doesn't zoom.
 - **Luxe v2 ("high-roller luxe" + liquid glass, Look & feel v2):** the CSS lives in the Luxe section of
@@ -680,7 +682,8 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
   inputs radius 12px; buttons and inputs ≥48px tall; list/leaderboard rows ≥56px; the bottom nav pill is 60px
   (`--ct-nav-h`), 16px from the sides and `--ct-nav-gap` (`max(12px, safe-area inset)`) from the bottom;
   `--ct-nav-footprint` (pill + gap) is what `.ct-footer` and `.ct-above-nav` (the live action bar, 8px
-  above the pill) clear. Button labels wrap and never truncate.
+  above the pill) clear. The action bar is solid (never glass) and its fill continues down behind the pill
+  to the screen edge, so the page never shows through the gap. Button labels wrap and never truncate.
 
 **Components**
 - **Brand chip lockups:** `ChipBadge` is the app-icon chip (brass rim, mahogany spots, "51"), same art
