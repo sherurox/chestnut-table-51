@@ -624,8 +624,9 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 - Accessible: semantic HTML, labels on inputs, visible focus states, sufficient contrast in both themes.
 - **Sounds** (`lib/sound.ts`, Web Audio generated in code, no audio files): a per-device setting on More,
   next to Animations (`ct51.sound`, default On; Off stores `"off"`), separate from Animations: reduced
-  motion never mutes them. One shared AudioContext, created and resumed on the first `pointerdown`
-  anywhere (`installSoundUnlock` in `main.tsx`), master gain 0.25 into a limiter; every call is in
+  motion never mutes them. One shared AudioContext, created and resumed on the first tap anywhere
+  (`installSoundUnlock` in `main.tsx` listens for `pointerdown`, `touchend` and `click`, capture + passive:
+  iOS doesn't count a touch `pointerdown` as a user gesture), master gain 0.25 into a limiter; every call is in
   try/catch and never blocks input; nothing touches `window` at import; `navigator.audioSession` is left
   alone. Off creates no context and plays nothing. Three sounds: **chip** (a ≤80ms clink, from
   `chipFeedback()`, so on every chip tap; overlapping taps layer), **saved** (a rising 3-note brass sting,

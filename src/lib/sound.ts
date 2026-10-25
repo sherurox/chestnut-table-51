@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 // Sounds, generated with Web Audio (no audio files). One shared AudioContext, created and resumed on the
-// first pointerdown anywhere (installSoundUnlock in main.tsx), through a master gain. Every call is
+// first tap anywhere (pointerdown, touchend or click; installSoundUnlock in main.tsx), through a master gain. Every call is
 // wrapped in try/catch: a sound never throws and never blocks input. Nothing touches `window` at import
 // time (the admin screens' snapshot tests render in Node). navigator.audioSession is left alone.
 // The "Sounds" setting on More is separate from Animations: reduced motion never mutes sounds.
@@ -80,11 +80,15 @@ export function unlockAudio(): void {
   }
 }
 
+// The events that unlock audio. iOS doesn't count a touch pointerdown as a user gesture, so resume()
+// from it fails there: touchend and click do count, and pointerdown stays for everything else.
+export const UNLOCK_EVENTS = ["pointerdown", "touchend", "click"] as const;
+
 // Kept for the whole session: iOS suspends the context when the app goes to the background, and the
 // next tap resumes it.
 export function installSoundUnlock(target: Pick<Window, "addEventListener"> = window): void {
   try {
-    target.addEventListener("pointerdown", unlockAudio, { capture: true, passive: true });
+    for (const type of UNLOCK_EVENTS) target.addEventListener(type, unlockAudio, { capture: true, passive: true });
   } catch {
     // nothing to listen to
   }

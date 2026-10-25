@@ -73,9 +73,14 @@ afterEach(() => {
 
 function withWindow(AudioContext?: unknown) {
   const listeners: string[] = [];
+  const handlers = new Map<string, () => void>();
   g.window = {
     AudioContext,
-    addEventListener: (type: string) => listeners.push(type),
+    handlers,
+    addEventListener: (type: string, handler: () => void) => {
+      listeners.push(type);
+      handlers.set(type, handler);
+    },
     removeEventListener() {},
     dispatchEvent() {
       return true;
@@ -150,6 +155,21 @@ describe("playing sounds", () => {
     expect(made.contexts).toBe(1);
     expect(made.sources).toBe(2);
     expect(made.oscillators).toBeGreaterThan(6);
+  });
+
+  it("pointerdown, touchend and click each unlock audio (iOS only counts touchend and click)", async () => {
+    for (const type of ["pointerdown", "touchend", "click"]) {
+      vi.resetModules(); // a fresh shared context for each event
+      sound = await import("./sound.js");
+      const { made, FakeAudioContext } = fakeAudio();
+      withWindow(FakeAudioContext);
+      const handlers = (g.window as { handlers: Map<string, () => void> }).handlers;
+      sound.installSoundUnlock(g.window as Window);
+      expect([...handlers.keys()].sort()).toEqual(["click", "pointerdown", "touchend"]);
+      handlers.get(type)!();
+      expect(made.contexts, type).toBe(1);
+      expect(made.resumed, type).toBe(1);
+    }
   });
 
   it("win plays only once a tap has unlocked the context", () => {
