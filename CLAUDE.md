@@ -84,6 +84,7 @@ Node 22+ is required. No backend code, no other external services.
 │  │  ├─ gameEdits.ts        # edit/delete/restore finished games: draft, edit check, changes (§5.9)
 │  │  ├─ seasonLimit.ts      # 10-game season limit: count, full, end date (§5.2)
 │  │  ├─ chips.ts / chipBox.ts  # chip split + calculator; live-game box replay and per-colour hint (§9)
+│  │  ├─ seasonShow.ts      # season podium + player trophies (§12, Season show)
 │  │  ├─ migrations.ts
 │  │  └─ *.test.ts
 │  ├─ devserver/             # sandboxServer.ts: Node-only sandbox middleware for vite.config.ts (§8.6)
@@ -888,6 +889,22 @@ Three chunks on the `results-card` branch. Add, don't change: the §9.8 copy tex
   The draw is keyed on the card's content (`JSON.stringify` of the model), so a refresh or another save
   that doesn't change this game's card never redraws it.
 - **C. Sounds:** the rules are in §11 (Sounds).
+
+### Season show (mini-phase, owner-approved 2026-10-25)
+Four chunks on the `season-show` branch: data, season race replay, 3D podium, trophy cabinet. Add, don't
+change: existing screens, celebrations, tests and build checks stay as they are. No new dependencies.
+- **A. Data:** `seasonRace(data, seasonId)` (`lib/seasonShow.ts`): one frame per game of
+  `seasonGamesInOrder`, each `seasonStandings` over the games up to it (players with 1+ game only, so late
+  joiners appear from their first game), with `gameNumber`, `gameId`, `date` (`shareDate`), rows (net,
+  rank, places gained or `"new"`) and a caption: "<Name> takes the lead" when #1 changed (never on game
+  1), else "<Name> wins the night +$X" (`nightSummary` winners, ties joined with " & "), else "All
+  square". `seasonPodium(data, seasonId)` (`domain/seasonShow.ts`): the top 3 of the standings among
+  players with 1+ game, with initials (first letters of the first and last words) and `final` when the
+  season is closed; null if nobody has played. `playerTrophies(data, playerId)`: closed seasons only,
+  newest first, exactly one trophy per Champion/Podium/Wooden spoon badge `seasonCloseBadges` gives
+  (gold/silver/bronze for places 1–3, plus a spoon for last place with 2+ players), so in a 2- or
+  3-player season last place holds a medal and the spoon (medal first). A test checks the one-to-one
+  match for every player and season.
 
 ---
 
