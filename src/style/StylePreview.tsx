@@ -4,7 +4,7 @@ import { chipFeedback, useFlip, useMotionReduced } from "../design/motion.js";
 import { formatDollars, formatSignedDollars } from "../lib/format.js";
 import { useData } from "../state/DataContext.js";
 import { ResultsCardPreview } from "./ResultsCardPreview.js";
-import { SeasonPodiumPreview, SeasonRacePreview } from "./SeasonShowPreview.js";
+import { SeasonPodiumPreview, SeasonRacePreview, TrophyCabinetPreview } from "./SeasonShowPreview.js";
 import { localIsoDate } from "../domain/dates.js";
 import { assignQuotes, badges, nemesis, playerMoods, seasonAwards, seasonSummary, typicalBuyIn } from "../domain/fun.js";
 
@@ -546,6 +546,10 @@ export function StylePreview() {
 
         <Section title="Season podium" suit="♦">
           <SeasonPodiumPreview />
+        </Section>
+
+        <Section title="Trophy cabinet" suit="♥">
+          <TrophyCabinetPreview />
         </Section>
 
         <Section title="Wordmark & splash" suit="♠">

@@ -582,7 +582,7 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 | `#/` | **Leaderboard**: active season standings (rank, name, net, games played, last result). "You" highlight. Last updated + refresh. |
 | `#/games` | **Game history**: newest first, season games and incognito games (labeled) with per-player results. Filter by season. "Edited" badges. |
 | `#/games/:id` | **Game detail**: final stacks, results, and an "Every buy-in" panel listing each player's buy-ins in order (e.g. `$1,000 · $1,500`). "Share card" (the results card image, everyone). |
-| `#/players/:id` | **Player page**: net-winnings-over-time chart for the selected season (season games only), game list, best/worst game. |
+| `#/players/:id` | **Player page**: net-winnings-over-time chart for the selected season (season games only), game list, best/worst game; **Trophy cabinet** above the badge list (§12 Season show). |
 | `#/seasons` | **Seasons**: all seasons; closed ones show champion and final standings (tap through). |
 | `#/seasons/:id` | **Season page**: champion card (closed), **podium** ("Final podium" / "Podium so far"), standings, **The race** (2+ season games: replay of the standings game by game, §12 Season show), awards. |
 | `#/history` | **Edit history**: commit list. |
@@ -930,6 +930,13 @@ change: existing screens, celebrations, tests and build checks stay as they are.
   felt-green initials disc with a metal ring, the name (wraps anywhere, never cut) and the signed net; a
   `Crown` over #1 only when closed. Fewer places show only those steps, centred. The DOM is in place order
   (flex `order` draws 2 · 1 · 3) with "1st place, name, amount" for screen readers. Preview on `#/style`.
+- **D. Trophy cabinet** (`components/TrophyCabinet.tsx`, on the player page right above the badge list,
+  existing sections unchanged): a dark wooden panel (fixed light text, money and focus colours on the
+  wood, AA in both themes) with brass-edged shelves, three trophies a shelf, wrapping onto more shelves.
+  One trophy per `playerTrophies` entry, newest first: a gold cup (Champion), a silver or bronze medal
+  (2nd / 3rd), a wooden spoon, all inline SVG (no emoji), with the season name and signed net under it.
+  Each trophy links to its season (≥48px) and reads "Champion, Season 1, +$X" to screen readers.
+  Empty: "No trophies yet. They're handed out when a season closes." Preview on `#/style`.
 
 ---
 

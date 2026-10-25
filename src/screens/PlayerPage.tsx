@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef, type ReactNode, type Ref } from "react";
 import { Link, useParams, useViewTransitionState } from "react-router-dom";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AwardsList, BadgeList, NemesisCard, SectionLabel, TitleCard } from "../components/FunPanels.js";
+import { TrophyCabinet } from "../components/TrophyCabinet.js";
+import { playerTrophies } from "../domain/seasonShow.js";
 import { EmptyState, Loading, Money, PageTitle, RankBadge } from "../design/components.js";
 import { createOnce, motionReduced } from "../design/motion.js";
 import { seasonStandings } from "../domain/standings.js";
@@ -221,6 +223,7 @@ export function PlayerPage() {
           <EmptyState suit="♠" title="No active season" />
         </div>
       )}
+      <TrophyCabinet trophies={playerTrophies(data, id)} />
       <BadgeList earned={allBadges(data, id)} />
     </div>
   );

@@ -1353,6 +1353,57 @@ button.ct-list-row:active {
   }
 }
 
+/* Trophy cabinet (player page): a wooden panel with brass-edged shelves. The wood is dark in both themes,
+   so text, money and focus colours are fixed light values here (AA on the wood). */
+.ct-cabinet {
+  --ct-text: #f4ecda;
+  --ct-text-muted: #d8cdb6;
+  --ct-win: #6fdc9a;
+  --ct-loss: #ff9e88;
+  --ct-focus: #f0d68b;
+  overflow: hidden;
+  border: 1px solid var(--ct-brass-lo);
+  border-radius: 16px;
+  color: var(--ct-text);
+  background:
+    repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.025) 0 3px, transparent 3px 11px),
+    linear-gradient(180deg, var(--ct-wood) 0%, var(--ct-wood-dark) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 24px rgba(0, 0, 0, 0.45),
+    0 10px 24px -12px var(--ct-shadow);
+}
+.ct-cabinet-shelf {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem 0;
+  list-style: none;
+}
+/* The shelf board: a brass edge on top, wood below, a shadow under it. */
+.ct-cabinet-shelf::after {
+  content: "";
+  grid-column: 1 / -1;
+  height: 10px;
+  margin: 0 -0.5rem;
+  border-top: 2px solid var(--ct-brass);
+  background: linear-gradient(180deg, var(--ct-wood-light), var(--ct-wood-dark));
+  box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.6);
+}
+.ct-cabinet-trophy {
+  display: flex;
+  min-height: 48px;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  border-radius: 12px;
+  padding: 0.25rem 0.25rem 0.5rem;
+  text-align: center;
+}
+.ct-cabinet-trophy svg {
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.5));
+}
+
 /* Motion off: the phone's reduced-motion setting, or Animations: Off on More (data-motion="off" on
    <html>). Both blocks list the same selectors (a test keeps them in step). */
 @media (prefers-reduced-motion: reduce) {

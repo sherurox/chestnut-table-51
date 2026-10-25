@@ -1,10 +1,11 @@
 import { SeasonPodium } from "../components/SeasonPodium.js";
 import { SeasonRace } from "../components/SeasonRace.js";
-import { initials, type SeasonPodium as Podium } from "../domain/seasonShow.js";
+import { TrophyCabinet } from "../components/TrophyCabinet.js";
+import { initials, type SeasonPodium as Podium, type Trophy } from "../domain/seasonShow.js";
 import type { Data, Game } from "../domain/types.js";
 import { seasonRace } from "../lib/seasonShow.js";
 
-// DEV ONLY (#/style): Season show previews (the race, the podium) on made-up seasons, with the real components.
+// DEV ONLY (#/style): Season show previews (the race, the podium, the trophy cabinet) on made-up seasons, with the real components.
 const NOW = "2026-10-24T21:00:00.000Z";
 const NAMES = [
   "Shreyas",
@@ -100,6 +101,23 @@ export function SeasonPodiumPreview() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+const TROPHIES: Trophy[] = [
+  { seasonId: "s5", seasonName: "Diwali Cup 2027", kind: "gold", net: 4850 },
+  { seasonId: "s4", seasonName: "Season 4", kind: "bronze", net: -300 },
+  { seasonId: "s4", seasonName: "Season 4", kind: "spoon", net: -300 },
+  { seasonId: "s3", seasonName: "Monsoon Masters Invitational", kind: "silver", net: 1200 },
+  { seasonId: "s2", seasonName: "Season 2", kind: "spoon", net: -2350 },
+];
+
+export function TrophyCabinetPreview() {
+  return (
+    <div className="space-y-2">
+      <TrophyCabinet trophies={TROPHIES} />
+      <TrophyCabinet trophies={[]} />
     </div>
   );
 }
