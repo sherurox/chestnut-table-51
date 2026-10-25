@@ -992,6 +992,13 @@ stay as they are. No new dependencies.
   the image at 58dvh, and Escape closes the sheet only. The finale plays `playSound("win")` once per story,
   the first time it shows. `#/style` previews the image for a 2-player season.
 
+### Next (owner-approved, not started)
+Each needs its own plan and approval before any code, like every mini-phase.
+- **Player trading cards.**
+- **Poker hand quiz.**
+- **Live chip stacks.** Needs an owner decision first: it would animate the live screen, which
+  `INSTANT_PATHS` (§11.1 Motion rules) currently forbids.
+
 ---
 
 ## 13. Working agreements for Claude Code
