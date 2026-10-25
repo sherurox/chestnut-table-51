@@ -938,6 +938,27 @@ change: existing screens, celebrations, tests and build checks stay as they are.
   Each trophy links to its season (≥48px) and reads "Champion, Season 1, +$X" to screen readers.
   Empty: "No trophies yet. They're handed out when a season closes." Preview on `#/style`.
 
+### Season Wrapped (mini-phase, owner-approved 2026-10-25)
+Three chunks on the `wrapped` branch: data, the story, share + finale sound. Add, don't change: existing
+screens (except one entry button on SeasonDetail and PlayerPage), `domain/` exports, tests and build checks
+stay as they are. No new dependencies.
+- **A. Data** (`lib/wrapped.ts`): `wrappedModel(data, seasonId, playerId)` is null unless the season is
+  closed and the player has 1+ season game in it; otherwise slides in this order, each left out when it has
+  nothing true to say. Every number comes from an existing helper, never re-derived.
+  intro ("<Name>, your <Season> wrapped.", games, players with 1+ game, `startedOn`–`endedOn`); finish
+  (place "2nd of 4" among players with 1+ game, net, `playerTrophies` for this season, so spoon + medal can
+  show together); bestNight (`playerSeasonStats().bestNight`, "Your least bad night" when below $0, its
+  `badgesInGame` for this player); top (`seasonRace` frames led, "You led after 4 of 10 games", or "Highest
+  you climbed: #2 after game 6"); toughNight (`worstNight` + `totalRebuys`, only when it was a loss); nemesis
+  (`nemesis()`, only when not null); badges (per-game hits in this season's games + this season's
+  `seasonCloseBadges`, and the title from `playerMoods`: situation over tier, Fresh blood counts, so in
+  practice it always shows); finale (place, net, best night, highlight).
+  **Inside Wrapped every ×N counts within this season only** (best night: up to that night; badges slide:
+  the whole season); the results card keeps its all-time running count. Finale highlight: the first badge
+  of `TOP_BADGE_ORDER` (Season champion, Wire to wire, Perfect attendance, Podium, then per-game badges;
+  Wooden spoon, Felted and Even Steven never headline), else the title. `wrappedPlayers(data, seasonId)`:
+  standings order, closed seasons only; `wrappedSeasons(data, playerId)`: newest first.
+
 ---
 
 ## 13. Working agreements for Claude Code
