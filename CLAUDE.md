@@ -630,7 +630,7 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
 |---|---|---|---|
 | `--ct-bg` | `#0b1d16` deep felt | `#f4ecda` ivory | page background (plus a CSS-only felt weave) |
 | `--ct-felt` / `--ct-felt-hi` | `#123326` / `#18412f` | `#fffaf0` / `#ffffff` | panels, nav, action bar |
-| `--ct-line` | `#2c5a46` | `#d9caa8` | hairlines, dividers |
+| `--ct-line` | `#563634` | `#d9caa8` | hairlines, dividers (warm since Look v2) |
 | `--ct-wood-dark` / `--ct-wood` / `--ct-wood-light` | mahogany → chestnut | same, slightly deeper | wood accents (the header is glass since Look v2) |
 | `--ct-brass` / `-hi` / `-lo` | `#d6b35e` / `#f0d68b` / `#9c7a34` | `#b8923e` / `#e3c473` / `#7d5f1f` | accents, primary buttons, borders |
 | `--ct-brass-text` | `#d6b35e` | `#7d5f1f` | brass used as **text** (AA in both themes; never use `--ct-brass` for text) |
@@ -657,10 +657,11 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
     behind the content (`isolation: isolate`), animating `transform` only, 28s / 34s.
   - Real glass (`.ct-glass`, `backdrop-filter` + `-webkit-`) only on the bottom nav, the header and the
     season-stats sheet. Its tint stays readable with no blur behind it (view-transition snapshots), and an
-    `@supports not` fallback gives a solid fill. Panels and rows get the glass *look* (`.ct-glass-panel`:
-    translucent fill, hairline, inner top highlight) and are never blurred.
-  - Foil (`.ct-foil`): a ~5s gold sweep, only on the #1 leaderboard name and the header wordmark; static
-    when motion is off, plain brass without `background-clip: text`.
+    `@supports not` fallback gives a solid fill. Panels get the glass *look* (`.ct-panel`, `.ct-panel-brass`, and
+    `.ct-glass-panel` on `#/style`: translucent fill, hairline, inner top highlight) and are never blurred.
+  - Foil (`.ct-foil`): a ~5s gold sweep, only on the header wordmark and the #1 name on the active
+    season's leaderboard (`StandingsList` with `morph`, once that player has 1+ game; ties are already
+    broken, so one row); static when motion is off, plain brass without `background-clip: text`.
   - Springs: `--ct-spring` (bouncy, nav bubble) and `--ct-spring-soft` (never overshoots, sheet), `linear()`
     with a `cubic-bezier` fallback.
   - Contrast is checked against the strongest orb at its peak, in both themes (worst cases on `#/style`).
@@ -671,8 +672,10 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
     where they are and the foil rests.
   - Bottom nav: a floating glass pill (radius 24px) with a brass bubble (radius 20px) under the active
     tab (`NavBubble`, `--i` = tab index). It springs from tab to tab only; arriving from a screen without a
-    tab, on instant paths or with motion off it jumps. It's hidden on screens without a tab. The four
-    NavLinks, labels, suits and `viewTransition` are unchanged.
+    tab, on instant paths or with motion off it jumps. It's hidden on screens without a tab. When it
+    slides, the new tab's label turns dark 120ms late (as the bubble arrives under it) and the old one lets
+    go at once; when it jumps, labels change instantly. The four NavLinks, labels, suits and
+    `viewTransition` are unchanged.
 - **Spacing and sizing:** 16px side gutter (`px-4`) on every screen; panels radius 16px, buttons and
   inputs radius 12px; buttons and inputs ≥48px tall; list/leaderboard rows ≥56px; the bottom nav pill is 60px
   (`--ct-nav-h`), 16px from the sides and `--ct-nav-gap` (`max(12px, safe-area inset)`) from the bottom;
@@ -685,10 +688,12 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
   titles); `lg` = chip stacked above the name (More screen) so it never breaks at 360px.
 - **Chip buttons** (`.ct-chip`, `data-tone` `red`/`blue`/`black`/`green`, plus `outline` for "Custom"):
   the live screen's preset buy-in buttons, 56–80px round, four per row, tones cycling by preset index.
-- **Rank badges** (`RankBadge`, `.ct-rank`): gold/silver/bronze discs for ranks 1–3, plain number below.
+- **Rank badges** (`RankBadge`, `.ct-rank`): gold/silver/bronze plaques (bevelled tiles, radius 8px) for
+  ranks 1–3 with Playfair Display lining digits (not Cinzel), a plain number below; the Poker Guide's
+  `.ct-rank-brass` is a brass plaque.
   Leaderboard and season standings share `StandingsList`; the "You" row gets a brass left edge
   (`.ct-row-me`). Closed-season champions get a `Crown`.
-- **Cards and surfaces:** `.ct-panel` (felt card with hairline; `.ct-panel-brass` for emphasis),
+- **Cards and surfaces:** `.ct-panel` (glass card with hairline; `.ct-panel-brass` for emphasis),
   `.ct-rail` (glass header), `.ct-list-row`, `.ct-tag` (Incognito, Edited, Guest), `.ct-pill` (brass
   status pill: "Game on", "Not synced"). Buttons: `.ct-btn` + `-primary` (brass) / `-secondary` /
   `-danger`. Headings: `PageTitle` / `SuitHeading` with a suit accent. `Money` renders signed dollars.
@@ -701,7 +706,7 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
   change (`useFlip`); the chip tap "pop" ring + 12ms vibrate on Android (`chipFeedback`); the header
   wordmark (a "Season stats" button on every screen) flips its chip and slides up the season-stats sheet
   (`SeasonStatsPanel.tsx`, content from `lib/statsPanel.ts`) with count-ups. Look v2 adds the drifting
-  orbs (28s / 34s), the ~5s foil sweep on the header wordmark, and the nav bubble's spring (380ms).
+  orbs (28s / 34s), the ~5s foil sweep on the header wordmark and the #1 leaderboard name, and the nav bubble's spring (380ms).
 - Animation is visual only: values, order and handlers are already final, and nothing ever delays input.
   Chip feedback runs after the buy-in is recorded.
 - **`#/admin/live` and `#/admin/end` never animate** (`INSTANT_PATHS` / `isInstant` in `motion.ts`): no screen

@@ -7,7 +7,7 @@
   --ct-bg: #0b0405;           /* velvet edge: page background (and overscroll) */
   --ct-felt: #123326;         /* panel felt */
   --ct-felt-hi: #18412f;      /* panel highlight */
-  --ct-line: #2c5a46;         /* hairlines on felt */
+  --ct-line: #563634;         /* warm hairline on velvet and glass */
   --ct-wood-dark: #2b150d;    /* mahogany */
   --ct-wood: #5b2c19;
   --ct-wood-light: #8a4a2c;   /* chestnut */
@@ -129,20 +129,23 @@
   box-shadow: 0 8px 24px -14px var(--ct-shadow);
 }
 
-/* Card-like panel on felt with a brass hairline. */
-.ct-panel {
-  border: 1px solid var(--ct-line);
+/* Card-like panel with the glass look (Luxe v2): translucent fill, light hairline, inner top highlight.
+   Never blurred: there are 100+ panels and the orbs move behind them. */
+.ct-panel,
+.ct-glass-panel {
+  border: 1px solid var(--ct-glass-line);
   border-radius: 16px;
-  background: linear-gradient(180deg, var(--ct-felt-hi), var(--ct-felt));
+  background: linear-gradient(180deg, var(--ct-glass-sheen), transparent 40%), var(--ct-glass);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 8px 20px -10px var(--ct-shadow);
+    inset 0 1px 0 var(--ct-glass-highlight),
+    0 10px 24px -12px var(--ct-shadow);
 }
 .ct-panel-brass {
   border-color: var(--ct-brass-lo);
   box-shadow:
+    inset 0 1px 0 var(--ct-glass-highlight),
     inset 0 0 0 1px rgba(214, 179, 94, 0.15),
-    0 8px 20px -10px var(--ct-shadow);
+    0 10px 24px -12px var(--ct-shadow);
 }
 
 /* Section heading with a suit accent: <h2 class="ct-heading"><span class="ct-suit">♠</span> Title</h2> */
@@ -335,32 +338,41 @@
 
 /* ---- Rank badges ----------------------------------------------------------------------------- */
 
+/* Plaques (Luxe v2): engraved metal tiles with a bevel, Playfair Display lining digits. Ranks 1-3 are
+   gold / silver / bronze; below that a plain number. */
 .ct-rank {
   display: inline-grid;
   place-items: center;
   width: 2rem;
   height: 2rem;
   flex-shrink: 0;
-  border-radius: 50%;
+  border-radius: 8px;
+  font-family: "Playfair Display", Georgia, serif;
   font-weight: 700;
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
   color: var(--ct-text-muted);
 }
 .ct-rank[data-rank="1"],
 .ct-rank[data-rank="2"],
 .ct-rank[data-rank="3"] {
   color: #24170a;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.22),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.18),
+    0 2px 6px -1px rgba(0, 0, 0, 0.5);
 }
 .ct-rank[data-rank="1"] {
-  background: radial-gradient(circle at 35% 30%, #fff1b8, #e1b84a 55%, #9f7a22);
+  background: linear-gradient(160deg, #fff1b8, #e1b84a 45%, #b48a2c 70%, #f0d68b);
 }
 .ct-rank[data-rank="2"] {
-  background: radial-gradient(circle at 35% 30%, #ffffff, #c4cbd2 55%, #808992);
+  background: linear-gradient(160deg, #ffffff, #c4cbd2 45%, #8f98a1 70%, #e3e7eb);
 }
 .ct-rank[data-rank="3"] {
-  background: radial-gradient(circle at 35% 30%, #ffd6ae, #c9824a 55%, #87491f);
+  background: linear-gradient(160deg, #ffd6ae, #c9824a 45%, #94532a 70%, #e8ad7c);
 }
 
 /* Leaderboard row; "you" gets a brass edge. */
@@ -490,7 +502,15 @@
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--ct-text-muted);
-  transition: color 200ms ease-out;
+}
+/* While the bubble slides, the new tab's label turns dark as the bubble arrives under it (never dark ink
+   on dark glass); the old tab's label lets go at once. When the bubble jumps there's no transition at
+   all. Low specificity, so the motion-off blocks below still win. */
+:where(.ct-nav-bubble[data-slide]) ~ .ct-nav-item {
+  transition: color 120ms ease-out;
+}
+:where(.ct-nav-bubble[data-slide]) ~ .ct-nav-active {
+  transition-delay: 120ms;
 }
 .ct-nav-active {
   color: var(--ct-ink-on-brass);
@@ -650,11 +670,14 @@ button.ct-list-row:active {
   background: linear-gradient(180deg, var(--ct-brass-hi), var(--ct-brass));
 }
 
-/* Brass rank disc for every rank (the guide's hand ranks), not gold/silver/bronze. */
+/* Brass rank plaque for every rank (the guide's hand ranks), not gold/silver/bronze. */
 .ct-rank-brass {
   color: var(--ct-ink-on-brass);
-  background: radial-gradient(circle at 35% 30%, var(--ct-brass-hi), var(--ct-brass) 55%, var(--ct-brass-lo));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 3px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(160deg, var(--ct-brass-hi), var(--ct-brass) 45%, var(--ct-brass-lo) 75%, var(--ct-brass-hi));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.2),
+    0 2px 6px -1px rgba(0, 0, 0, 0.45);
 }
 
 /* Playing cards (PlayingCard): white in both themes; five fit in a row at 360px. */
@@ -1095,17 +1118,6 @@ button.ct-list-row:active {
   .ct-sheet {
     background: var(--ct-glass-solid);
   }
-}
-
-/* Glass look for panels and rows: translucent fill, light hairline, inner top highlight. No blur:
-   there are 100+ panels and the orbs move behind them. */
-.ct-glass-panel {
-  border: 1px solid var(--ct-glass-line);
-  border-radius: 16px;
-  background: linear-gradient(180deg, var(--ct-glass-sheen), transparent 40%), var(--ct-glass);
-  box-shadow:
-    inset 0 1px 0 var(--ct-glass-highlight),
-    0 10px 24px -12px var(--ct-shadow);
 }
 
 /* Gold foil text with a slow highlight sweep (#1 on the leaderboard, header wordmark). Static, it rests

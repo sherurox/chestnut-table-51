@@ -48,7 +48,8 @@ function RowLink({ playerId, morph, children }: { playerId: ID; morph: boolean; 
 // Ranked standings (leaderboard, season detail). Rows rise in with a stagger, amounts count up, and
 // rows slide to their new place when the order changes after a refresh. Names and lines wrap, never
 // truncate. `lines` (leaderboard only) adds today's line under each row, full width. `morph` (leaderboard
-// only): tapping a row morphs its rank and name into the player page. `pulse`: rank arrows pulse once.
+// only): tapping a row morphs its rank and name into the player page, and #1 (once they've played) gets
+// the gold foil. `pulse`: rank arrows pulse once.
 export function StandingsList({
   rows,
   me,
@@ -93,7 +94,10 @@ export function StandingsList({
                       <span className="flex items-center gap-3">
                         <span className="min-w-0 flex-1">
                           <span className="flex flex-wrap items-center gap-x-1.5 font-medium break-words">
-                            <span className="min-w-0 break-words" style={names ? { viewTransitionName: names.name } : undefined}>
+                            <span
+                              className={`min-w-0 break-words ${morph && i === 0 && row.gamesPlayed > 0 ? "ct-foil" : ""}`}
+                              style={names ? { viewTransitionName: names.name } : undefined}
+                            >
                               {row.name}
                             </span>
                             {change && <RankMove change={change} pulse={pulse} />}
