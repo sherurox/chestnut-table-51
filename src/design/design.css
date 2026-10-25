@@ -22,6 +22,22 @@
   --ct-loss: #ff9076;
   --ct-focus: #f0d68b;
   --ct-shadow: rgba(0, 0, 0, 0.45);
+  /* Luxe v2: velvet page, drifting orbs, glass (see the Luxe section below). */
+  --ct-velvet-top: #2a0f14;   /* oxblood velvet, top of the page */
+  --ct-velvet-edge: #0b0405;  /* and its edges */
+  --ct-felt-accent: #1d7a52;  /* felt green, accent only */
+  --ct-oxblood: #7a1f2b;
+  --ct-orb-green: rgba(29, 122, 82, 0.34);
+  --ct-orb-brass: rgba(184, 134, 47, 0.26);
+  --ct-orb-chestnut: rgba(122, 59, 29, 0.4);
+  --ct-glass: rgba(30, 11, 15, 0.6);            /* panel glass look (no blur) */
+  --ct-glass-sheen: rgba(255, 240, 220, 0.06);  /* its top sheen */
+  --ct-glass-line: rgba(255, 236, 210, 0.12);   /* its hairline */
+  --ct-glass-highlight: rgba(255, 255, 255, 0.08); /* its inner top edge */
+  --ct-glass-chrome: rgba(26, 9, 12, 0.82);     /* real glass tint: readable with no blur behind it */
+  --ct-glass-solid: #1a090c;                    /* real glass without backdrop-filter */
+  --ct-foil: #d6b35e;         /* gold foil text, and its sweeping highlight */
+  --ct-foil-hi: #fff3c4;
   color-scheme: dark;
 }
 
@@ -44,6 +60,23 @@
   --ct-loss: #b0381f;
   --ct-focus: #7d5f1f;
   --ct-shadow: rgba(60, 40, 10, 0.18);
+  /* Luxe light: ivory and gold, oxblood accents, frosted white glass. Orbs stay faint so brass text
+     on the bare page keeps AA over them. */
+  --ct-velvet-top: #fdf8ee;
+  --ct-velvet-edge: #f7efdd;
+  --ct-felt-accent: #17703f;
+  --ct-oxblood: #7a1f2b;
+  --ct-orb-green: rgba(29, 122, 82, 0.08);
+  --ct-orb-brass: rgba(184, 134, 47, 0.12);
+  --ct-orb-chestnut: rgba(122, 59, 29, 0.07);
+  --ct-glass: rgba(255, 255, 255, 0.62);
+  --ct-glass-sheen: rgba(255, 255, 255, 0.5);
+  --ct-glass-line: rgba(125, 95, 31, 0.22);
+  --ct-glass-highlight: rgba(255, 255, 255, 0.9);
+  --ct-glass-chrome: rgba(255, 250, 240, 0.84);
+  --ct-glass-solid: #fffaf0;
+  --ct-foil: #5a4212;         /* deep gold, so even the sweep (#846420) keeps AA on ivory */
+  --ct-foil-hi: #846420;
   color-scheme: light;
 }
 
@@ -947,6 +980,126 @@ button.ct-list-row:active {
   }
 }
 
+/* ---- Luxe v2 ("high-roller luxe" + liquid glass) ---------------------------------------------- */
+
+/* Shared springs (nav bubble, sheet). linear() where supported, a cubic-bezier otherwise. The soft one
+   never overshoots (the sheet would lift off the bottom edge); its fallback is the sheet's old curve. */
+:root {
+  --ct-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --ct-spring-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --ct-spring: linear(0, 0.132, 0.4, 0.672, 0.881, 1.01, 1.071, 1.083, 1.07, 1.047, 1.025, 1.008, 0.998, 0.994, 0.993, 0.994, 0.996, 0.998, 0.999, 1, 1.001, 1.001, 1, 1, 1);
+    --ct-spring-soft: linear(0, 0.151, 0.4, 0.611, 0.76, 0.857, 0.917, 0.953, 0.973, 0.985, 0.992, 0.996, 0.998, 0.999, 0.999, 1, 1);
+  }
+}
+
+/* Velvet: oxblood lit from the top, falling off to near-black at the edges. */
+.ct-velvet {
+  background-color: var(--ct-velvet-edge);
+  background-image: radial-gradient(130% 80% at 50% 0%, var(--ct-velvet-top), var(--ct-velvet-edge) 75%);
+}
+
+/* Orbs: soft colour pools drifting behind the content. Radial gradients (never filter: blur), transform
+   only, slow; never take a tap or a scroll. */
+.ct-orbs {
+  position: relative;
+  isolation: isolate;
+}
+.ct-orbs::before,
+.ct-orbs::after {
+  content: "";
+  position: absolute;
+  inset: -15%;
+  z-index: -1;
+  pointer-events: none;
+}
+.ct-orbs::before {
+  background:
+    radial-gradient(38% 30% at 18% 22%, var(--ct-orb-green), transparent),
+    radial-gradient(34% 28% at 86% 58%, var(--ct-orb-brass), transparent);
+  animation: ct-orb-a 28s ease-in-out infinite alternate;
+}
+.ct-orbs::after {
+  background: radial-gradient(40% 30% at 38% 92%, var(--ct-orb-chestnut), transparent);
+  animation: ct-orb-b 34s ease-in-out infinite alternate;
+}
+@keyframes ct-orb-a {
+  to {
+    transform: translate3d(6%, 5%, 0) scale(1.06);
+  }
+}
+@keyframes ct-orb-b {
+  to {
+    transform: translate3d(-7%, -6%, 0) scale(1.04);
+  }
+}
+
+/* Real glass (nav, header, sheet only): blurs what's behind it. The tint alone stays readable, for
+   view-transition snapshots that render without a backdrop; no backdrop-filter means a solid fill. */
+.ct-glass {
+  background: var(--ct-glass-chrome);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ct-glass {
+    background: var(--ct-glass-solid);
+  }
+}
+
+/* Glass look for panels and rows: translucent fill, light hairline, inner top highlight. No blur:
+   there are 100+ panels and the orbs move behind them. */
+.ct-glass-panel {
+  border: 1px solid var(--ct-glass-line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--ct-glass-sheen), transparent 40%), var(--ct-glass);
+  box-shadow:
+    inset 0 1px 0 var(--ct-glass-highlight),
+    0 10px 24px -12px var(--ct-shadow);
+}
+
+/* Gold foil text with a slow highlight sweep (#1 on the leaderboard, header wordmark). Static, it rests
+   with the highlight in the middle. Plain brass where background-clip: text isn't supported. */
+.ct-foil {
+  color: var(--ct-foil);
+}
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .ct-foil {
+    color: transparent;
+    background-image: linear-gradient(100deg, var(--ct-foil) 0%, var(--ct-foil) 38%, var(--ct-foil-hi) 50%, var(--ct-foil) 62%, var(--ct-foil) 100%);
+    background-size: 250% 100%;
+    background-position: 50% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: ct-foil 5s ease-in-out infinite;
+  }
+}
+@media (forced-colors: active) {
+  .ct-foil {
+    color: CanvasText;
+    background: none;
+  }
+}
+@keyframes ct-foil {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+
+/* Small caps-style eyebrow labels ("Champion", "Awards so far"). */
+.ct-eyebrow {
+  font-family: "Cinzel", "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-variant-numeric: lining-nums;
+}
+
 /* Motion off: the phone's reduced-motion setting, or Animations: Off on More (data-motion="off" on
    <html>). Both blocks list the same selectors (a test keeps them in step). */
 @media (prefers-reduced-motion: reduce) {
@@ -964,7 +1117,10 @@ button.ct-list-row:active {
   .ct-spin,
   .ct-pulse,
   .ct-confetti-bit,
-  .ct-crown-drop {
+  .ct-crown-drop,
+  .ct-orbs::before,
+  .ct-orbs::after,
+  .ct-foil {
     animation: none !important;
   }
   /* Separate rule: a browser without view transitions drops a whole selector list it can't parse. */
@@ -994,7 +1150,10 @@ button.ct-list-row:active {
 :root[data-motion="off"] .ct-spin,
 :root[data-motion="off"] .ct-pulse,
 :root[data-motion="off"] .ct-confetti-bit,
-:root[data-motion="off"] .ct-crown-drop {
+:root[data-motion="off"] .ct-crown-drop,
+:root[data-motion="off"] .ct-orbs::before,
+:root[data-motion="off"] .ct-orbs::after,
+:root[data-motion="off"] .ct-foil {
   animation: none !important;
 }
 :root[data-motion="off"]::view-transition-group(*),

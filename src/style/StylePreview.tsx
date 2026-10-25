@@ -325,6 +325,167 @@ function FunStats() {
 
 // ---- page ----------------------------------------------------------------------------------------
 
+// ---- Luxe v2 preview (Look & feel v2, chunk 2a): tokens, Cinzel, springs, glass and orbs ----------
+
+const LUXE_PALETTE: Record<"dark" | "light", [string, string][]> = {
+  dark: [
+    ["Velvet top", "#2a0f14"],
+    ["Velvet edge", "#0b0405"],
+    ["Felt accent", "#1d7a52"],
+    ["Orb: green", "#1d7a52"],
+    ["Orb: brass", "#b8862f"],
+    ["Orb: chestnut", "#7a3b1d"],
+    ["Glass solid", "#1a090c"],
+    ["Foil", "#d6b35e"],
+    ["Foil highlight", "#fff3c4"],
+  ],
+  light: [
+    ["Velvet top", "#fdf8ee"],
+    ["Velvet edge", "#f7efdd"],
+    ["Felt accent", "#17703f"],
+    ["Oxblood", "#7a1f2b"],
+    ["Glass solid", "#fffaf0"],
+    ["Foil", "#5a4212"],
+    ["Foil highlight", "#846420"],
+  ],
+};
+
+// Worst cases: the backgrounds composited over the strongest orb at its peak (scratch calculation; keep
+// in step with the --ct-orb-* and --ct-glass* tokens).
+const LUXE_CONTRAST: Record<"dark" | "light", [string, string, string][]> = {
+  dark: [
+    ["Muted on page, brass orb", "#c4bba6", "#4f2e1b"],
+    ["Brass on page, brass orb", "#d6b35e", "#4f2e1b"],
+    ["Loss on page, brass orb", "#ff9076", "#4f2e1b"],
+    ["Muted on panel glass, brass orb", "#c4bba6", "#3e2620"],
+    ["Loss on panel glass, brass orb", "#ff9076", "#3e2620"],
+    ["Foil on panel glass, brass orb", "#d6b35e", "#3e2620"],
+    ["Ivory on nav glass (no blur)", "#f4ecda", "#24100f"],
+  ],
+  light: [
+    ["Brass deep on page, green orb", "#7d5f1f", "#e6e6d2"],
+    ["Win on page, green orb", "#17703f", "#e6e6d2"],
+    ["Loss on page, green orb", "#b0381f", "#e6e6d2"],
+    ["Brass deep on panel glass", "#7d5f1f", "#f5efe8"],
+    ["Foil highlight on panel glass", "#846420", "#f5efe8"],
+    ["Oxblood on panel glass", "#7a1f2b", "#f5efe8"],
+    ["Muted on nav glass (no blur)", "#5a5240", "#fbf4e9"],
+  ],
+};
+
+const LUXE_TABS = ["♠", "♣", "♦", "♥"];
+
+function LuxePreview({ theme, reduced }: { theme: "dark" | "light"; reduced: boolean }) {
+  const [tab, setTab] = useState(0);
+  const [sheetSpring, setSheetSpring] = useState(false);
+  return (
+    <div className="space-y-3">
+      <div className="ct-velvet ct-orbs overflow-hidden rounded-2xl p-3">
+        <div className="ct-glass flex min-h-[56px] items-center justify-between rounded-xl px-3">
+          <span className="ct-display ct-foil text-lg font-semibold">Chestnut Table</span>
+          <ChipBadge size={30} />
+        </div>
+
+        <div className="ct-glass-panel mt-3 p-4">
+          <div className="ct-eyebrow ct-muted text-xs">Season 1 · Game 9 of 10</div>
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <span className="flex items-center gap-3">
+              <span className="ct-eyebrow ct-brass text-2xl">1</span>
+              <span className="ct-foil text-lg font-semibold">Kakahalwai</span>
+            </span>
+            <Money value={780} className="text-lg" />
+          </div>
+          <div className="mt-1 flex items-center justify-between gap-3">
+            <span className="ct-muted text-sm">Andhar</span>
+            <Money value={-980} className="text-lg" />
+          </div>
+          <p className="ct-brass mt-2 text-sm">Brass text on panel glass</p>
+        </div>
+
+        <div className="ct-glass-panel mt-3 px-4 py-3 text-sm">
+          <span className="ct-eyebrow ct-muted text-xs">Eyebrow · Cinzel 700</span>
+          <p>Body stays Inter. Headings stay Playfair Display.</p>
+        </div>
+
+        <div className="ct-glass relative mt-3 flex h-[60px] rounded-full p-1">
+          <span
+            aria-hidden="true"
+            className="absolute top-1 bottom-1 left-1 rounded-full"
+            style={{
+              width: "calc((100% - 0.5rem) / 4)",
+              transform: `translateX(${tab * 100}%)`,
+              transition: reduced ? "none" : "transform 380ms var(--ct-spring)",
+              background: "linear-gradient(180deg, var(--ct-brass-hi), var(--ct-brass))",
+            }}
+          />
+          {LUXE_TABS.map((suit, i) => (
+            <button
+              key={suit}
+              type="button"
+              aria-pressed={tab === i}
+              onClick={() => setTab(i)}
+              className="ct-focus relative z-10 grid min-h-[48px] flex-1 place-items-center text-lg"
+              style={{ color: tab === i ? "var(--ct-ink-on-brass)" : "var(--ct-text-muted)" }}
+            >
+              {suit}
+            </button>
+          ))}
+        </div>
+        <p className="ct-muted mt-2 text-xs">Tap a suit: the bubble slides on --ct-spring (380ms). Orbs drift 28s / 34s.</p>
+      </div>
+
+      <div className="ct-panel space-y-2 p-4 text-sm">
+        <div className="font-semibold">Soft spring (sheet)</div>
+        <div className="relative h-10 overflow-hidden rounded-lg" style={{ background: "var(--ct-felt)" }}>
+          <span
+            className="absolute inset-y-1 left-1 w-10 rounded-md"
+            style={{
+              transform: sheetSpring ? "translateX(240px)" : "none",
+              transition: reduced ? "none" : "transform 280ms var(--ct-spring-soft)",
+              background: "var(--ct-felt-accent)",
+            }}
+          />
+        </div>
+        <button type="button" className="ct-btn ct-btn-secondary w-full" onClick={() => setSheetSpring(!sheetSpring)}>
+          Run soft spring
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {LUXE_PALETTE[theme].map(([name, hex]) => (
+          <div key={name} className="ct-panel overflow-hidden">
+            <div className="h-10" style={{ background: hex }} />
+            <div className="p-2 text-xs">
+              <div className="font-medium">{name}</div>
+              <div className="ct-muted ct-num">{hex}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="ct-panel p-3 text-sm">
+        <div className="mb-2 font-semibold">Contrast over the orbs (worst case, AA 4.5)</div>
+        {LUXE_CONTRAST[theme].map(([label, fg, bg]) => {
+          const ratio = contrast(fg, bg);
+          return (
+            <div key={label} className="flex items-center justify-between gap-2 py-1">
+              <span className="flex items-center gap-2">
+                <span className="rounded px-2 py-0.5 text-xs font-semibold" style={{ color: fg, background: bg }}>
+                  Aa
+                </span>
+                {label}
+              </span>
+              <span className={`ct-num font-semibold ${ratio >= 4.5 ? "ct-win" : "ct-loss"}`}>
+                {ratio.toFixed(1)} {ratio >= 4.5 ? "AA" : "fail"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function StylePreview() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [rows, setRows] = useState(START);
@@ -369,6 +530,10 @@ export function StylePreview() {
       <p className="ct-muted px-4 pt-2 text-xs">Last updated: Oct 24, 11:48 PM · style preview (dev only)</p>
 
       <main className="mx-auto max-w-[430px] px-4 pt-4 pb-16">
+        <Section title="Luxe v2 (preview)" suit="♦">
+          <LuxePreview theme={theme} reduced={reduced} />
+        </Section>
+
         <Section title="Wordmark & splash" suit="♠">
           <div className="ct-panel flex flex-col items-center gap-5 p-6">
             <Wordmark size="lg" />

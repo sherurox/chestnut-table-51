@@ -47,7 +47,7 @@ daily home poker game played between friends with **play money** (shown as dolla
 | Routing | React Router with **HashRouter** (GitHub Pages has no SPA fallback) |
 | Validation | zod |
 | Charts | Recharts |
-| Fonts | `@fontsource/playfair-display` + `@fontsource/inter` (self-hosted, Latin subset; section 11.1) |
+| Fonts | `@fontsource/playfair-display` + `@fontsource/inter` + `@fontsource/cinzel` (700 only) (self-hosted, Latin subset; section 11.1) |
 | PWA | vite-plugin-pwa (installable, offline app shell) |
 | Tests | Vitest |
 | Dev https | `@vitejs/plugin-basic-ssl` (dev server only, self-signed cert: Web Crypto/admin login needs https on a phone over the LAN). `DEV_HTTP=1` skips it and serves plain http on `localhost:5180` only, for desktop review. `SANDBOX=1` moves them to 5174 / 5181 (§8.6) |
@@ -638,11 +638,32 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
 | `--ct-text` / `--ct-text-muted` | `#f4ecda` / `#c4bba6` | `#1f2a22` / `#5a5240` | body / secondary text |
 | `--ct-win` / `--ct-loss` | `#6fdc9a` / `#ff9076` | `#17703f` / `#b0381f` | money signs (with the sign, never colour alone) |
 | `--ct-focus` | `#f0d68b` | `#7d5f1f` | 3px focus outline |
+| `--ct-velvet-top` / `--ct-velvet-edge` | `#2a0f14` / `#0b0405` | `#fdf8ee` / `#f7efdd` | Luxe page background (`.ct-velvet`, radial from the top) |
+| `--ct-felt-accent` / `--ct-oxblood` | `#1d7a52` / `#7a1f2b` | `#17703f` / `#7a1f2b` | felt green as an accent only; oxblood accents (light) |
+| `--ct-orb-green` / `-brass` / `-chestnut` | `#1d7a52` 34% / `#b8862f` 26% / `#7a3b1d` 40% | same colours at 8% / 12% / 7% | drifting orbs (`.ct-orbs`) |
+| `--ct-glass` / `-sheen` / `-line` / `-highlight` | translucent velvet, warm-white sheen/hairline/edge | translucent white, gold hairline | panel glass look, no blur (`.ct-glass-panel`) |
+| `--ct-glass-chrome` / `--ct-glass-solid` | `rgba(26,9,12,.82)` / `#1a090c` | `rgba(255,250,240,.84)` / `#fffaf0` | real glass tint (`.ct-glass`) / its no-backdrop-filter fallback |
+| `--ct-foil` / `--ct-foil-hi` | `#d6b35e` / `#fff3c4` | `#5a4212` / `#846420` | gold foil text and its sweep (`.ct-foil`; AA in both themes) |
 
 - **Typography:** Playfair Display 600/700 for display (`.ct-display`, headings, wordmark; always
   `lining-nums`), Inter 400–700 for everything else. Numbers use `.ct-num` (tabular, lining figures).
+  Cinzel 700 (all caps, letter-spaced) for small eyebrow labels (`.ct-eyebrow`) and the rank numerals.
   Fonts are self-hosted via `@fontsource` (`src/design/fonts.ts`, Latin subset only) and precached;
   never load Google Fonts. Inputs are ≥16px so iOS doesn't zoom.
+- **Luxe v2 ("high-roller luxe" + liquid glass, Look & feel v2):** the CSS lives in the Luxe section of
+  `design.css` and is shown on `#/style`.
+  - Velvet: an oxblood radial gradient replaces the green felt page background.
+  - Orbs (`.ct-orbs::before/::after`): radial gradients (never `filter: blur`), `pointer-events: none`,
+    behind the content (`isolation: isolate`), animating `transform` only, 28s / 34s.
+  - Real glass (`.ct-glass`, `backdrop-filter` + `-webkit-`) only on the bottom nav, the header and the
+    season-stats sheet. Its tint stays readable with no blur behind it (view-transition snapshots), and an
+    `@supports not` fallback gives a solid fill. Panels and rows get the glass *look* (`.ct-glass-panel`:
+    translucent fill, hairline, inner top highlight) and are never blurred.
+  - Foil (`.ct-foil`): a ~5s gold sweep, only on the #1 leaderboard name and the header wordmark; static
+    when motion is off, plain brass without `background-clip: text`.
+  - Springs: `--ct-spring` (bouncy, nav bubble) and `--ct-spring-soft` (never overshoots, sheet), `linear()`
+    with a `cubic-bezier` fallback.
+  - Contrast is checked against the strongest orb at its peak, in both themes (worst cases on `#/style`).
 - **Spacing and sizing:** 16px side gutter (`px-4`) on every screen; panels radius 16px, buttons and
   inputs radius 12px; buttons and inputs ≥48px tall; list/leaderboard rows ≥56px; bottom nav 60px
   (`--ct-nav-h`) plus the safe-area inset. Button labels wrap and never truncate.
