@@ -979,6 +979,10 @@ stay as they are. No new dependencies.
   fits 360px), Cinzel eyebrows, Inter body; badges as pills (8, then "+N more"); trophies reuse the
   cabinet's `TrophyArt`. Entry: SeasonDetail and PlayerPage (§10). Every slide kind is previewed on
   `#/style` (long names, six-figure amounts).
+- **C. Share + finale sound.** The share mechanics live in `components/ShareImage.tsx`: `useShareImage(key,
+  draw, fileName)` (draw before the tap in one serial queue for every image, `canShare`/`share` with no await,
+  a cancel is silent, any other error opens the sheet) and `ImageSheet` (image with alt text, Download, object
+  URL revoked on close/unmount). `ShareCardButton` is a thin wrapper on them, unchanged in behaviour.
 
 ---
 
