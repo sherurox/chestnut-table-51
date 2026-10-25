@@ -459,5 +459,8 @@
       "createdAt": "2026-10-23T03:38:02.842Z"
     }
   ],
-  "liveGame": null
+  "liveGame": {
+    "gameId": "4MQ4epV4",
+    "startedAt": "2026-10-25T04:59:00.020Z"
+  }
 }
