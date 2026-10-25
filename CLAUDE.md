@@ -962,7 +962,8 @@ stay as they are. No new dependencies.
   the whole season); the results card keeps its all-time running count. Finale highlight: the first badge
   of `TOP_BADGE_ORDER` (Season champion, Wire to wire, Perfect attendance, Podium, then per-game badges;
   Wooden spoon, Felted and Even Steven never headline), else the title. `wrappedPlayers(data, seasonId)`:
-  standings order, closed seasons only; `wrappedSeasons(data, playerId)`: newest first.
+  standings order, closed seasons only; `wrappedSeasons(data, playerId)`: newest first. These two live in
+  `lib/wrappedEntry.ts` (re-exported by `wrapped.ts`) so the entry bundle doesn't carry the model.
 - **B. The story** (`screens/Wrapped.tsx`, one lazy chunk with the admin chunk's one-time reload;
   slides in `components/WrappedSlides.tsx`; pure controls in `lib/wrappedNav.ts`). Picker at
   `#/seasons/:id/wrapped`, story at `#/seasons/:id/wrapped/:playerId`; bad links say "Wrapped not found".

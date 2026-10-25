@@ -1,9 +1,11 @@
 import { badgesInGame, nemesis, playerMoods, playerSeasonStats, seasonCloseBadges, seasonGamesInOrder, type BadgeKind } from "../domain/fun.js";
 import { playerTrophies, type Trophy } from "../domain/seasonShow.js";
-import { seasonStandings, type StandingsRow } from "../domain/standings.js";
-import type { Data, ID, Season } from "../domain/types.js";
+import type { Data, ID } from "../domain/types.js";
 import { BADGES, badgeTitle, SITUATION_NAMES, TIER_NAMES } from "./funLabels.js";
 import { seasonRace } from "./seasonShow.js";
+import { closedSeason, playedRows } from "./wrappedEntry.js";
+
+export { wrappedPlayers, wrappedSeasons } from "./wrappedEntry.js";
 
 // "Season Wrapped": a closed season's story for one player, slide by slide. Every number comes from an
 // existing helper (fun.ts, seasonShow, standings); nothing here re-derives a result. A slide with nothing
@@ -47,26 +49,6 @@ export function ordinal(n: number): string {
   const teen = n % 100 >= 11 && n % 100 <= 13;
   const suffix = teen ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th");
   return `${n}${suffix}`;
-}
-
-function closedSeason(data: Data, seasonId: ID): Season | undefined {
-  return data.seasons.find((s) => s.id === seasonId && s.status === "closed");
-}
-
-function playedRows(data: Data, seasonId: ID): StandingsRow[] {
-  return seasonStandings(data, seasonId).filter((r) => r.gamesPlayed > 0);
-}
-
-// The players who have a Wrapped for this season (closed, 1+ game), in final standings order.
-export function wrappedPlayers(data: Data, seasonId: ID): StandingsRow[] {
-  return closedSeason(data, seasonId) ? playedRows(data, seasonId) : [];
-}
-
-// The closed seasons a player has a Wrapped for, newest first (by end date, then start date).
-export function wrappedSeasons(data: Data, playerId: ID): Season[] {
-  return data.seasons
-    .filter((s) => s.status === "closed" && wrappedPlayers(data, s.id).some((r) => r.playerId === playerId))
-    .sort((a, b) => (b.endedOn ?? "").localeCompare(a.endedOn ?? "") || b.startedOn.localeCompare(a.startedOn));
 }
 
 function badge(kind: BadgeKind, count: number): WrappedBadge {

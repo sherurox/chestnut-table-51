@@ -8,7 +8,7 @@ import { EmptyState, Loading, Money, PageTitle, RankBadge } from "../design/comp
 import { createOnce, motionReduced } from "../design/motion.js";
 import { seasonStandings } from "../domain/standings.js";
 import { morphNames } from "../lib/viewTransitions.js";
-import { wrappedSeasons } from "../lib/wrapped.js";
+import { wrappedSeasons } from "../lib/wrappedEntry.js";
 import { useData } from "../state/DataContext.js";
 import { activeSeason, playerById, todaysLines } from "../lib/selectors.js";
 import { netWinningsOverTime } from "../domain/charts.js";

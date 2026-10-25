@@ -12,7 +12,7 @@ import { useData } from "../state/DataContext.js";
 import { useMe } from "../state/useMe.js";
 import { seasonById } from "../lib/selectors.js";
 import { seasonRace } from "../lib/seasonShow.js";
-import { wrappedPlayers } from "../lib/wrapped.js";
+import { wrappedPlayers } from "../lib/wrappedEntry.js";
 import { checkChampionCrown } from "../lib/celebrations.js";
 import { motionReduced } from "../design/motion.js";
 import { browserStore } from "../storage/localKeys.js";
