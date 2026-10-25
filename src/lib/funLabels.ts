@@ -16,11 +16,11 @@ export const TIER_NAMES: Record<Tier, string> = {
 // The rule behind each tier (fun.ts `tier`), best first. "A typical buy-in" is the season's most common
 // first buy-in (`typicalBuyIn`).
 export const TIER_RULES: { tier: Tier; rule: string }[] = [
-  { tier: "legend", rule: "Averaging at least +½ a typical buy-in per game." },
-  { tier: "bond", rule: "Averaging at least +⅕ a typical buy-in per game." },
-  { tier: "biscuit", rule: "Averaging within ⅕ of a typical buy-in of break-even per game." },
-  { tier: "easyTiger", rule: "Averaging a loss of ⅕ to ½ a typical buy-in per game." },
-  { tier: "atm", rule: "Averaging a loss of at least ½ a typical buy-in per game." },
+  { tier: "legend", rule: "Averaging at least +⅓ a typical buy-in per game." },
+  { tier: "bond", rule: "Averaging at least +⅒ a typical buy-in per game." },
+  { tier: "biscuit", rule: "Averaging within ⅒ of a typical buy-in of break-even per game." },
+  { tier: "easyTiger", rule: "Averaging a loss of ⅒ to ⅓ a typical buy-in per game." },
+  { tier: "atm", rule: "Averaging a loss of at least ⅓ a typical buy-in per game." },
   { tier: "freshBlood", rule: "Fewer than 3 season games this season, so no title yet." },
 ];
 

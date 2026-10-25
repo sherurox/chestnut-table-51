@@ -785,6 +785,9 @@ the season game limit live in `src/config.ts`.
     never show a count: First blood, Ten club, Half century, Man of the Match ×5, Lucky seven, Double
     digits. Hat trick counts once per winning run that reaches 3.
   - Player page: earned badges first (newest first), then unearned ones, dimmed, with how to earn them.
+  - Title bands (owner-approved 2026-10-25, were ±⅕ / ±½), average per game ÷ typical buy-in: Legend
+    ≥ +⅓, The Bond ≥ +⅒, Biscuit strictly between ±⅒, Easy tiger ≤ −⅒ and > −⅓, The ATM ≤ −⅓
+    (`tier()` in `domain/fun.ts`, whole-number comparison). Situations still override the tier.
 - **C. Chip calculator** (standalone, linked from More). Chip set: white $5 ×100, red $10 ×50, green $20
   ×50, blue $50 ×50, black $100 ×50 (box total $9,500). Preferred $1,000 split: 10 white, 10 red, 10 green,
   5 blue, 4 black. Buy-ins must be multiples of $5.

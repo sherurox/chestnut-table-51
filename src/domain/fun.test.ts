@@ -163,24 +163,31 @@ describe("playerSeasonStats", () => {
 describe("tier", () => {
   const t = (net: number, games = 4, typical = 1000) => tier({ net, games }, typical);
 
-  it("ratio exactly 0.5 is legend; just below is bond", () => {
-    expect(t(2000)).toBe("legend"); // avg 500 / 1000
-    expect(t(1999)).toBe("bond");
+  it("ratio exactly ⅓ is legend; just below is bond", () => {
+    expect(t(1000, 3)).toBe("legend"); // avg 333.33 / 1000
+    expect(t(999, 3)).toBe("bond");
   });
 
-  it("ratio exactly 0.2 is bond; just below is biscuit", () => {
-    expect(t(800)).toBe("bond"); // avg 200
-    expect(t(799)).toBe("biscuit");
+  it("ratio exactly ⅒ is bond; just below is biscuit", () => {
+    expect(t(400)).toBe("bond"); // avg 100
+    expect(t(399)).toBe("biscuit");
   });
 
-  it("ratio exactly −0.2 is easyTiger; just above is biscuit", () => {
-    expect(t(-800)).toBe("easyTiger");
-    expect(t(-799)).toBe("biscuit");
+  it("ratio exactly −⅒ is easyTiger; just above is biscuit", () => {
+    expect(t(-400)).toBe("easyTiger");
+    expect(t(-399)).toBe("biscuit");
   });
 
-  it("ratio exactly −0.5 is atm; just above is easyTiger", () => {
-    expect(t(-2000)).toBe("atm");
-    expect(t(-1999)).toBe("easyTiger");
+  it("ratio exactly −⅓ is atm; just above is easyTiger", () => {
+    expect(t(-1000, 3)).toBe("atm");
+    expect(t(-999, 3)).toBe("easyTiger");
+  });
+
+  it("real Season 1 standings after game 8 (typical $1,000)", () => {
+    expect(t(780, 7)).toBe("bond"); // Kakahalwai, +0.111
+    expect(t(485, 8)).toBe("biscuit"); // Dinosaur, +0.061
+    expect(t(-285, 8)).toBe("biscuit"); // Sherudogs, −0.036
+    expect(t(-980, 6)).toBe("easyTiger"); // Andhar, −0.163
   });
 
   it("uses the season's typical buy-in", () => {

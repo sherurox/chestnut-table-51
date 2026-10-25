@@ -156,12 +156,12 @@ export function playerSeasonStats(data: Data, seasonId: ID, playerId: ID): Playe
 // ratio = avgPerGame / typicalBuyIn, compared in whole numbers so the boundaries are exact.
 export function tier(stats: Pick<PlayerSeasonStats, "games" | "net">, typical: number): Tier {
   if (stats.games < 3) return "freshBlood";
-  const lhs = 10 * stats.net; // 10 × net vs k × typical × games, for ratio thresholds k/10
+  const lhs = 30 * stats.net; // 30 × net vs k × typical × games, for ratio thresholds k/30 (⅒ = 3, ⅓ = 10)
   const at = (k: number) => k * typical * stats.games;
-  if (lhs >= at(5)) return "legend";
-  if (lhs >= at(2)) return "bond";
-  if (lhs > at(-2)) return "biscuit";
-  if (lhs > at(-5)) return "easyTiger";
+  if (lhs >= at(10)) return "legend";
+  if (lhs >= at(3)) return "bond";
+  if (lhs > at(-3)) return "biscuit";
+  if (lhs > at(-10)) return "easyTiger";
   return "atm";
 }
 
