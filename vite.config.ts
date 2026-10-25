@@ -108,8 +108,8 @@ export default defineConfig({
         display: "standalone",
         start_url: "/chestnut-table-51/",
         scope: "/chestnut-table-51/",
-        background_color: "#0b1f17",
-        theme_color: "#7a3f25",
+        background_color: "#0b0405",
+        theme_color: "#2a0f14",
         icons: [
           { src: "icons/icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "icons/icon-512.png", sizes: "512x512", type: "image/png" },
