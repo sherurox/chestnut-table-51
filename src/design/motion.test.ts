@@ -159,4 +159,8 @@ describe("motion-off CSS", () => {
   it("covers the podium entrance", () => {
     expect(media).toContain(".ct-podium-rise");
   });
+
+  it("covers the Wrapped slide pop", () => {
+    expect(media).toContain(".ct-wrapped-pop");
+  });
 });

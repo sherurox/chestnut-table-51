@@ -8,7 +8,7 @@ import { formatSignedDollars } from "../lib/format.js";
 // (playerTrophies), newest first, three to a wooden shelf. Each trophy opens its season.
 
 const PER_SHELF = 3;
-const KIND_LABEL: Record<TrophyKind, string> = {
+export const KIND_LABEL: Record<TrophyKind, string> = {
   gold: "Champion",
   silver: "2nd place",
   bronze: "3rd place",
@@ -81,7 +81,7 @@ function Spoon() {
   );
 }
 
-function TrophyArt({ kind }: { kind: TrophyKind }) {
+export function TrophyArt({ kind }: { kind: TrophyKind }) {
   if (kind === "gold") return <Cup />;
   if (kind === "spoon") return <Spoon />;
   return <Medal kind={kind} />;

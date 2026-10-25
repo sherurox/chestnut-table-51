@@ -1404,6 +1404,183 @@ button.ct-list-row:active {
   filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.5));
 }
 
+/* ---- Season Wrapped (the story over the whole app, screens/Wrapped.tsx) ------------------------- */
+/* Always the dark palette (data-theme="dark" on .ct-wrapped resets the tokens); each slide kind picks a
+   fixed background (lib/wrappedNav.ts SLIDE_BACKGROUND). Text stays ivory on all five (AA). */
+.ct-wrapped {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow: hidden;
+  color: var(--ct-text);
+  background: var(--ct-wrapped-bg, var(--ct-bg));
+  outline: none;
+}
+.ct-wrapped[data-bg="velvet"],
+.ct-wrapped-frame[data-bg="velvet"] {
+  --ct-wrapped-bg: radial-gradient(120% 70% at 50% 0%, #4a1520 0%, #2a0f14 45%, #0b0405 100%);
+}
+.ct-wrapped[data-bg="felt"],
+.ct-wrapped-frame[data-bg="felt"] {
+  --ct-wrapped-bg: radial-gradient(120% 70% at 50% 0%, #155c3d 0%, #0b3324 50%, #04130c 100%);
+}
+.ct-wrapped[data-bg="brass"],
+.ct-wrapped-frame[data-bg="brass"] {
+  --ct-wrapped-bg: radial-gradient(120% 70% at 50% 0%, #5e4416 0%, #2f1f08 50%, #120b03 100%);
+}
+.ct-wrapped[data-bg="midnight"],
+.ct-wrapped-frame[data-bg="midnight"] {
+  --ct-wrapped-bg: radial-gradient(120% 70% at 50% 0%, #1f2552 0%, #0e1230 50%, #05060f 100%);
+}
+.ct-wrapped[data-bg="oxblood"],
+.ct-wrapped-frame[data-bg="oxblood"] {
+  --ct-wrapped-bg: radial-gradient(120% 70% at 50% 0%, #6a1824 0%, #3a0c14 50%, #150407 100%);
+}
+/* #/style: one slide in a phone-shaped frame instead of the full screen. */
+.ct-wrapped-frame {
+  display: flex;
+  min-height: 600px;
+  border-radius: 16px;
+  color: var(--ct-text);
+  background: var(--ct-wrapped-bg);
+}
+.ct-wrapped-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.25rem 0 1rem;
+}
+.ct-wrapped-progress {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+}
+.ct-wrapped-progress li {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(244, 236, 218, 0.25);
+}
+.ct-wrapped-progress li[data-done] {
+  background: var(--ct-brass-hi);
+}
+.ct-wrapped-close {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 1.25rem;
+}
+.ct-wrapped-stage {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+/* The tap zones fill the stage under the content; the content lets taps through except on its own
+   buttons and links. */
+.ct-wrapped-zones {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+.ct-wrapped-zone {
+  height: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-wrapped-zone:focus-visible {
+  outline: 3px solid var(--ct-focus);
+  outline-offset: -6px;
+  border-radius: 16px;
+}
+.ct-wrapped-live {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  pointer-events: none;
+}
+.ct-wrapped-content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 1rem 1.5rem 2rem;
+  text-align: center;
+}
+.ct-wrapped-content a,
+.ct-wrapped-content button {
+  pointer-events: auto;
+}
+.ct-wrapped-big {
+  font-size: clamp(2.5rem, 14vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  max-width: 100%;
+}
+.ct-wrapped-name {
+  font-size: clamp(1.75rem, 8.5vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  max-width: 100%;
+}
+.ct-wrapped-big .ct-num {
+  font-family: "Playfair Display", Georgia, serif;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.ct-wrapped-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  border: 1px solid rgba(240, 214, 139, 0.45);
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  background: rgba(0, 0, 0, 0.25);
+}
+.ct-wrapped-disc {
+  display: grid;
+  width: 88px;
+  height: 88px;
+  place-items: center;
+  border: 3px solid var(--ct-brass);
+  border-radius: 999px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f4ecda;
+  background: radial-gradient(circle at 35% 30%, #2a8a5f, #1d7a52 45%, #0e3d29);
+}
+.ct-wrapped-disc-sm {
+  width: 40px;
+  height: 40px;
+  border-width: 2px;
+  font-size: 0.95rem;
+}
+.ct-wrapped-pop {
+  animation: ct-wrapped-pop 480ms var(--ct-spring) both;
+}
+@keyframes ct-wrapped-pop {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Motion off: the phone's reduced-motion setting, or Animations: Off on More (data-motion="off" on
    <html>). Both blocks list the same selectors (a test keeps them in step). */
 @media (prefers-reduced-motion: reduce) {
@@ -1428,7 +1605,8 @@ button.ct-list-row:active {
   .ct-app::after,
   .ct-foil,
   .ct-wordmark-btn .ct-display,
-  .ct-podium-rise {
+  .ct-podium-rise,
+  .ct-wrapped-pop {
     animation: none !important;
   }
   /* Separate rule: a browser without view transitions drops a whole selector list it can't parse. */
@@ -1469,7 +1647,8 @@ button.ct-list-row:active {
 :root[data-motion="off"] .ct-app::after,
 :root[data-motion="off"] .ct-foil,
 :root[data-motion="off"] .ct-wordmark-btn .ct-display,
-:root[data-motion="off"] .ct-podium-rise {
+:root[data-motion="off"] .ct-podium-rise,
+:root[data-motion="off"] .ct-wrapped-pop {
   animation: none !important;
 }
 :root[data-motion="off"]::view-transition-group(*),

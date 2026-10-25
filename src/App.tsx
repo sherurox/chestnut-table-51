@@ -35,6 +35,25 @@ const AdminRoutes = lazy(() =>
     }),
 );
 
+// Season Wrapped (picker + story) is its own chunk too, so the entry bundle doesn't carry it. Same
+// one-time reload as the admin chunk when a deploy deleted it.
+const loadWrapped = () => import("./screens/Wrapped.js");
+function lazyWrapped(name: "WrappedPicker" | "WrappedStory") {
+  return lazy(() =>
+    loadWrapped()
+      .then((m) => {
+        reloader.clear();
+        return { default: m[name] };
+      })
+      .catch((err: unknown) => {
+        if (reloader.reloadOnce()) return new Promise<never>(() => {});
+        throw err;
+      }),
+  );
+}
+const WrappedPicker = lazyWrapped("WrappedPicker");
+const WrappedStory = lazyWrapped("WrappedStory");
+
 // Dev-only style guide (#/style). The DEV check is a compile-time constant, so production builds drop
 // the route and the chunk entirely; check-bundle verifies it.
 const StylePreview = import.meta.env.DEV
@@ -72,6 +91,22 @@ const router = createHashRouter([
           { path: "/players/:id", element: <PlayerPage /> },
           { path: "/seasons", element: <Seasons /> },
           { path: "/seasons/:id", element: <SeasonDetail /> },
+          {
+            path: "/seasons/:id/wrapped",
+            element: (
+              <Suspense fallback={<p className="p-4">Loading…</p>}>
+                <WrappedPicker />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/seasons/:id/wrapped/:playerId",
+            element: (
+              <Suspense fallback={<p className="p-4">Loading…</p>}>
+                <WrappedStory />
+              </Suspense>
+            ),
+          },
           { path: "/history", element: <EditHistory /> },
           { path: "/me", element: <WhoAmI /> },
           { path: "/more", element: <More /> },

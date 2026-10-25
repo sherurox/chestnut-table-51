@@ -8,6 +8,7 @@ import { EmptyState, Loading, Money, PageTitle, RankBadge } from "../design/comp
 import { createOnce, motionReduced } from "../design/motion.js";
 import { seasonStandings } from "../domain/standings.js";
 import { morphNames } from "../lib/viewTransitions.js";
+import { wrappedSeasons } from "../lib/wrapped.js";
 import { useData } from "../state/DataContext.js";
 import { activeSeason, playerById, todaysLines } from "../lib/selectors.js";
 import { netWinningsOverTime } from "../domain/charts.js";
@@ -191,6 +192,7 @@ export function PlayerPage() {
 
   const rankIndex = season ? seasonStandings(data, season.id).findIndex((r) => r.playerId === id) : -1;
   const names = morph ? morphNames(id) : null;
+  const wrapped = wrappedSeasons(data, id);
 
   return (
     <div className="px-4 pt-2 pb-4">
@@ -222,6 +224,15 @@ export function PlayerPage() {
         <div className="mb-4">
           <EmptyState suit="♠" title="No active season" />
         </div>
+      )}
+      {wrapped.length > 0 && (
+        <section className="mb-4 flex flex-col gap-2" aria-label="Season Wrapped">
+          {wrapped.map((s) => (
+            <Link key={s.id} to={`/seasons/${s.id}/wrapped/${id}`} className="ct-btn ct-btn-secondary ct-focus w-full">
+              {s.name} Wrapped
+            </Link>
+          ))}
+        </section>
       )}
       <TrophyCabinet trophies={playerTrophies(data, id)} />
       <BadgeList earned={allBadges(data, id)} />

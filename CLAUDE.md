@@ -98,7 +98,7 @@ Node 22+ is required. No backend code, no other external services.
 │  │  ├─ sandbox.ts          # sandbox-mode requests to the dev server (dev only, §8.6)
 │  │  └─ sync.ts             # pushes the queue + a pending live marker (admin chunk only)
 │  ├─ admin/                 # admin screens: lazy-loaded chunk, never shipped to viewers
-│  ├─ screens/               # one file per viewer screen
+│  ├─ screens/               # one file per viewer screen (Wrapped.tsx: lazy chunk, picker + story)
 │  ├─ components/
 │  └─ main.tsx
 └─ .github/workflows/deploy.yml
@@ -582,9 +582,11 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 | `#/` | **Leaderboard**: active season standings (rank, name, net, games played, last result). "You" highlight. Last updated + refresh. |
 | `#/games` | **Game history**: newest first, season games and incognito games (labeled) with per-player results. Filter by season. "Edited" badges. |
 | `#/games/:id` | **Game detail**: final stacks, results, and an "Every buy-in" panel listing each player's buy-ins in order (e.g. `$1,000 · $1,500`). "Share card" (the results card image, everyone). |
-| `#/players/:id` | **Player page**: net-winnings-over-time chart for the selected season (season games only), game list, best/worst game; **Trophy cabinet** above the badge list (§12 Season show). |
+| `#/players/:id` | **Player page**: net-winnings-over-time chart for the selected season (season games only), game list, best/worst game; "<Season> Wrapped" links (closed seasons played) and the **Trophy cabinet** above the badge list (§12 Season show, Season Wrapped). |
 | `#/seasons` | **Seasons**: all seasons; closed ones show champion and final standings (tap through). |
-| `#/seasons/:id` | **Season page**: champion card (closed), **podium** ("Final podium" / "Podium so far"), standings, **The race** (2+ season games: replay of the standings game by game, §12 Season show), awards. |
+| `#/seasons/:id` | **Season page**: champion card (closed), **podium** ("Final podium" / "Podium so far"), standings, **The race** (2+ season games: replay of the standings game by game, §12 Season show), awards. Closed seasons: a "Season Wrapped" button below the podium (your story when `ct51.me` has one, else the picker). |
+| `#/seasons/:id/wrapped` | **Season Wrapped picker** (lazy chunk): players with a Wrapped, standings order, initials discs. |
+| `#/seasons/:id/wrapped/:playerId` | **Season Wrapped story** (lazy chunk): full screen over the app, slide by slide (§12 Season Wrapped). |
 | `#/history` | **Edit history**: commit list. |
 | `#/me` | **Who are you?**: pick your player; stored in localStorage `ct51.me`; used only for highlighting. |
 | `#/more` | **More**: Poker Guide, Hall of Fame, Chip calculator, Theme, Animations, Sounds, Chip mode, Admin. |
@@ -731,7 +733,9 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
   autoplay (one game per 1.1s). Motion off: no `.ct-race-anim`, no Play button (step buttons only), and
   `.ct-race-anim .ct-race-row/.ct-race-bar` are in both motion-off blocks. The podium's steps rise once
   per mount (`.ct-podium-rise`, 700ms `--ct-spring`, #1 then #2 then #3, 140ms apart), only added when
-  animations are allowed and listed in both motion-off blocks.
+  animations are allowed and listed in both motion-off blocks. Season Wrapped: each slide pops in
+  (`.ct-wrapped-pop`, 480ms `--ct-spring`, only when animations are allowed, in both motion-off blocks)
+  and its big amounts count up (`Money animate`).
 - Animation is visual only: values, order and handlers are already final, and nothing ever delays input.
   Chip feedback runs after the buy-in is recorded.
 - **`#/admin/live` and `#/admin/end` never animate** (`INSTANT_PATHS` / `isInstant` in `motion.ts`): no screen
@@ -959,6 +963,21 @@ stay as they are. No new dependencies.
   of `TOP_BADGE_ORDER` (Season champion, Wire to wire, Perfect attendance, Podium, then per-game badges;
   Wooden spoon, Felted and Even Steven never headline), else the title. `wrappedPlayers(data, seasonId)`:
   standings order, closed seasons only; `wrappedSeasons(data, playerId)`: newest first.
+- **B. The story** (`screens/Wrapped.tsx`, one lazy chunk with the admin chunk's one-time reload;
+  slides in `components/WrappedSlides.tsx`; pure controls in `lib/wrappedNav.ts`). Picker at
+  `#/seasons/:id/wrapped`, story at `#/seasons/:id/wrapped/:playerId`; bad links say "Wrapped not found".
+  The story is portalled to `<body>` (the page area's screen-fade transform would shift a fixed child):
+  `.ct-wrapped`, fixed inset 0, z 70, safe-area padding, `#root` inert and page scroll locked while open,
+  `data-theme="dark"` so it is always the dark palette, and `SandboxBanner` on top in sandbox mode.
+  Progress segments, a ✕ (48px: back if opened in-app, else the season page), Previous (left third) and
+  Next (right two-thirds) tap zones as labelled buttons under the content (content ignores taps except
+  its own buttons/links), ArrowLeft/ArrowRight/Escape, no auto-advance, no wrap past either end. The
+  slide is in an `aria-live="polite"` region with "Slide n of N". Backgrounds by kind
+  (`SLIDE_BACKGROUND`: velvet, brass, felt, midnight, oxblood; neighbours never match, tested). Playfair
+  for big statements (`.ct-wrapped-big`; names and titles `.ct-wrapped-name`, smaller so one long word
+  fits 360px), Cinzel eyebrows, Inter body; badges as pills (8, then "+N more"); trophies reuse the
+  cabinet's `TrophyArt`. Entry: SeasonDetail and PlayerPage (§10). Every slide kind is previewed on
+  `#/style` (long names, six-figure amounts).
 
 ---
 

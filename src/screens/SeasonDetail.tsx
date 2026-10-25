@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { AwardsList, SectionLabel } from "../components/FunPanels.js";
 import { StandingsList } from "../components/StandingsList.js";
 import { SeasonRace } from "../components/SeasonRace.js";
@@ -12,6 +12,7 @@ import { useData } from "../state/DataContext.js";
 import { useMe } from "../state/useMe.js";
 import { seasonById } from "../lib/selectors.js";
 import { seasonRace } from "../lib/seasonShow.js";
+import { wrappedPlayers } from "../lib/wrapped.js";
 import { checkChampionCrown } from "../lib/celebrations.js";
 import { motionReduced } from "../design/motion.js";
 import { browserStore } from "../storage/localKeys.js";
@@ -59,6 +60,9 @@ export function SeasonDetail() {
   const anyAward = Object.values(awards).some((a) => a !== null);
   const race = seasonRace(data, season.id);
   const podium = seasonPodium(data, season.id);
+  // Season Wrapped (closed seasons): straight into your own story when this phone knows who you are.
+  const wrapped = wrappedPlayers(data, season.id);
+  const wrappedTo = wrapped.some((r) => r.playerId === me) ? `/seasons/${season.id}/wrapped/${me}` : `/seasons/${season.id}/wrapped`;
 
   return (
     <div className="px-4 pt-2 pb-4">
@@ -77,6 +81,12 @@ export function SeasonDetail() {
             <SeasonPodium key={season.id} podium={podium} />
           </div>
         </section>
+      )}
+
+      {wrapped.length > 0 && (
+        <Link to={wrappedTo} className="ct-btn ct-btn-primary ct-focus mb-4 w-full">
+          Season Wrapped
+        </Link>
       )}
 
       {rows.length === 0 ? (
