@@ -3,9 +3,11 @@ import { useParams } from "react-router-dom";
 import { AwardsList, SectionLabel } from "../components/FunPanels.js";
 import { StandingsList } from "../components/StandingsList.js";
 import { SeasonRace } from "../components/SeasonRace.js";
+import { SeasonPodium } from "../components/SeasonPodium.js";
 import { Crown, EmptyState, Loading, Money, PageTitle } from "../design/components.js";
 import { seasonAwards } from "../domain/fun.js";
 import { champion, seasonStandings } from "../domain/standings.js";
+import { seasonPodium } from "../domain/seasonShow.js";
 import { useData } from "../state/DataContext.js";
 import { useMe } from "../state/useMe.js";
 import { seasonById } from "../lib/selectors.js";
@@ -56,6 +58,7 @@ export function SeasonDetail() {
   const awards = seasonAwards(data, season.id);
   const anyAward = Object.values(awards).some((a) => a !== null);
   const race = seasonRace(data, season.id);
+  const podium = seasonPodium(data, season.id);
 
   return (
     <div className="px-4 pt-2 pb-4">
@@ -66,6 +69,15 @@ export function SeasonDetail() {
       />
 
       {championRow && <ChampionCard seasonId={season.id} name={championRow.name} net={championRow.net} />}
+
+      {podium && (
+        <section className="mb-4" aria-label={podium.final ? "Final podium" : "Podium so far"}>
+          <SectionLabel>{podium.final ? "Final podium" : "Podium so far"}</SectionLabel>
+          <div className="ct-panel overflow-hidden px-2 pt-2">
+            <SeasonPodium key={season.id} podium={podium} />
+          </div>
+        </section>
+      )}
 
       {rows.length === 0 ? (
         <EmptyState suit="♣" title="No games in this season" />

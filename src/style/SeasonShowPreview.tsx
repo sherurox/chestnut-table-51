@@ -1,8 +1,10 @@
+import { SeasonPodium } from "../components/SeasonPodium.js";
 import { SeasonRace } from "../components/SeasonRace.js";
+import { initials, type SeasonPodium as Podium } from "../domain/seasonShow.js";
 import type { Data, Game } from "../domain/types.js";
 import { seasonRace } from "../lib/seasonShow.js";
 
-// DEV ONLY (#/style): Season show previews (the race) on made-up seasons, with the real components.
+// DEV ONLY (#/style): Season show previews (the race, the podium) on made-up seasons, with the real components.
 const NOW = "2026-10-24T21:00:00.000Z";
 const NAMES = [
   "Shreyas",
@@ -71,6 +73,33 @@ export function SeasonRacePreview() {
     <div className="space-y-4">
       <SeasonRace frames={seasonRace(data, "big")} />
       <SeasonRace frames={seasonRace(data, "pair")} />
+    </div>
+  );
+}
+
+function podium(final: boolean, people: [string, number][]): Podium {
+  return {
+    final,
+    places: people.map(([name, net], i) => ({ place: (i + 1) as 1 | 2 | 3, playerId: `x${i}`, name, initials: initials(name), net })),
+  };
+}
+
+export function SeasonPodiumPreview() {
+  const shows: [string, Podium][] = [
+    ["Final, three long names", podium(true, [["Venkataramanan Subramaniam", 4850], ["Ishaan Chattopadhyay-Banerjee", 1200], ["Shreyas Khandale", -150]])],
+    ["So far, two places", podium(false, [["Rohan", 800], ["Andhar", -800]])],
+    ["One place", podium(false, [["Kabir", 0]])],
+  ];
+  return (
+    <div className="space-y-4">
+      {shows.map(([label, p]) => (
+        <div key={label}>
+          <p className="mb-1 text-xs text-ink-muted">{label}</p>
+          <div className="ct-panel overflow-hidden px-2 pt-2">
+            <SeasonPodium podium={p} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

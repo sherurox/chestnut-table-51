@@ -584,7 +584,7 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 | `#/games/:id` | **Game detail**: final stacks, results, and an "Every buy-in" panel listing each player's buy-ins in order (e.g. `$1,000 · $1,500`). "Share card" (the results card image, everyone). |
 | `#/players/:id` | **Player page**: net-winnings-over-time chart for the selected season (season games only), game list, best/worst game. |
 | `#/seasons` | **Seasons**: all seasons; closed ones show champion and final standings (tap through). |
-| `#/seasons/:id` | **Season page**: champion card (closed), standings, **The race** (2+ season games: replay of the standings game by game, §12 Season show), awards. |
+| `#/seasons/:id` | **Season page**: champion card (closed), **podium** ("Final podium" / "Podium so far"), standings, **The race** (2+ season games: replay of the standings game by game, §12 Season show), awards. |
 | `#/history` | **Edit history**: commit list. |
 | `#/me` | **Who are you?**: pick your player; stored in localStorage `ct51.me`; used only for highlighting. |
 | `#/more` | **More**: Poker Guide, Hall of Fame, Chip calculator, Theme, Animations, Sounds, Chip mode, Admin. |
@@ -729,7 +729,9 @@ components instead of one-off colours. `#/style` is a dev-only style guide (drop
   Season show adds the race replay on the season page: rows slide to their new rank (`top`, 600ms
   `--ct-spring`) and bars grow or shrink (`left`/`width`, `--ct-spring-soft`) via `.ct-race-anim`, plus
   autoplay (one game per 1.1s). Motion off: no `.ct-race-anim`, no Play button (step buttons only), and
-  `.ct-race-anim .ct-race-row/.ct-race-bar` are in both motion-off blocks.
+  `.ct-race-anim .ct-race-row/.ct-race-bar` are in both motion-off blocks. The podium's steps rise once
+  per mount (`.ct-podium-rise`, 700ms `--ct-spring`, #1 then #2 then #3, 140ms apart), only added when
+  animations are allowed and listed in both motion-off blocks.
 - Animation is visual only: values, order and handlers are already final, and nothing ever delays input.
   Chip feedback runs after the buy-in is recorded.
 - **`#/admin/live` and `#/admin/end` never animate** (`INSTANT_PATHS` / `isInstant` in `motion.ts`): no screen
@@ -920,6 +922,14 @@ change: existing screens, celebrations, tests and build checks stay as they are.
   amount" per row (the bars are `aria-hidden`). Opens on the last frame; Play starts from game 1 (also
   when on the last frame) and stops at the last. Timers clear on pause, unmount and motion off; keyed by
   season. Preview on `#/style` (12 players with late joiners and long names, and 2 players).
+- **C. Podium** (`components/SeasonPodium.tsx`, on the season page right below the champion card and
+  above the standings, whenever `seasonPodium` isn't null; "Final podium" when closed, else "Podium so
+  far"): CSS 3D steps (each tilted back with `perspective` + `rotateX`, a lighter top face and a front
+  face) in the order 2 · 1 · 3, gold tallest, then silver, then bronze, Playfair numerals in dark ink on the
+  faces. Metals are fixed colours in both themes, with a hairline drop-shadow edge. Above each step: a
+  felt-green initials disc with a metal ring, the name (wraps anywhere, never cut) and the signed net; a
+  `Crown` over #1 only when closed. Fewer places show only those steps, centred. The DOM is in place order
+  (flex `order` draws 2 · 1 · 3) with "1st place, name, amount" for screen readers. Preview on `#/style`.
 
 ---
 

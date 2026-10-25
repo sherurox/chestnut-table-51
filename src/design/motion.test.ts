@@ -155,4 +155,8 @@ describe("motion-off CSS", () => {
   it("covers the season race slides", () => {
     for (const sel of [".ct-race-anim .ct-race-row", ".ct-race-anim .ct-race-bar"]) expect(media).toContain(sel);
   });
+
+  it("covers the podium entrance", () => {
+    expect(media).toContain(".ct-podium-rise");
+  });
 });
