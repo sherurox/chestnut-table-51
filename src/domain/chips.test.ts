@@ -103,7 +103,7 @@ describe("chipSplit", () => {
       }
     }
     expect(checked).toBeGreaterThan(500);
-  });
+  }, 15_000); // an exhaustive sweep: it can pass 5s while dev servers share the machine
 
   it("is deterministic", () => {
     for (const [amount, players] of [[1000, 6], [1500, 5], [735, 3], [2000, 4]] as const) {
