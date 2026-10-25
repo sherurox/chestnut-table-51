@@ -951,7 +951,8 @@ stay as they are. No new dependencies.
   `badgesInGame` for this player); top (`seasonRace` frames led, "You led after 4 of 10 games", or "Highest
   you climbed: #2 after game 6"); toughNight (`worstNight` + `totalRebuys`, only when it was a loss); nemesis
   (`nemesis()`, only when not null); badges (per-game hits in this season's games + this season's
-  `seasonCloseBadges`, and the title from `playerMoods`: situation over tier, Fresh blood counts, so in
+  `seasonCloseBadges`, run on the data with `seasons: [that season]` because its tally merges every closed
+  season into the first one's id; and the title from `playerMoods`: situation over tier, Fresh blood counts, so in
   practice it always shows); finale (place, net, best night, highlight).
   **Inside Wrapped every ×N counts within this season only** (best night: up to that night; badges slide:
   the whole season); the results card keeps its all-time running count. Finale highlight: the first badge

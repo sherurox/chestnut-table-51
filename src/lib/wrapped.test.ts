@@ -123,7 +123,7 @@ describe("wrappedModel numbers equal the existing helpers", () => {
         expect(slide(s, "nemesis")).toEqual(foe ? { kind: "nemesis", ...foe } : undefined);
 
         const perGame = seasonGamesInOrder(data, seasonId).flatMap((g) => badgesInGame(data, g.id).filter((b) => b.playerId === id));
-        const close = seasonCloseBadges(data, id).filter((b) => b.seasonId === seasonId);
+        const close = seasonCloseBadges({ ...data, seasons: [season] }, id);
         const expectedKinds = [...new Set([...perGame.map((b) => b.kind), ...close.map((b) => b.kind)])];
         const mood = moods.find((m) => m.playerId === id)!;
         const badges = slide(s, "badges")!;
@@ -258,5 +258,35 @@ describe("×N counts within this season only", () => {
     const s = wrappedModel(flipped, "s2", "a")!.slides;
     expect(slide(s, "bestNight")!.badges.find((b) => b.kind === "whale")).toMatchObject({ count: 1 });
     expect(slide(s, "badges")!.badges.find((b) => b.kind === "whale")).toMatchObject({ count: 2 });
+  });
+});
+
+describe("season-close badges count this season only", () => {
+  // Amit wins Season 1, Bina wins Season 2; both are on the podium (3 players) in both seasons.
+  const data = small(
+    [closed("s1", "Season 1", "2026-09-01", "2026-09-30"), closed("s2", "Season 2", "2026-10-01", "2026-10-30")],
+    [
+      game("g1", "s1", "2026-09-05", { a: [1000, 1500], b: [1000, 1200], c: [1000, 300] }),
+      game("g2", "s2", "2026-10-05", { a: [1000, 1200], b: [1000, 1500], c: [1000, 300] }),
+    ],
+  );
+  const close = (seasonId: string, playerId: string) =>
+    slide(wrappedModel(data, seasonId, playerId)!.slides, "badges")!.badges.filter((b) =>
+      ["champion", "podium", "woodenSpoon"].includes(b.kind),
+    );
+
+  it("a podium in two seasons shows Podium ×1 in each, and Champion where earned", () => {
+    expect(close("s1", "a").map((b) => b.label)).toEqual(["Season champion", "Podium"]);
+    expect(close("s2", "a").map((b) => b.label)).toEqual(["Podium"]);
+    expect(close("s1", "b").map((b) => b.label)).toEqual(["Podium"]);
+    expect(close("s2", "b").map((b) => b.label)).toEqual(["Season champion", "Podium"]);
+    // Chetan: last both times, a bronze and a spoon each season.
+    expect(close("s2", "c").map((b) => b.label)).toEqual(["Podium", "Wooden spoon"]);
+  });
+
+  it("the finale headline uses this season's close badges", () => {
+    expect(slide(wrappedModel(data, "s2", "a")!.slides, "finale")!.highlight).toBe("Podium");
+    expect(slide(wrappedModel(data, "s2", "b")!.slides, "finale")!.highlight).toBe("Season champion");
+    expect(slide(wrappedModel(data, "s2", "c")!.slides, "finale")!.highlight).toBe("Podium");
   });
 });

@@ -161,9 +161,9 @@ export function wrappedModel(data: Data, seasonId: ID, playerId: ID): WrappedMod
   const foe = nemesis(data, seasonId, playerId);
   if (foe) slides.push({ kind: "nemesis", ...foe });
 
-  const closeKinds = seasonCloseBadges(data, playerId)
-    .filter((b) => b.seasonId === seasonId)
-    .map((b) => b.kind);
+  // seasonCloseBadges tallies by kind across every closed season (keeping the first season's id), so it
+  // runs on this season alone to count only what this season gave.
+  const closeKinds = seasonCloseBadges({ ...data, seasons: [season] }, playerId).map((b) => b.kind);
   const seasonBadges = countKinds([...hits.map((h) => h.kind), ...closeKinds]);
   const mood = playerMoods(data, seasonId).find((m) => m.playerId === playerId);
   const title = mood ? (mood.situation ? SITUATION_NAMES[mood.situation] : TIER_NAMES[mood.tier]) : null;
