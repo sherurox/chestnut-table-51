@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ShareCardButton } from "../components/ShareCard.js";
 import { Loading, PageTitle } from "../design/components.js";
 import { IconChevron } from "../design/icons.js";
 import { createFirstSeason } from "../domain/adminOps.js";
@@ -81,6 +82,7 @@ function ShareResults({ data, game }: { data: Data; game: Game }) {
         >
           {status === "copied" ? "Copied ✓" : "Share results"}
         </button>
+        <ShareCardButton data={data} game={game} className="whitespace-nowrap" />
       </div>
       {status === "manual" && (
         <label className="mt-2 block">

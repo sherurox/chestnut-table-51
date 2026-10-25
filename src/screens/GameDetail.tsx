@@ -5,6 +5,7 @@ import { gameById, playerById, seasonById } from "../lib/selectors.js";
 import { finalStack, gameResult, totalBuyIns } from "../domain/results.js";
 import { formatDate, formatDollars } from "../lib/format.js";
 import { isAdminDevice } from "../storage/localKeys.js";
+import { ShareCardButton } from "../components/ShareCard.js";
 
 export function GameDetail() {
   const { id } = useParams();
@@ -82,6 +83,8 @@ export function GameDetail() {
           ))}
         </ul>
       </div>
+
+      <ShareCardButton data={data} game={game} className="mt-4 w-full" />
 
       {/* Only on a phone that has logged in as admin (non-secret flag, no admin code); the route asks to log in. */}
       {isAdminDevice() && (

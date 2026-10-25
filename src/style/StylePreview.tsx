@@ -3,6 +3,7 @@ import { AppIconSvg, ChipBadge, Crown, Money, RankBadge, Splash, SuitHeading, Wo
 import { chipFeedback, useFlip, useMotionReduced } from "../design/motion.js";
 import { formatDollars, formatSignedDollars } from "../lib/format.js";
 import { useData } from "../state/DataContext.js";
+import { ResultsCardPreview } from "./ResultsCardPreview.js";
 import { localIsoDate } from "../domain/dates.js";
 import { assignQuotes, badges, nemesis, playerMoods, seasonAwards, seasonSummary, typicalBuyIn } from "../domain/fun.js";
 
@@ -532,6 +533,10 @@ export function StylePreview() {
       <main className="mx-auto max-w-[430px] px-4 pt-4 pb-16">
         <Section title="Luxe v2 (preview)" suit="♦">
           <LuxePreview theme={theme} reduced={reduced} />
+        </Section>
+
+        <Section title="Results card" suit="♥">
+          <ResultsCardPreview />
         </Section>
 
         <Section title="Wordmark & splash" suit="♠">

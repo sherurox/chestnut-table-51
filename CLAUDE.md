@@ -519,6 +519,8 @@ $env:SANDBOX='1'; $env:DEV_HTTP='1'; npx vite      # http://localhost:5181, desk
    ```
    Incognito games use `CT51 · Incognito · …` and have no season-leader line. If the clipboard is blocked,
    show the text in a selectable box.
+   Next to it, **Share card** shares the same game as a results-card image (§12, Results card + sounds);
+   the copy text above is unchanged.
 
 **Phase 4 decisions (owner-approved):**
 - **Offline Save (answer 1):** without login the admin can enter stacks, pass the strict chip check, and
@@ -578,7 +580,7 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 |---|---|
 | `#/` | **Leaderboard**: active season standings (rank, name, net, games played, last result). "You" highlight. Last updated + refresh. |
 | `#/games` | **Game history**: newest first, season games and incognito games (labeled) with per-player results. Filter by season. "Edited" badges. |
-| `#/games/:id` | **Game detail**: final stacks, results, and an "Every buy-in" panel listing each player's buy-ins in order (e.g. `$1,000 · $1,500`). |
+| `#/games/:id` | **Game detail**: final stacks, results, and an "Every buy-in" panel listing each player's buy-ins in order (e.g. `$1,000 · $1,500`). "Share card" (the results card image, everyone). |
 | `#/players/:id` | **Player page**: net-winnings-over-time chart for the selected season (season games only), game list, best/worst game. |
 | `#/seasons` | **Seasons**: all seasons; closed ones show champion and final standings (tap through). |
 | `#/history` | **Edit history**: commit list. |
@@ -858,6 +860,19 @@ Three chunks on the `results-card` branch. Add, don't change: the §9.8 copy tex
   others sorted like `shareText`; badges as "Name: Badge" via `badgeTitle` (×N on repeats). The leader
   line is as of that game; a closed season's last game (auto-closed or ended by hand) shows
   "<Season> champion: Name +$X" instead.
+- **B. Card image + sharing:** `lib/drawResultsCard.ts` (Canvas 2D, 1080×1350 PNG, a lazy precached chunk;
+  it alone imports the Playfair 600 italic face) always draws the dark design with fixed colours: velvet
+  `#2a0f14` → `#0b0405` with brass/green glows, a brass hairline border, Cinzel title, a drawn crown, the
+  Man of the Match in Playfair with a static gold gradient, the result in green, the line in italic,
+  the others in a glass panel (two columns past 7), badge pills (3 lines, 2 with two columns; the rest
+  "+N more"), the leader/champion line and "Paisa he paisa hoga". It awaits `document.fonts.load` (4s cap),
+  shrinks long names to fit (never cut), no emoji. `ShareCardButton` (`components/ShareCard.tsx`) draws in
+  the background as soon as it mounts, one card at a time in mount order (`lib/serialQueue.ts`), showing
+  "Preparing card…" (disabled) until its own card is ready; the tap calls `navigator.share({ files })`
+  straight away when `canShare` allows (no await before it, for iOS; a cancel is silent), otherwise (or on
+  any other error) a sheet with the image (alt = `shareText`), "Press and hold the image to save or share
+  it" and Download; its object URL is revoked on close/unmount. On Game detail (every finished game,
+  viewers too) and next to each "Share results" in Admin home's Saved list. `#/style` previews four cards.
 
 ---
 
