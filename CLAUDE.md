@@ -585,6 +585,7 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
 | `#/seasons` | **Seasons**: all seasons; closed ones show champion and final standings (tap through). |
 | `#/history` | **Edit history**: commit list. |
 | `#/me` | **Who are you?**: pick your player; stored in localStorage `ct51.me`; used only for highlighting. |
+| `#/more` | **More**: Poker Guide, Hall of Fame, Chip calculator, Theme, Animations, Sounds, Chip mode, Admin. |
 
 **Admin** (after login; a lock icon in the header opens login)
 | Route | Screen |
@@ -621,6 +622,16 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
   Android Chrome shows an "Install app" button once the browser fires `beforeinstallprompt` (caught early in
   `lib/installPrompt.ts`). Hidden when installed (standalone) and once dismissed (`ct51.installHintDismissed`).
 - Accessible: semantic HTML, labels on inputs, visible focus states, sufficient contrast in both themes.
+- **Sounds** (`lib/sound.ts`, Web Audio generated in code, no audio files): a per-device setting on More,
+  next to Animations (`ct51.sound`, default On; Off stores `"off"`), separate from Animations: reduced
+  motion never mutes them. One shared AudioContext, created and resumed on the first `pointerdown`
+  anywhere (`installSoundUnlock` in `main.tsx`), master gain 0.25 into a limiter; every call is in
+  try/catch and never blocks input; nothing touches `window` at import; `navigator.audioSession` is left
+  alone. Off creates no context and plays nothing. Three sounds: **chip** (a ≤80ms clink, from
+  `chipFeedback()`, so on every chip tap; overlapping taps layer), **saved** (a rising 3-note brass sting,
+  ~600ms, in EndGame's `save()` right after `moveToQueue`, so offline saves too) and **win** (a soft ta-da
+  when Home's new-game confetti would fire, also with Animations off; only if a tap already unlocked the
+  context this session). The live screen's clink is allowed there because it is sound, not motion.
 
 ### 11.1 Design system ("private club card room")
 All tokens and component styles live in `src/design/design.css`; brand components in
@@ -873,6 +884,9 @@ Three chunks on the `results-card` branch. Add, don't change: the §9.8 copy tex
   any other error) a sheet with the image (alt = `shareText`), "Press and hold the image to save or share
   it" and Download; its object URL is revoked on close/unmount. On Game detail (every finished game,
   viewers too) and next to each "Share results" in Admin home's Saved list. `#/style` previews four cards.
+  The draw is keyed on the card's content (`JSON.stringify` of the model), so a refresh or another save
+  that doesn't change this game's card never redraws it.
+- **C. Sounds:** the rules are in §11 (Sounds).
 
 ---
 

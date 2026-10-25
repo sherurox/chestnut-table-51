@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Data, Game } from "../domain/types.js";
-import { resultsCardModel } from "../lib/resultsCard.js";
+import { resultsCardModel, type ResultsCardModel } from "../lib/resultsCard.js";
 import { createSerialQueue } from "../lib/serialQueue.js";
 import { shareText } from "../lib/share.js";
 
@@ -17,18 +17,23 @@ export function ShareCardButton({ data, game, className = "" }: { data: Data; ga
   const [sheetOpen, setSheetOpen] = useState(false);
   const closeSheet = useCallback(() => setSheetOpen(false), []);
 
+  // Redraw only when the card would look different: a refresh or a save elsewhere gives a new `data`
+  // object, but the same content keeps the card that's ready (no "Preparing card…" flash).
+  const cardKey = useMemo(() => JSON.stringify(resultsCardModel(data, game)), [data, game]);
+  const fileName = `ct51-${game.date}.png`;
+
   useEffect(() => {
     let cancelled = false;
     file.current = null;
     setState("preparing");
-    const model = resultsCardModel(data, game);
+    const model = JSON.parse(cardKey) as ResultsCardModel;
     enqueue(async () => {
       if (cancelled) return;
       const { drawResultsCard } = await import("../lib/drawResultsCard.js");
       if (cancelled) return;
       const blob = await drawResultsCard(model);
       if (cancelled) return;
-      file.current = new File([blob], `ct51-${game.date}.png`, { type: "image/png" });
+      file.current = new File([blob], fileName, { type: "image/png" });
       setState("ready");
     }).catch(() => {
       if (!cancelled) setState("failed");
@@ -36,7 +41,7 @@ export function ShareCardButton({ data, game, className = "" }: { data: Data; ga
     return () => {
       cancelled = true;
     };
-  }, [data, game]);
+  }, [cardKey, fileName]);
 
   // Straight inside the tap: no await before share().
   function share() {

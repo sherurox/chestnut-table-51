@@ -3,6 +3,7 @@ import { PageTitle, Wordmark } from "../design/components.js";
 import { IconChevron } from "../design/icons.js";
 import { currentMotionEnv, setMotionSetting, useMotionReduced, useMotionSetting } from "../design/motion.js";
 import { saveChipMode, useChipMode } from "../lib/chipMode.js";
+import { setSoundSetting, useSoundSetting } from "../lib/sound.js";
 import { useTheme } from "../state/useTheme.js";
 
 export function More() {
@@ -11,6 +12,7 @@ export function More() {
   useMotionReduced(); // re-render when the phone's reduced-motion setting changes
   const osReduced = currentMotionEnv().osReduced;
   const chipMode = useChipMode();
+  const sounds = useSoundSetting();
 
   return (
     <div className="px-4 pt-2 pb-4">
@@ -76,6 +78,21 @@ export function More() {
                 {osReduced && <span className="block text-xs text-ink-muted">Off: your phone asks for reduced motion</span>}
               </span>
               <span className="ct-tag ct-tag-brass">{animations ? "On" : "Off"}</span>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={sounds}
+              onClick={() => setSoundSetting(!sounds)}
+              className="ct-list-row ct-focus w-full text-left"
+            >
+              <span className="flex-1">
+                Sounds
+                <span className="block text-xs text-ink-muted">Chip clinks, the save sting, the new-game ta-da</span>
+              </span>
+              <span className="ct-tag ct-tag-brass">{sounds ? "On" : "Off"}</span>
             </button>
           </li>
           <li>

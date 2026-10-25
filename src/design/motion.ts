@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
+import { playSound } from "../lib/sound.js";
 
 // Motion helpers. Everything respects prefers-reduced-motion and the in-app Animations setting
 // (animationsAllowed), and nothing here ever delays input:
@@ -167,4 +168,6 @@ export function chipFeedback(el: HTMLElement | null): void {
   } catch {
     // not supported
   }
+  // Sound isn't motion: the clink follows the Sounds setting, not Animations or reduced motion.
+  playSound("chip");
 }

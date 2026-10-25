@@ -21,6 +21,7 @@ import { useChipMode } from "../lib/chipMode.js";
 import { COLOR_HINT_MATCH, COLOR_HINT_NEEDS_COUNTS, COLOR_HINT_NOTE, colorHint } from "../lib/chipText.js";
 import { formatDollars, formatSignedDollars } from "../lib/format.js";
 import { seasonCompleteLine } from "../lib/seasonText.js";
+import { playSound } from "../lib/sound.js";
 import { useData } from "../state/DataContext.js";
 import { moveToQueue } from "../storage/localGame.js";
 import { useGameUpdater, useLocalGame } from "./localHooks.js";
@@ -137,6 +138,7 @@ export function EndGame() {
   function save() {
     try {
       moveToQueue(finishLocalGame(game!, nameOf));
+      playSound("saved");
       navigate("/admin");
       void syncNow();
     } catch (err) {

@@ -16,6 +16,7 @@ import { seasonProgress } from "../lib/seasonText.js";
 import { motionReduced } from "../design/motion.js";
 import { newGameCelebration } from "../lib/celebrations.js";
 import { browserStore } from "../storage/localKeys.js";
+import { playSound } from "../lib/sound.js";
 
 const PULSE_MS = 1200;
 
@@ -38,6 +39,8 @@ function useNewGameCelebration(data: Data | null): { pulse: boolean; confetti: b
     const play = newGameCelebration(isNew, !motionReduced(), latest, cardGameId);
     if (play.pulse) setPulse(true);
     if (play.confetti) setConfetti(true);
+    // The ta-da goes with the confetti, but follows the Sounds setting, not Animations.
+    if (newGameCelebration(isNew, true, latest, cardGameId).confetti) playSound("win");
   }, [data, latestGame, latest, cardGameId]);
   useEffect(() => {
     if (!pulse) return;
