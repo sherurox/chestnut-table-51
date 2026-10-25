@@ -5,7 +5,7 @@ import { formatDollars, formatSignedDollars } from "../lib/format.js";
 import { useData } from "../state/DataContext.js";
 import { ResultsCardPreview } from "./ResultsCardPreview.js";
 import { SeasonPodiumPreview, SeasonRacePreview, TrophyCabinetPreview } from "./SeasonShowPreview.js";
-import { WrappedPreview } from "./WrappedPreview.js";
+import { WrappedImagePreview, WrappedPreview } from "./WrappedPreview.js";
 import { localIsoDate } from "../domain/dates.js";
 import { assignQuotes, badges, nemesis, playerMoods, seasonAwards, seasonSummary, typicalBuyIn } from "../domain/fun.js";
 
@@ -555,6 +555,10 @@ export function StylePreview() {
 
         <Section title="Season Wrapped" suit="♠">
           <WrappedPreview />
+        </Section>
+
+        <Section title="Season Wrapped image" suit="♥">
+          <WrappedImagePreview />
         </Section>
 
         <Section title="Wordmark & splash" suit="♠">

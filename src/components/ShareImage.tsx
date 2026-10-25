@@ -70,6 +70,7 @@ export function ImageSheet({
   label,
   width,
   height,
+  imageClassName = "mx-auto block h-auto w-full max-w-[400px] rounded-xl",
   onClose,
 }: {
   file: File;
@@ -77,6 +78,7 @@ export function ImageSheet({
   label: string;
   width: number;
   height: number;
+  imageClassName?: string;
   onClose: () => void;
 }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -104,7 +106,7 @@ export function ImageSheet({
       <div className="ct-sheet px-4" data-instant="" role="dialog" aria-modal="true" aria-label={label}>
         <span className="ct-sheet-handle" aria-hidden="true" />
         <p className="pt-3 pb-2 text-center text-sm text-ink-muted">Press and hold the image to save or share it</p>
-        {url && <img src={url} alt={alt} width={width} height={height} className="mx-auto block h-auto w-full max-w-[400px] rounded-xl" />}
+        {url && <img src={url} alt={alt} width={width} height={height} className={imageClassName} />}
         <div className="mt-3 flex flex-col gap-2">
           {url && (
             <a href={url} download={file.name} className="ct-btn ct-btn-primary ct-focus">

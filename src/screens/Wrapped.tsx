@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { SandboxBanner } from "../components/SandboxBanner.js";
+import { ShareWrappedButton } from "../components/ShareWrapped.js";
 import { WrappedSlideView } from "../components/WrappedSlides.js";
 import { EmptyState, Loading, Money, PageTitle } from "../design/components.js";
 import { motionReduced } from "../design/motion.js";
 import { initials } from "../domain/seasonShow.js";
 import { seasonById } from "../lib/selectors.js";
+import { playSound } from "../lib/sound.js";
 import { wrappedModel, wrappedPlayers } from "../lib/wrapped.js";
 import { SLIDE_BACKGROUND, stepSlide, storyKey } from "../lib/wrappedNav.js";
 import { useData } from "../state/DataContext.js";
@@ -66,6 +68,12 @@ export function WrappedStory() {
   const [index, setIndex] = useState(0);
   const [pop] = useState(() => !motionReduced());
   const dialog = useRef<HTMLDivElement>(null);
+  // While the share sheet is open, Escape closes the sheet only (it has its own handler).
+  const sheetOpen = useRef(false);
+  const onSheet = useCallback((open: boolean) => {
+    sheetOpen.current = open;
+  }, []);
+  const finaleShown = useRef(false);
   const at = Math.min(index, Math.max(0, slides.length - 1));
   const slide = slides[at];
 
@@ -80,7 +88,7 @@ export function WrappedStory() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const m = storyKey(e.key);
-      if (!m) return;
+      if (!m || sheetOpen.current) return;
       e.preventDefault();
       if (m === "close") close();
       else move(m);
@@ -88,6 +96,13 @@ export function WrappedStory() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [close, move]);
+
+  // The finale's win sound, once per story (playSound follows the Sounds setting).
+  useEffect(() => {
+    if (slide?.kind !== "finale" || finaleShown.current) return;
+    finaleShown.current = true;
+    playSound("win");
+  }, [slide?.kind]);
 
   // The app behind can't scroll or take focus while the story is open.
   useEffect(() => {
@@ -150,6 +165,7 @@ export function WrappedStory() {
           {body ?? (
             <div key={at} className={`ct-wrapped-content ${pop ? "ct-wrapped-pop" : ""}`}>
               {slide && <WrappedSlideView slide={slide} />}
+              {slide?.kind === "finale" && <ShareWrappedButton model={slide} onSheet={onSheet} />}
             </div>
           )}
         </div>

@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { WrappedSlideView } from "../components/WrappedSlides.js";
 import type { Data, Game } from "../domain/types.js";
+import type { WrappedCardModel } from "../lib/drawWrappedCard.js";
 import { wrappedModel, type WrappedSlide } from "../lib/wrapped.js";
 import { SLIDE_BACKGROUND } from "../lib/wrappedNav.js";
 
@@ -62,6 +64,64 @@ export function WrappedPreview() {
               <WrappedSlideView slide={slide} />
             </div>
           </div>
+        </figure>
+      ))}
+    </div>
+  );
+}
+
+// The story image for a 2-player season (the champion has a long name), drawn with the real drawing code.
+const PAIR: Data = {
+  ...DATA,
+  players: [
+    { id: "a", name: "Venkataramanan Subramaniam", type: "regular", status: "active", createdAt: NOW },
+    { id: "b", name: "Om", type: "regular", status: "active", createdAt: NOW },
+  ],
+  seasons: [{ id: "w", name: "Season 1", status: "closed", startedOn: "2026-10-01", endedOn: "2026-10-12" }],
+  games: [
+    [1_250_000, -1_250_000],
+    [-300_000, 300_000],
+  ].map((results, i) => ({
+    ...game(i + 1, [0, 0]),
+    players: ["a", "b"],
+    buyIns: ["a", "b"].map((player) => ({ player, amount: 2_000_000, at: NOW })),
+    cashOuts: results.map((r, j) => ({ player: j === 0 ? "a" : "b", amount: 2_000_000 + r })),
+  })),
+};
+const FINALES = ["a", "b"].map(
+  (id) => wrappedModel(PAIR, "w", id)!.slides.find((s): s is WrappedCardModel => s.kind === "finale")!,
+);
+
+export function WrappedImagePreview() {
+  const [urls, setUrls] = useState<(string | null)[]>(FINALES.map(() => null));
+  useEffect(() => {
+    let cancelled = false;
+    const made: string[] = [];
+    void (async () => {
+      const { drawWrappedCard } = await import("../lib/drawWrappedCard.js");
+      for (const [i, finale] of FINALES.entries()) {
+        const blob = await drawWrappedCard(finale);
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        made.push(url);
+        setUrls((prev) => prev.map((u, j) => (j === i ? url : u)));
+      }
+    })();
+    return () => {
+      cancelled = true;
+      made.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, []);
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {FINALES.map((f, i) => (
+        <figure key={f.name} className="m-0">
+          {urls[i] ? (
+            <img src={urls[i]!} alt={`${f.name}'s Wrapped`} className="block h-auto w-full rounded-lg" width={1080} height={1920} />
+          ) : (
+            <div className="ct-panel aspect-[9/16]" />
+          )}
+          <figcaption className="ct-muted mt-1 text-xs">{f.placeLabel}</figcaption>
         </figure>
       ))}
     </div>

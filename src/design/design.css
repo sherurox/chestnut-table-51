@@ -1567,6 +1567,13 @@ button.ct-list-row:active {
   border-width: 2px;
   font-size: 0.95rem;
 }
+/* "Share my Wrapped" fallback sheet: its own layer above the story (the story's content is transformed
+   while it pops, which would trap a fixed sheet inside it). */
+.ct-wrapped-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+}
 .ct-wrapped-pop {
   animation: ct-wrapped-pop 480ms var(--ct-spring) both;
 }

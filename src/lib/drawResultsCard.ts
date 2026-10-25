@@ -7,7 +7,7 @@ import type { CardRow, ResultsCardModel } from "./resultsCard.js";
 export const CARD_WIDTH = 1080;
 export const CARD_HEIGHT = 1350;
 
-const C = {
+export const C = {
   velvetTop: "#2a0f14",
   velvetEdge: "#0b0405",
   brass: "#d6b35e",
@@ -23,27 +23,27 @@ const C = {
 const CINZEL = '"Cinzel", Georgia, serif';
 const PLAYFAIR = '"Playfair Display", Georgia, serif';
 const INTER = '"Inter", system-ui, sans-serif';
-const cinzel = (size: number) => `700 ${size}px ${CINZEL}`;
-const playfair = (size: number) => `700 ${size}px ${PLAYFAIR}`;
-const italic = (size: number) => `italic 600 ${size}px ${PLAYFAIR}`;
-const inter = (weight: 400 | 600 | 700, size: number) => `${weight} ${size}px ${INTER}`;
+export const cinzel = (size: number) => `700 ${size}px ${CINZEL}`;
+export const playfair = (size: number) => `700 ${size}px ${PLAYFAIR}`;
+export const italic = (size: number) => `italic 600 ${size}px ${PLAYFAIR}`;
+export const inter = (weight: 400 | 600 | 700, size: number) => `${weight} ${size}px ${INTER}`;
 
 const FONTS = [cinzel(40), playfair(80), italic(40), inter(400, 30), inter(600, 30), inter(700, 30)];
 const FONT_WAIT_MS = 4000;
 
 // Wait for every face the card uses (never forever: offline without a cached font, it draws with the fallback).
-async function loadFonts(): Promise<void> {
+export async function loadFonts(): Promise<void> {
   if (typeof document === "undefined" || !document.fonts) return;
   const all = Promise.all(FONTS.map((font) => document.fonts.load(font).catch(() => [])));
   await Promise.race([all, new Promise((resolve) => setTimeout(resolve, FONT_WAIT_MS))]);
 }
 
-type Ctx = CanvasRenderingContext2D;
+export type Ctx = CanvasRenderingContext2D;
 
 const SIDE = 90; // content inset from the card edge
 const INNER = CARD_WIDTH - 2 * SIDE;
 
-function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {
+export function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {
   const rr = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
   ctx.moveTo(x + rr, y);
@@ -55,13 +55,13 @@ function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: numb
 }
 
 // Letter-spaced text, drawn a character at a time (ctx.letterSpacing isn't everywhere yet).
-function spacedWidth(ctx: Ctx, text: string, spacing: number): number {
+export function spacedWidth(ctx: Ctx, text: string, spacing: number): number {
   let width = 0;
   for (const ch of text) width += ctx.measureText(ch).width + spacing;
   return Math.max(0, width - spacing);
 }
 
-function drawSpaced(ctx: Ctx, text: string, cx: number, y: number, spacing: number) {
+export function drawSpaced(ctx: Ctx, text: string, cx: number, y: number, spacing: number) {
   let x = cx - spacedWidth(ctx, text, spacing) / 2;
   ctx.textAlign = "left";
   for (const ch of text) {
@@ -71,7 +71,7 @@ function drawSpaced(ctx: Ctx, text: string, cx: number, y: number, spacing: numb
 }
 
 // The largest size ≤ `size` at which `text` fits `maxWidth`: names shrink, they're never cut off.
-function fitSize(ctx: Ctx, text: string, font: (size: number) => string, size: number, maxWidth: number, spacing = 0): number {
+export function fitSize(ctx: Ctx, text: string, font: (size: number) => string, size: number, maxWidth: number, spacing = 0): number {
   let s = size;
   for (let i = 0; i < 40 && s > 8; i++) {
     ctx.font = font(s);
@@ -102,11 +102,11 @@ function wrap(ctx: Ctx, text: string, font: (size: number) => string, size: numb
   }
 }
 
-function moneyColour(value: number): string {
+export function moneyColour(value: number): string {
   return value > 0 ? C.win : value < 0 ? C.loss : C.muted;
 }
 
-function goldGradient(ctx: Ctx, x0: number, y0: number, x1: number, y1: number): CanvasGradient {
+export function goldGradient(ctx: Ctx, x0: number, y0: number, x1: number, y1: number): CanvasGradient {
   const g = ctx.createLinearGradient(x0, y0, x1, y1);
   g.addColorStop(0, C.brassLo);
   g.addColorStop(0.3, C.brassHi);
@@ -117,7 +117,7 @@ function goldGradient(ctx: Ctx, x0: number, y0: number, x1: number, y1: number):
 }
 
 // A three-point crown with jewels, `w` wide, top edge at `y`.
-function drawCrown(ctx: Ctx, cx: number, y: number, w: number) {
+export function drawCrown(ctx: Ctx, cx: number, y: number, w: number) {
   const h = w * 0.72;
   const x = cx - w / 2;
   const p = (fx: number, fy: number): [number, number] => [x + fx * w, y + fy * h];

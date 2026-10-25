@@ -636,7 +636,7 @@ Use HashRouter paths. Mobile-first, one column, bottom navigation for viewer tab
   `chipFeedback()`, so on every chip tap; overlapping taps layer), **saved** (a rising 3-note brass sting,
   ~600ms, in EndGame's `save()` right after `moveToQueue`, so offline saves too) and **win** (a soft ta-da
   when Home's new-game confetti would fire, also with Animations off; only if a tap already unlocked the
-  context this session). The live screen's clink is allowed there because it is sound, not motion.
+  context this session; also once when a Season Wrapped story's finale first shows, §12). The live screen's clink is allowed there because it is sound, not motion.
 
 ### 11.1 Design system ("private club card room")
 All tokens and component styles live in `src/design/design.css`; brand components in
@@ -983,6 +983,14 @@ stay as they are. No new dependencies.
   draw, fileName)` (draw before the tap in one serial queue for every image, `canShare`/`share` with no await,
   a cancel is silent, any other error opens the sheet) and `ImageSheet` (image with alt text, Download, object
   URL revoked on close/unmount). `ShareCardButton` is a thin wrapper on them, unchanged in behaviour.
+  `lib/drawWrappedCard.ts` (dynamic import, sharing the results card's exported palette, `loadFonts` with
+  its 4s cap and `fitSize`) draws the finale as a 1080×1920 PNG: "CHESTNUT TABLE 51", "SEASON WRAPPED", the
+  season, a crown for #1, the name in gold, place, net, best night (amount + date), the highlight pill and
+  "Paisa he paisa hoga"; always dark, no emoji, everything shrinks to fit (tested with a recording
+  canvas). The finale slide's "Share my Wrapped" (`components/ShareWrapped.tsx`) draws it as soon as the
+  finale appears; its fallback sheet sits in `.ct-wrapped-sheet-layer` (z 80, above the story, dark) with
+  the image at 58dvh, and Escape closes the sheet only. The finale plays `playSound("win")` once per story,
+  the first time it shows. `#/style` previews the image for a 2-player season.
 
 ---
 
