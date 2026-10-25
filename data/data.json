@@ -457,10 +457,61 @@
         }
       ],
       "createdAt": "2026-10-23T03:38:02.842Z"
+    },
+    {
+      "id": "4MQ4epV4",
+      "seasonId": "dOj0daIq",
+      "date": "2026-10-25",
+      "mode": "season",
+      "status": "finished",
+      "players": [
+        "cKc2LnIe",
+        "2rylYTr8",
+        "IqhoGQt_",
+        "Di2USM-i"
+      ],
+      "buyIns": [
+        {
+          "player": "cKc2LnIe",
+          "amount": 2000,
+          "at": "2026-10-25T04:59:01.152Z"
+        },
+        {
+          "player": "2rylYTr8",
+          "amount": 2000,
+          "at": "2026-10-25T04:59:02.904Z"
+        },
+        {
+          "player": "IqhoGQt_",
+          "amount": 2000,
+          "at": "2026-10-25T04:59:04.522Z"
+        },
+        {
+          "player": "Di2USM-i",
+          "amount": 2000,
+          "at": "2026-10-25T04:59:05.941Z"
+        }
+      ],
+      "cashOuts": [
+        {
+          "player": "cKc2LnIe",
+          "amount": 950
+        },
+        {
+          "player": "2rylYTr8",
+          "amount": 1875
+        },
+        {
+          "player": "IqhoGQt_",
+          "amount": 2105
+        },
+        {
+          "player": "Di2USM-i",
+          "amount": 3070
+        }
+      ],
+      "createdAt": "2026-10-25T04:59:00.020Z"
     }
   ],
-  "liveGame": {
-    "gameId": "4MQ4epV4",
-    "startedAt": "2026-10-25T04:59:00.020Z"
-  }
+  "liveGame": null
 }
