@@ -594,7 +594,7 @@
       "cashOuts": [
         {
           "player": "2rylYTr8",
-          "amount": 1360
+          "amount": 635
         },
         {
           "player": "Di2USM-i",
@@ -602,10 +602,11 @@
         },
         {
           "player": "cKc2LnIe",
-          "amount": 635
+          "amount": 1360
         }
       ],
-      "createdAt": "2026-10-30T02:49:34.791Z"
+      "createdAt": "2026-10-30T02:49:34.791Z",
+      "editedAt": "2026-10-30T02:53:24.474Z"
     }
   ],
   "liveGame": null
