@@ -653,5 +653,8 @@
       "createdAt": "2026-10-30T04:38:36.286Z"
     }
   ],
-  "liveGame": null
+  "liveGame": {
+    "gameId": "Esrh16Am",
+    "startedAt": "2026-10-31T03:21:41.979Z"
+  }
 }
