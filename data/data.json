@@ -695,10 +695,41 @@
         }
       ],
       "createdAt": "2026-10-31T03:21:41.979Z"
+    },
+    {
+      "id": "i4asHxVr",
+      "seasonId": "tWhW3hs0",
+      "date": "2026-11-01",
+      "mode": "season",
+      "status": "finished",
+      "players": [
+        "cKc2LnIe",
+        "Di2USM-i"
+      ],
+      "buyIns": [
+        {
+          "player": "cKc2LnIe",
+          "amount": 1000,
+          "at": "2026-11-02T04:10:43.136Z"
+        },
+        {
+          "player": "Di2USM-i",
+          "amount": 1000,
+          "at": "2026-11-02T04:10:43.930Z"
+        }
+      ],
+      "cashOuts": [
+        {
+          "player": "cKc2LnIe",
+          "amount": 850
+        },
+        {
+          "player": "Di2USM-i",
+          "amount": 1150
+        }
+      ],
+      "createdAt": "2026-11-02T04:10:41.755Z"
     }
   ],
-  "liveGame": {
-    "gameId": "i4asHxVr",
-    "startedAt": "2026-11-02T04:10:41.755Z"
-  }
+  "liveGame": null
 }
