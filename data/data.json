@@ -731,5 +731,8 @@
       "createdAt": "2026-11-02T04:10:41.755Z"
     }
   ],
-  "liveGame": null
+  "liveGame": {
+    "gameId": "-rjzxYno",
+    "startedAt": "2026-11-03T04:38:29.776Z"
+  }
 }
